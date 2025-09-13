@@ -4,7 +4,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "jsx": "react-jsx",
-    "allowJs": true
+    "allowJs": true,
+    "isolatedModules": true
   },
   "include": ["**/*.ts", "**/*.tsx", "jest.setup.ts"]
 }
