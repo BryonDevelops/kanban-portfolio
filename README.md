@@ -1,7 +1,9 @@
 
 # Kanban Portfolio
 
-This is a Kanban board app built with [Next.js](https://nextjs.org), [Supabase](https://supabase.com), [Tailwind CSS](https://tailwindcss.com), [Zustand](https://zustand-demo.pmnd.rs/), [Jest](https://jestjs.io/), and [Cypress](https://www.cypress.io/).
+![CI/CD](https://github.com/BryonDevelops/kanban-portfolio/actions/workflows/ci.yml/badge.svg)
+
+This is a Kanban board style portfolio app built with [Next.js](https://nextjs.org), [Supabase](https://supabase.com), [Tailwind CSS](https://tailwindcss.com), [Zustand](https://zustand-demo.pmnd.rs/), [Jest](https://jestjs.io/), and [Cypress](https://www.cypress.io/).
 
 ## Tech Stack
 
@@ -89,7 +91,7 @@ Project structure follows separation of concerns:
 
 ## Continuous Integration
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) installs dependencies, runs Jest, and executes Cypress against the dev server. The workflow is currently configured to trigger on `main` (adjust to your default branch if needed).
+GitHub Actions workflow (`.github/workflows/ci.yml`) installs dependencies, runs lint, unit tests (Jest), and E2E tests (Cypress) on every push and pull request to `master`.
 
 ## Storybook
 
@@ -101,4 +103,14 @@ The `.devcontainer/` setup provides a reproducible environment (Node 18, recomme
 
 ## Deployment
 
-Deploy on [Vercel](https://vercel.com/) or your preferred platform.
+Deployed via Vercel using the CD job in `ci.yml`.
+
+### Required GitHub Secrets
+
+- `VERCEL_TOKEN`: Personal/team token for Vercel CLI
+- `VERCEL_ORG_ID`: Vercel Organization ID
+- `VERCEL_PROJECT_ID`: Vercel Project ID
+
+Add these under GitHub → Repo → Settings → Secrets and variables → Actions.
+
+The deploy job runs on pushes to `master` after CI passes, building with `vercel build` and deploying with `vercel deploy --prebuilt --prod`.
