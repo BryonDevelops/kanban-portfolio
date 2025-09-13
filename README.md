@@ -114,3 +114,17 @@ Deployed via Vercel using the CD job in `ci.yml`.
 Add these under GitHub → Repo → Settings → Secrets and variables → Actions.
 
 The deploy job runs on pushes to `master` after CI passes, building with `vercel build` and deploying with `vercel deploy --prebuilt --prod`.
+
+## API Docs (Zod + OpenAPI)
+
+- **Schemas**: Defined with Zod in `domain/task.schemas.ts`.
+- **OpenAPI generation**: Implemented via `@asteasolutions/zod-to-openapi` in `lib/openapi.ts` using `OpenAPIRegistry` and `OpenApiGeneratorV3`.
+- **Routes**:
+   - `GET /api/openapi`: Serves the OpenAPI JSON document.
+   - `GET /api/tasks`: Lists tasks from Supabase.
+   - `POST /api/save-board`: Validates body with `TaskCreateSchema` and persists to Supabase.
+- **Swagger UI**: Visit `/api-docs` to explore and try the endpoints.
+
+Notes:
+- We rely on Zod v4 and the maintained OpenAPI generator (`@asteasolutions/zod-to-openapi`).
+- Request validation uses `safeParse` and returns 400 with flattened Zod errors.
