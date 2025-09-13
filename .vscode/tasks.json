@@ -11,6 +11,17 @@
 				"$jest-stylish"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Run Jest tests",
+			"type": "shell",
+			"command": "npm test",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$jest-stylish"
+			],
+			"group": "build"
 		}
 	]
 }
