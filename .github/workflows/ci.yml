@@ -152,10 +152,42 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy Project Artifacts to Staging
-        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        id: vercel_staging
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> $GITHUB_OUTPUT
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment Staging URL on commit
+        if: success()
+        uses: peter-evans/commit-comment@v3
+        with:
+          body: |
+            🚀 Staging deployment: ${{ steps.vercel_staging.outputs.url }}
+
+      - name: Comment Staging URL on PR (if any)
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              head: `${context.repo.owner}:dev`,
+              state: 'open'
+            });
+            if (pr.data.length > 0) {
+              const number = pr.data[0].number;
+              const body = `🚀 Staging deployment: ${{ steps.vercel_staging.outputs.url }}`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                issue_number: number,
+                body,
+              });
+            }
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
