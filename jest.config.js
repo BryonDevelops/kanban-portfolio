@@ -1,25 +1,29 @@
 // jest.config.js
 export default {
-  preset: 'ts-jest/presets/js-with-ts-esm',
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   transform: {
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: {
-          jsx: 'react-jsx',
-        },
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      useESM: true,
+      tsconfig: {
+        jsx: 'react-jsx',
+        target: 'es2020',
+        module: 'esnext',
+        moduleResolution: 'node',
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true,
       },
-    ],
+    }],
+    '^.+\\.(js|jsx)$': ['babel-jest'],
   },
   moduleNameMapper: {
-    // Next.js static imports
     '^@/(.*)$': '<rootDir>/$1',
-    // Mock react-dnd for ESM compatibility
     '^react-dnd$': '<rootDir>/__mocks__/react-dnd.js',
     '^react-dnd-html5-backend$': '<rootDir>/__mocks__/react-dnd-html5-backend.js',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd))',
+  ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 };
