@@ -1,6 +1,6 @@
 describe('Kanban Board', () => {
   it('loads the board and shows default columns', () => {
-    cy.visit('/')
+    cy.visit('/projects')
     cy.contains('ideas')
     cy.contains('in-progress')
     cy.contains('completed')
