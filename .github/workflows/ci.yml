@@ -2,9 +2,18 @@ name: CI/CD
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - dev
+      - 'feature/**'
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
@@ -112,6 +121,73 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy_staging:
+    name: Deploy to Vercel (staging)
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment Information (staging)
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project Artifacts (staging)
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy Project Artifacts to Staging
+        id: vercel_staging
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment Staging URL on commit
+        if: success()
+        uses: peter-evans/commit-comment@v3
+        with:
+          body: |
+            🚀 Staging deployment: ${{ steps.vercel_staging.outputs.url }}
+
+      - name: Comment Staging URL on PR (if any)
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              head: `${context.repo.owner}:dev`,
+              state: 'open'
+            });
+            if (pr.data.length > 0) {
+              const number = pr.data[0].number;
+              const body = `🚀 Staging deployment: ${{ steps.vercel_staging.outputs.url }}`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                issue_number: number,
+                body,
+              });
+            }
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
