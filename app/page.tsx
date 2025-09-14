@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Primary } from "@/stories/Button.stories";
 
 
 export default function Home() {
@@ -21,18 +23,7 @@ export default function Home() {
           I build modern web applications with Next.js, Supabase, Tailwind CSS, and more. Explore my projects, skills, and experience below.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
-          <a
-            href="#projects"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full shadow transition-colors"
-          >
-            View Projects
-          </a>
-          <a
-            href="#contact"
-            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white font-semibold py-3 px-8 rounded-full shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            Contact Me
-          </a>
+          <Button>View Projects</Button>
         </div>
       </section>
     </main>
