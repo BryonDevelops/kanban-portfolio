@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import Card from '../components/Card';
-import { Project } from '../domain/project';
+import Card from '../../components/Card';
+import { Project } from '../../domain/project';
 
 const mockProject: Project = {
   id: '1',

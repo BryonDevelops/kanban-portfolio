@@ -2,6 +2,8 @@
 export default {
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  rootDir: '../../',
+  testMatch: ['<rootDir>/tests/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       useESM: true,
@@ -24,12 +26,12 @@ export default {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '^react-dnd$': '<rootDir>/__mocks__/react-dnd.js',
-    '^react-dnd-html5-backend$': '<rootDir>/__mocks__/react-dnd-html5-backend.js',
+    '^react-dnd$': '<rootDir>/tests/__mocks__/react-dnd.js',
+    '^react-dnd-html5-backend$': '<rootDir>/tests/__mocks__/react-dnd-html5-backend.js',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd))',
   ],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 };
