@@ -53,6 +53,16 @@ Project structure follows separation of concerns:
 - **SELECT**: Allow public
 - **INSERT/UPDATE/DELETE**: Only owner or authenticated user
 
+### Supabase Auth (Optional)
+- The Auth UI is implemented in `components/Auth.tsx` using `@supabase/auth-ui-react`.
+- Auth is optional during local/dev: if `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` are not set, the component shows a friendly
+   notice instead of breaking the page.
+- When configured, the Auth UI will render and use the configured providers
+   (currently `google` and `github`). You can adjust providers in `Auth.tsx`.
+- Configure preview/prod environment variables in Vercel under the appropriate
+   Environment (Preview/Production) for a seamless CI/CD flow.
+
 ## Local Development
 
 1. Install dependencies
