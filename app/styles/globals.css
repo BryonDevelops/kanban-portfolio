@@ -122,5 +122,43 @@
   }
   body {
     @apply bg-background text-foreground;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  body::-webkit-scrollbar { display: none; }
+  html { -ms-overflow-style: none; scrollbar-width: none; }
+  html::-webkit-scrollbar { display: none; }
+}
+
+/* Hide scrollbars utility */
+@layer utilities {
+  /* Smooth fade for sidebar container and trigger */
+  [data-slot="sidebar-container"] {
+    transition: opacity 250ms ease;
+  }
+  [data-slot="sidebar-trigger"], [data-slot="sidebar-rail"] {
+    transition: opacity 200ms ease;
+  }
+
+  /* When hero is active, fade out sidebar container, rail and trigger,
+     but keep the gap present to avoid content shifting */
+  .hero-active [data-slot="sidebar-container"],
+  .hero-active [data-slot="sidebar-rail"],
+  .hero-active [data-slot="sidebar-trigger"] {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* On hero, remove the reserved sidebar gap so content fills the width */
+  .hero-active [data-slot="sidebar-gap"] {
+    width: 0 !important;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
   }
 }
