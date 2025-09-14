@@ -70,10 +70,20 @@ Project structure follows separation of concerns:
    npm install
    ```
 2. Environment variables (`.env.local`)
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   ```
+    - Start from the example file:
+       - Windows (PowerShell):
+          ```powershell
+          Copy-Item -Path .env.local.example -Destination .env.local -Force
+          ```
+       - macOS/Linux:
+          ```bash
+          cp .env.local.example .env.local
+          ```
+    - Then edit `.env.local` and fill:
+       ```env
+       NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+       NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+       ```
 3. Start the app
    ```bash
    npm run dev
