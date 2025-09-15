@@ -1,5 +1,5 @@
-import { Task } from '../domain/task';
-import { useBoardStore } from '../stores/boardStore';
+import { Task } from '../../domain/task';
+import { useBoardStore } from '../../stores/board/boardStore';
 
 export class BoardService {
   addTask(columnId: string, title: string, description?: string) {

@@ -29,7 +29,7 @@ module.exports = {
       ]
     }],
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^react-dnd$': '<rootDir>/tests/__mocks__/react-dnd.js',
     '^react-dnd-html5-backend$': '<rootDir>/tests/__mocks__/react-dnd-html5-backend.js',

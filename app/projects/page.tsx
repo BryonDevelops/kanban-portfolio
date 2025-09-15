@@ -6,7 +6,7 @@ import { HTML5Backend } from "react-dnd-html5-backend"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Plus, SlidersHorizontal } from "lucide-react"
-import { BoardService } from "@/services/boardService"
+import { BoardService } from "@/services/board/boardService"
 
 export default function ProjectsPage() {
   return (

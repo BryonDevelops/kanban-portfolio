@@ -2,15 +2,16 @@
 import React, { useRef, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 import Card from './Card';
+import { Project } from '../domain/project';
 import { Task } from '../domain/task';
-import { BoardService } from '../services/boardService';
+import { BoardService } from '../services/board/boardService';
 
 interface ColumnProps {
-  tasks: Task[];
+  projects: Project[];
   columnId: string;
 }
 
-const Column: React.FC<ColumnProps> = ({ tasks, columnId }) => {
+const Column: React.FC<ColumnProps> = ({ projects, columnId }) => {
   interface DragItem {
     id: string;
     fromCol: string;
@@ -38,8 +39,8 @@ const Column: React.FC<ColumnProps> = ({ tasks, columnId }) => {
 
   return (
     <div ref={ref} className={`flex flex-col gap-3 rounded-md border border-white/10 bg-white/5 p-3 ${isOver ? 'ring-2 ring-blue-400/60' : ''}`}>
-      {tasks.map((task, i) => (
-        <Card key={task.id} task={task} fromCol={columnId} index={i} />
+      {projects.map((project, i) => (
+        <Card key={project.id} project={project} fromCol={columnId} index={i} />
       ))}
     </div>
   );
