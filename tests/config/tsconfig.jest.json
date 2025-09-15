@@ -5,7 +5,12 @@
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "allowJs": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "types": ["jest", "@testing-library/jest-dom", "node"]
   },
-  "include": ["../**/*.ts", "../**/*.tsx", "../setup/jest.setup.ts"]
+  "include": [
+    "./**/*",
+    "../domain/**/*",
+    "../services/**/*"
+  ]
 }

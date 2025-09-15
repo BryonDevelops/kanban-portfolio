@@ -12,6 +12,13 @@ type Story = StoryObj<typeof Card>
 
 export const Default: Story = {
   args: {
-    task: { id: '1', title: 'Sample Task', description: 'Optional description' },
+    project: {
+      id: '1',
+      title: 'Sample Project',
+      description: 'Optional description',
+      status: 'idea'
+    },
+    fromCol: 'ideas',
+    index: 0,
   },
 }

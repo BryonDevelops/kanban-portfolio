@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import Column from './Column';
 import { Plus } from 'lucide-react';
-import { BoardService } from '../services/boardService';
-import { useBoardStore } from '../stores/boardStore';
+import { BoardService } from '../services/board/boardService';
+import { useBoardStore } from '../stores/board/boardStore';
+import { Project } from '../domain/project';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 
 const columnOrder = ['ideas', 'in-progress', 'completed'];
@@ -19,14 +20,12 @@ export default function Board() {
     if (localStorage.getItem('kanban-board-v1')) return;
     const demo = {
       ideas: [
-        { id: 't1', title: 'Redesign landing page', description: 'Hero, pricing, footer' },
-        { id: 't2', title: 'Add blog', description: 'MDX + RSS' },
       ],
       'in-progress': [
-        { id: 't3', title: 'Implement dark mode', description: 'Theme switch + system' },
+
       ],
       completed: [
-        { id: 't4', title: 'Set up CI/CD', description: 'Vercel + GitHub Actions' },
+
       ],
     } as typeof columns;
     setColumns(demo);
@@ -70,7 +69,7 @@ export default function Board() {
               </div>
             </div>
             <div className="pt-3">
-              <Column columnId={colId} tasks={columns[colId] ?? []} />
+              <Column columnId={colId} projects={columns[colId] as Project[] ?? []} />
             </div>
           </div>
         </div>

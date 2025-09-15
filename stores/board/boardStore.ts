@@ -2,8 +2,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import { Task } from '../domain/task';
-import { BoardService } from '../services/boardService';
+import { Task } from '../../domain/task';
+import { BoardService } from '../../services/board/boardService';
 
 type Columns = Record<string, Task[]>;
 

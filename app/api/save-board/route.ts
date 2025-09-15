@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SupabaseBoardRepo } from '../../../infrastructure/supabaseBoardRepo'
-import { TaskCreateSchema } from '../../../domain/task.schemas'
+import { TaskCreateSchema } from '../../../domain/schemas/task.schemas'
 
 export async function POST(req: NextRequest) {
   const json = await req.json()
