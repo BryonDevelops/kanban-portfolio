@@ -13,7 +13,6 @@ interface ColumnProps {
 
 const Column: React.FC<ColumnProps> = ({ projects, columnId }) => {
   const moveTask = useBoardStore((s) => s.moveTask);
-
   interface DragItem {
     id: string;
     fromCol: string;
