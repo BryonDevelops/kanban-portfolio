@@ -1,5 +1,5 @@
 import { User } from "@supabase/supabase-js";
-import { Task } from "./task";
+import { Task } from "../../../domain/task";
 
 export type Project = {
   id: string;

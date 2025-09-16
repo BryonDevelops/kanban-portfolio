@@ -1,10 +1,14 @@
 "use client"
 
-import { Button } from "@/presentation/components/ui/button"
+import Board from "@/presentation/components/board/Board"
+import { DndProvider } from "react-dnd"
+import { HTML5Backend } from "react-dnd-html5-backend"
 import { Input } from "@/presentation/components/ui/input"
-import { Plus, Search, Filter } from "lucide-react"
+import { Button } from "@/presentation/components/ui/button"
+import { Plus, SlidersHorizontal } from "lucide-react"
+import { BoardService } from "@/application/board/services/boardService"
 
-export default function ProjectsPage() {
+export default function BoardPage() {
   return (
     <div className="relative px-4 py-6 sm:px-6">
       {/* Background accents */}
@@ -17,41 +21,37 @@ export default function ProjectsPage() {
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">
-            Projects
+            Kanban Board
           </h1>
           <p className="mt-1 text-sm text-white/60">
-            Manage your portfolio projects, track progress, and showcase your work.
+            Organize, prioritize, and track progress across your tasks.
           </p>
         </div>
 
         {/* Toolbar */}
         <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center">
           <div className="flex flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2 backdrop-blur">
-            <Search className="h-4 w-4 text-white/60" />
-            <Input placeholder="Search projects..." className="bg-transparent border-0" />
-            <Button variant="ghost" size="sm" className="shrink-0">
-              <Filter className="mr-2 h-4 w-4" /> Filter
+            <Input placeholder="Search tasks" className="bg-transparent" />
+            <Button variant="ghost" className="shrink-0">
+              <SlidersHorizontal className="mr-2 h-4 w-4" /> Filters
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button className="inline-flex items-center">
-              <Plus className="mr-2 h-4 w-4" /> New Project
+            <Button
+              onClick={() => new BoardService().addTask('ideas', 'New Task')}
+              className="inline-flex items-center"
+            >
+              <Plus className="mr-2 h-4 w-4" /> New Idea
             </Button>
           </div>
         </div>
 
-        {/* Projects Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Empty State */}
-          <div className="col-span-full text-center py-12">
-            <div className="mx-auto w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <Plus className="h-8 w-8 text-white/60" />
-            </div>
-            <h3 className="text-lg font-semibold text-white/90 mb-2">No projects yet</h3>
-            <p className="text-white/60 mb-4">Create your first project to get started</p>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Create Project
-            </Button>
+        {/* Board container */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-2 shadow-sm backdrop-blur sm:p-3">
+          <div className="h-[80vh] overflow-x-hidden">
+            <DndProvider backend={HTML5Backend}>
+              <Board />
+            </DndProvider>
           </div>
         </div>
       </div>

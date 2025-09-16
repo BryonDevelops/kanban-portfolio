@@ -1,0 +1,22 @@
+/* Custom theme overrides for the presentation layer */
+
+/* Light theme customizations */
+.theme-light {
+  /* Custom properties for light theme */
+  --custom-board-background: #f8fafc;
+  --custom-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme customizations */
+.theme-dark {
+  /* Custom properties for dark theme */
+  --custom-board-background: #0f172a;
+  --custom-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* High contrast theme */
+.theme-high-contrast {
+  /* Accessibility-focused theme */
+  --custom-border-width: 2px;
+  --custom-focus-ring: 3px solid #3b82f6;
+}
