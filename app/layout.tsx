@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./styles/globals.css";
 import { SidebarProvider, SidebarInset } from "@/presentation/components/ui/sidebar";
-import { AppSidebar } from "@/presentation/components/shared/app-sidebar";
-import { Topbar } from "@/presentation/components/shared/topbar";
+import { AppSidebar } from "@/presentation/components/layout/app-sidebar";
+import { Topbar } from "@/presentation/components/layout/topbar";
 import { cookies } from "next/headers";
 import PageTransition from "@/presentation/components/shared/PageTransition";
 import ScrollRouter from "@/presentation/components/shared/scrollrouter";
+import { Toaster } from "@/presentation/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ async function RootLayout({
               </PageTransition>
             </div>
           </SidebarInset>
+          <Toaster />
         </SidebarProvider>
       </body>
     </html>

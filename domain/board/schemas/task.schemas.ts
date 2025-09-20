@@ -13,7 +13,9 @@ export const TaskSchema = z.object({
   columnId: z.string().optional(),
 })
 
-export const TaskCreateSchema = TaskSchema.omit({ id: true })
+export const TaskCreateSchema = TaskSchema.omit({ id: true }).extend({
+  columnId: z.string().optional().default('ideas')
+})
 
 export type Task = z.infer<typeof TaskSchema>
 export type TaskCreate = z.infer<typeof TaskCreateSchema>

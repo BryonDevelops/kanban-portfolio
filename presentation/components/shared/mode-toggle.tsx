@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { Moon, Sun } from "lucide-react"
+<<<<<<< HEAD
+import { Button } from "@/presentation/components/ui/button"
+=======
 import { Button } from "../ui/button"
+>>>>>>> origin/master
 
 type Theme = "light" | "dark"
 
