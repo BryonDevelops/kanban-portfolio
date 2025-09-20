@@ -8,12 +8,16 @@
     "start": "next start",
     "prepare": "husky install",
     "lint": "next lint",
-    "test": "jest --config tests/config/jest.config.js",
-    "test:watch": "jest --watch --config tests/config/jest.config.js",
-    "cypress": "cypress open --config-file tests/config/cypress.config.js",
-    "cypress:run": "cypress run --config-file tests/config/cypress.config.js",
-    "storybook": "storybook dev -p 6006 -c tests/stories/.storybook",
-    "build-storybook": "storybook build -c tests/stories/.storybook"
+    "test": "jest --config tests/unit/config/jest.config.cjs",
+    "test:integration": "jest --config tests/integration/config/jest.e2e.config.cjs",
+    "test:e2e": "jest --config tests/e2e/config/jest.e2e.config.cjs",
+    "test:watch": "jest --watch --config tests/unit/config/jest.config.cjs",
+    "cypress": "cypress open --config-file tests/unit/config/cypress.config.js",
+    "cypress:run": "cypress run --config-file tests/unit/config/cypress.config.js",
+    "storybook": "storybook dev -p 6006 -c tests/presentation/stories/.storybook",
+    "build-storybook": "storybook build -c tests/presentation/stories/.storybook",
+    "db:migrate": "./supabase.exe db push",
+    "db:reset": "./supabase.exe db reset"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.1.0",
@@ -23,10 +27,12 @@
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.57.4",
+    "@tailwindcss/typography": "^0.5.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",
@@ -37,6 +43,8 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "swagger-ui": "^5.29.0",
     "swagger-ui-react": "^5.29.0",
     "tailwind-merge": "^3.3.1",
@@ -86,5 +94,13 @@
     "typescript": "^5",
     "vitest": "^3.2.4"
   },
-  "type": "module"
+  "type": "module",
+  "description": "[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary) ](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)",
+  "main": "tailwind.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

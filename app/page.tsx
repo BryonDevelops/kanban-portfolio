@@ -3,9 +3,6 @@
 import { ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import Board from "@/components/Board"
-import { DndProvider } from "react-dnd"
-import { HTML5Backend } from "react-dnd-html5-backend"
 
 export default function Home() {
   const mainRef = useRef<HTMLElement | null>(null)

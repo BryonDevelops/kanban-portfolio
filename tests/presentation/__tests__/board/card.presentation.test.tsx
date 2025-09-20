@@ -1,0 +1,48 @@
+import React from 'react';
+import { render } from '@testing-library/react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import Card from '../../../../presentation/components/features/board/Card';
+import { Project } from '../../../../domain/board/schemas/project.schema';
+
+const mockProject: Project = {
+  id: '1',
+  title: 'Test Project',
+  description: 'Test project description',
+  status: 'in-progress',
+  technologies: ['React', 'TypeScript'],
+  tags: ['frontend', 'web'],
+  tasks: [
+    {
+      id: 'task-1',
+      title: 'Implement user authentication',
+      description: 'Add login and registration functionality',
+      status: 'in-progress',
+      created_at: new Date('2025-01-01'),
+      updated_at: new Date('2025-01-02'),
+    }
+  ],
+  created_at: new Date('2025-01-01'),
+  updated_at: new Date('2025-01-02'),
+};
+
+const CardWithDnd = ({ project, fromCol, index }: { project: Project; fromCol: string; index: number }) => (
+  <DndProvider backend={HTML5Backend}>
+    <Card project={project} fromCol={fromCol} index={index} />
+  </DndProvider>
+);
+
+describe('Card Component', () => {
+  test('renders project title', () => {
+    render(<CardWithDnd project={mockProject} fromCol="in-progress" index={0} />);
+  });
+
+  test('renders project description when provided', () => {
+    render(<CardWithDnd project={mockProject} fromCol="in-progress" index={0} />);
+  });
+
+  test('does not render description when not provided', () => {
+    const projectWithoutDescription = { ...mockProject, description: undefined };
+    render(<CardWithDnd project={projectWithoutDescription} fromCol="in-progress" index={0} />);
+  });
+});

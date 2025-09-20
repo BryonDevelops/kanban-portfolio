@@ -1,0 +1,18 @@
+import { Task } from './task';
+
+export type ProjectStatus = 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'archived';
+
+export type Project = {
+  id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  status: ProjectStatus;
+  technologies: string[];
+  tags: string[]; // Changed back to string[] to match schema
+  start_date?: Date;
+  end_date?: Date;
+  updated_at?: Date;
+  tasks: Task[];
+  created_at?: Date;
+}
