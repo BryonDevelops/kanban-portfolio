@@ -1,5 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
+<<<<<<<< HEAD:tests/presentation/stories/.storybook/board/Card.stories.tsx
 import Card from '../../../../../presentation/components/board/Card'
+========
+import Card from '../../../../presentation/components/board/Card'
+>>>>>>>> origin/master:tests/presentation/storybook/board/Card.stories.tsx
 
 const meta: Meta<typeof Card> = {
   title: 'Components/Card',

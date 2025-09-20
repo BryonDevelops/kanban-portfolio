@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
@@ -17,3 +18,22 @@ export function useIsMobile() {
 
   return !!isMobile
 }
+=======
+import { useEffect, useState } from "react"
+
+export function useIsMobile() {
+  const [isMobile, setIsMobile] = useState<boolean>(false)
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 768px)")
+    const onChange = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    mql.addListener(onChange)
+    setIsMobile(window.innerWidth < 768)
+    return () => mql.removeListener(onChange)
+  }, [])
+
+  return isMobile
+}
+>>>>>>> origin/master

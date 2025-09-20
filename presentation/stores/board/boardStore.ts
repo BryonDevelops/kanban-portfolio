@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // board store
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -28,6 +29,27 @@ const taskService = new TaskService(boardRepository);
 const projectService = new ProjectService(boardRepository);
 const boardService = new BoardService(boardRepository, taskService, projectService);
 
+=======
+// Board Store - Presentation layer state management
+// Follows: Components → Stores → Application Services → Domain
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { Task } from '../../../domain/task';
+// Import application services instead of calling domain directly
+import { BoardService } from '../../../application/board/services/boardService';
+
+export type Columns = Record<string, Task[]>;
+
+export type BoardState = {
+  columns: Columns;
+  addTask: (columnId: string, title: string, description?: string) => Promise<void>;
+  moveTask: (fromCol: string, toCol: string, fromIndex: number, toIndex: number) => Promise<void>;
+  setColumns: (cols: Columns) => void;
+  isLoading: boolean;
+  error: string | null;
+};
+
+>>>>>>> origin/master
 const defaultColumns: Columns = {
   ideas: [],
   'in-progress': [],
@@ -36,11 +58,16 @@ const defaultColumns: Columns = {
 
 export const useBoardStore = create<BoardState>()(
   persist(
+<<<<<<< HEAD
     (set) => ({
+=======
+    (set, get) => ({
+>>>>>>> origin/master
       columns: defaultColumns,
       isLoading: false,
       error: null,
 
+<<<<<<< HEAD
       loadProjects: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -60,10 +87,29 @@ export const useBoardStore = create<BoardState>()(
           set({
             error: error instanceof Error ? error.message : 'Failed to load projects',
             isLoading: false
+=======
+      // Store calls Application Service, not Domain directly
+      addTask: async (columnId: string, title: string, description?: string) => {
+        try {
+          set({ isLoading: true, error: null });
+
+          // Call application service instead of domain directly
+          const boardService = new BoardService();
+          await boardService.addTask(columnId, title, description);
+
+          // Get updated state from application layer
+          const updatedColumns = boardService.getColumns();
+          set({ columns: updatedColumns, isLoading: false });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Failed to add task'
+>>>>>>> origin/master
           });
         }
       },
 
+<<<<<<< HEAD
       addProject: async (columnId: string, title: string, description?: string) => {
         set({ isLoading: true, error: null });
         try {
@@ -90,10 +136,28 @@ export const useBoardStore = create<BoardState>()(
           // Show error toast
           import("@/presentation/utils/toast").then(({ error: errorToast }) => {
             errorToast("Failed to create project", error instanceof Error ? error.message : 'Please try again.');
+=======
+      moveTask: async (fromCol: string, toCol: string, fromIndex: number, toIndex: number) => {
+        try {
+          set({ isLoading: true, error: null });
+
+          // Call application service
+          const boardService = new BoardService();
+          await boardService.moveTask(fromCol, toCol, fromIndex, toIndex);
+
+          // Get updated state from application layer
+          const updatedColumns = boardService.getColumns();
+          set({ columns: updatedColumns, isLoading: false });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Failed to move task'
+>>>>>>> origin/master
           });
         }
       },
 
+<<<<<<< HEAD
       updateProject: async (projectId: string, updates: Partial<Project>) => {
         set({ isLoading: true, error: null });
         try {
@@ -211,6 +275,13 @@ export const useBoardStore = create<BoardState>()(
     {
       name: 'kanban-board-v1',
       // Only persist columns, not loading/error states
+=======
+      setColumns: (cols: Columns) => set({ columns: cols, error: null }),
+    }),
+    {
+      name: 'kanban-board-v1',
+      // Only persist the data, not loading/error states
+>>>>>>> origin/master
       partialize: (state) => ({ columns: state.columns })
     }
   )

@@ -6,7 +6,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+<<<<<<<< HEAD:presentation/components/shared/logout-button.tsx
 } from "@/presentation/components/ui/sidebar"
+========
+} from "../ui/sidebar"
+>>>>>>>> origin/master:presentation/components/user/logout-button.tsx
 
 export function LogoutButton() {
   const onLogout = async () => {

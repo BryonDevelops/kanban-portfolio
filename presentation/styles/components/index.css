@@ -1,0 +1,11 @@
+/* Component-specific styles for the presentation layer */
+/* Import component styles here as needed */
+
+/* Example component style imports:
+@import './board/kanban-board.css';
+@import './cards/project-card.css';
+@import './navigation/sidebar.css';
+*/
+
+/* This file can be imported in specific components that need
+   presentation layer styling beyond global Tailwind classes */

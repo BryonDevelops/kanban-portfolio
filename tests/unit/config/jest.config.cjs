@@ -1,9 +1,20 @@
+<<<<<<< HEAD:tests/unit/config/jest.config.cjs
 // jest.config.cjs
 module.exports = {
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   rootDir: '../../../',
   testMatch: ['<rootDir>/tests/unit/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
+=======
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  rootDir: '../..',
+  testMatch: [
+    '<rootDir>/tests/**/*.(test|spec).(ts|tsx)',
+  ],
+>>>>>>> origin/master:tests/config/jest.config.cjs
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       useESM: true,
@@ -14,6 +25,7 @@ module.exports = {
         moduleResolution: 'node',
         allowSyntheticDefaultImports: true,
         esModuleInterop: true,
+<<<<<<< HEAD:tests/unit/config/jest.config.cjs
       },
     }],
     '^.+\\.(js|jsx)$': ['babel-jest', {
@@ -34,4 +46,22 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/unit/setup/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+=======
+        types: ['jest', '@testing-library/jest-dom', 'node'],
+      },
+    }],
+  },
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/config/jest.setup.ts'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  collectCoverageFrom: [
+    '<rootDir>/**/*.{ts,tsx}',
+    '!<rootDir>/**/*.d.ts',
+    '!<rootDir>/node_modules/**',
+    '!<rootDir>/.next/**',
+    '!<rootDir>/tests/**',
+  ],
+>>>>>>> origin/master:tests/config/jest.config.cjs
 };

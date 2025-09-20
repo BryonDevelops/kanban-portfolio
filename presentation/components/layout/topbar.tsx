@@ -7,12 +7,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+<<<<<<<< HEAD:presentation/components/layout/topbar.tsx
 } from "@/presentation/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { ModeToggle } from "@/presentation/components/shared/mode-toggle"
 import { LogOut, User } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import { SidebarTrigger } from "@/presentation/components/ui/sidebar"
+========
+} from "../ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import { ModeToggle } from "./mode-toggle"
+import { LogOut, User } from "lucide-react"
+import { Button } from "../ui/button"
+import { SidebarTrigger } from "../ui/sidebar"
+>>>>>>>> origin/master:presentation/components/shared/topbar.tsx
 
 export function Topbar() {
   return (

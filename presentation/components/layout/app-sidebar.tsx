@@ -14,8 +14,13 @@ import {
   SquareTerminal,
 } from "lucide-react"
 
+<<<<<<<< HEAD:presentation/components/layout/app-sidebar.tsx
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { NavUser } from "@/presentation/components/layout/nav-user"
+========
+import { NavMain } from "./nav-main"
+import { NavUser } from "../user/nav-user"
+>>>>>>>> origin/master:presentation/components/shared/app-sidebar.tsx
 
 import {
   Sidebar,
@@ -24,7 +29,11 @@ import {
   SidebarHeader,
   SidebarRail,
   SidebarSeparator,
+<<<<<<<< HEAD:presentation/components/layout/app-sidebar.tsx
 } from "@/presentation/components/ui/sidebar"
+========
+} from "../ui/sidebar"
+>>>>>>>> origin/master:presentation/components/shared/app-sidebar.tsx
 
 // This is sample data.
 const data = {

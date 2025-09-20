@@ -9,7 +9,7 @@ export type Project = {
   url?: string;
   status: ProjectStatus;
   technologies: string[];
-  tags: string[]; // Changed back to string[] to match schema
+  tags: string[];
   start_date?: Date;
   end_date?: Date;
   updated_at?: Date;
