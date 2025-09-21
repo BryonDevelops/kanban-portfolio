@@ -14,12 +14,17 @@ import { ModeToggle } from "@/presentation/components/shared/mode-toggle"
 import { LogOut, User } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import { SidebarTrigger } from "@/presentation/components/ui/sidebar"
+import ContactModal from "./ContactModal"
 
 export function Topbar() {
   return (
     <div className="flex w-full items-center gap-4 p-2">
       <SidebarTrigger />
-      <div className="ml-auto" />
+      <div className="ml-auto flex items-center gap-4">
+        <ContactModal>
+          <Button className="animate-pulse bg-accent text-white" aria-label="Contact me">Get in touch</Button>
+        </ContactModal>
+      </div>
       <ModeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
