@@ -5,6 +5,7 @@ export type Task = {
   title: string;
   description?: string;
   status: TaskStatus;
+  columnId: string;
   created_at: Date;
   updated_at?: Date;
 };

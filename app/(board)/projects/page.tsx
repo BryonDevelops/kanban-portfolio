@@ -26,11 +26,9 @@ export default function ProjectsPage() {
       // Ensure tasks status is strictly typed
       const fixedProject: Project = {
         ...newProject,
-        tasks: newProject.tasks.map(task => ({
-          ...task,
-          status: task.status as "in-progress" | "todo" | "done"
-        }))
+        tasks: newProject.tasks
       };
+      
       console.log('Created project:', fixedProject);
 
       // Show success toast

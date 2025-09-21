@@ -7,5 +7,5 @@
     "allowJs": true,
     "isolatedModules": true
   },
-  "include": ["../**/*.ts", "../**/*.tsx", "../setup/jest.setup.ts"]
+  "include": ["../**/*.ts", "../**/*.tsx", "../setup/jest.unit.setup.ts"]
 }

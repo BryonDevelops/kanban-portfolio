@@ -1,11 +1,8 @@
 "use client";
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-<<<<<<<< HEAD:presentation/components/shared/Auth.tsx
 import { getSupabase } from '../../../infrastructure/database/supabaseClient';
-========
-import { getSupabase } from '../../../lib/supabaseClient';
->>>>>>>> origin/master:presentation/components/user/Auth.tsx
+
 
 export default function AuthComponent() {
   const client = getSupabase();

@@ -1,14 +1,15 @@
-<<<<<<< HEAD
 // board store
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Project } from '../../../domain/board/schemas/project.schema';
+// import { Task } from '../../../domain/board/entities/task'; // Removed unused import
 import { BoardService } from '../../../services/board/boardService';
 import { SupabaseBoardRepository } from '../../../infrastructure/database/repositories/supaBaseBoardRepository';
 import { TaskService } from '../../../services/board/taskService';
 import { ProjectService } from '../../../services/board/projectService';
 
-type Columns = Record<string, Project[]>;
+
+export type Columns = Record<string, Project[]>;
 
 type BoardState = {
   columns: Columns;
@@ -29,147 +30,70 @@ const taskService = new TaskService(boardRepository);
 const projectService = new ProjectService(boardRepository);
 const boardService = new BoardService(boardRepository, taskService, projectService);
 
-=======
-// Board Store - Presentation layer state management
-// Follows: Components → Stores → Application Services → Domain
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Task } from '../../../domain/task';
-// Import application services instead of calling domain directly
-import { BoardService } from '../../../application/board/services/boardService';
+// Removed duplicate Columns type for Task[]; only using Project[]
 
-export type Columns = Record<string, Task[]>;
-
-export type BoardState = {
-  columns: Columns;
-  addTask: (columnId: string, title: string, description?: string) => Promise<void>;
-  moveTask: (fromCol: string, toCol: string, fromIndex: number, toIndex: number) => Promise<void>;
-  setColumns: (cols: Columns) => void;
-  isLoading: boolean;
-  error: string | null;
-};
-
->>>>>>> origin/master
 const defaultColumns: Columns = {
   ideas: [],
   'in-progress': [],
   completed: [],
 };
 
+
 export const useBoardStore = create<BoardState>()(
   persist(
-<<<<<<< HEAD
     (set) => ({
-=======
-    (set, get) => ({
->>>>>>> origin/master
       columns: defaultColumns,
       isLoading: false,
       error: null,
 
-<<<<<<< HEAD
       loadProjects: async () => {
         set({ isLoading: true, error: null });
         try {
           const projects = await boardService.getProjects();
-
-          // Filter out archived projects and group by status
           const activeProjects = projects.filter((p: Project) => p.status !== 'archived');
           const groupedProjects = {
             ideas: activeProjects.filter((p: Project) => p.status === 'planning' || p.status === 'on-hold'),
             'in-progress': activeProjects.filter((p: Project) => p.status === 'in-progress'),
             completed: activeProjects.filter((p: Project) => p.status === 'completed'),
           };
-
           set({ columns: groupedProjects, isLoading: false });
         } catch (error) {
-          console.error('Failed to load projects:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to load projects',
             isLoading: false
-=======
-      // Store calls Application Service, not Domain directly
-      addTask: async (columnId: string, title: string, description?: string) => {
-        try {
-          set({ isLoading: true, error: null });
-
-          // Call application service instead of domain directly
-          const boardService = new BoardService();
-          await boardService.addTask(columnId, title, description);
-
-          // Get updated state from application layer
-          const updatedColumns = boardService.getColumns();
-          set({ columns: updatedColumns, isLoading: false });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to add task'
->>>>>>> origin/master
           });
         }
       },
 
-<<<<<<< HEAD
       addProject: async (columnId: string, title: string, description?: string) => {
         set({ isLoading: true, error: null });
         try {
-          // Create project via service layer
           const newProject = await boardService.createProject(title, description);
-
-          // Update local state
           set((state) => ({
             columns: BoardService.addProjectToColumns(state.columns, columnId, newProject),
             isLoading: false
           }));
-
-          // Show success toast
           import("@/presentation/utils/toast").then(({ success }) => {
             success("Project created!", `"${title}" has been added to your board.`);
           });
         } catch (error) {
-          console.error('Failed to add project:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to add project',
             isLoading: false
           });
-
-          // Show error toast
           import("@/presentation/utils/toast").then(({ error: errorToast }) => {
             errorToast("Failed to create project", error instanceof Error ? error.message : 'Please try again.');
-=======
-      moveTask: async (fromCol: string, toCol: string, fromIndex: number, toIndex: number) => {
-        try {
-          set({ isLoading: true, error: null });
-
-          // Call application service
-          const boardService = new BoardService();
-          await boardService.moveTask(fromCol, toCol, fromIndex, toIndex);
-
-          // Get updated state from application layer
-          const updatedColumns = boardService.getColumns();
-          set({ columns: updatedColumns, isLoading: false });
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to move task'
->>>>>>> origin/master
           });
         }
       },
 
-<<<<<<< HEAD
       updateProject: async (projectId: string, updates: Partial<Project>) => {
         set({ isLoading: true, error: null });
         try {
-          // Update project via service layer
           const updatedProject = await boardService.updateProject(projectId, updates);
-
-          // Update local state
           set((state) => {
             const newColumns = { ...state.columns };
             let found = false;
-
-            // Find and update the project in the correct column
             Object.keys(newColumns).forEach((columnId) => {
               const projectIndex = newColumns[columnId].findIndex((project) => project.id === projectId);
               if (projectIndex !== -1) {
@@ -177,16 +101,12 @@ export const useBoardStore = create<BoardState>()(
                 found = true;
               }
             });
-
-            // If project was moved to a different status, update column placement
             if (found && updates.status) {
               const targetColumn =
                 updates.status === 'planning' || updates.status === 'on-hold' ? 'ideas' :
                 updates.status === 'in-progress' ? 'in-progress' :
                 updates.status === 'completed' ? 'completed' : null;
-
               if (targetColumn) {
-                // Remove from current column and add to target column
                 Object.keys(newColumns).forEach((columnId) => {
                   newColumns[columnId] = newColumns[columnId].filter((project) => project.id !== projectId);
                 });
@@ -194,25 +114,19 @@ export const useBoardStore = create<BoardState>()(
                 newColumns[targetColumn].push(updatedProject);
               }
             }
-
             return {
               columns: newColumns,
               isLoading: false
             };
           });
-
-          // Show success toast
           import("@/presentation/utils/toast").then(({ success }) => {
             success("Project updated!", "Your changes have been saved.");
           });
         } catch (error) {
-          console.error('Failed to update project:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to update project',
             isLoading: false
           });
-
-          // Show error toast
           import("@/presentation/utils/toast").then(({ error: errorToast }) => {
             errorToast("Failed to update project", error instanceof Error ? error.message : 'Please try again.');
           });
@@ -222,10 +136,7 @@ export const useBoardStore = create<BoardState>()(
       deleteProject: async (projectId: string) => {
         set({ isLoading: true, error: null });
         try {
-          // Archive project by updating its status instead of deleting
           await boardService.updateProject(projectId, { status: 'archived' });
-
-          // Update local state by removing the project from all columns
           set((state) => {
             const newColumns = { ...state.columns };
             Object.keys(newColumns).forEach((columnId) => {
@@ -236,19 +147,14 @@ export const useBoardStore = create<BoardState>()(
               isLoading: false
             };
           });
-
-          // Show success toast
           import("@/presentation/utils/toast").then(({ success }) => {
             success("Project archived!", "The project has been moved to archive.");
           });
         } catch (error) {
-          console.error('Failed to archive project:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to archive project',
             isLoading: false
           });
-
-          // Show error toast
           import("@/presentation/utils/toast").then(({ error: errorToast }) => {
             errorToast("Failed to archive project", error instanceof Error ? error.message : 'Please try again.');
           });
@@ -274,14 +180,6 @@ export const useBoardStore = create<BoardState>()(
     }),
     {
       name: 'kanban-board-v1',
-      // Only persist columns, not loading/error states
-=======
-      setColumns: (cols: Columns) => set({ columns: cols, error: null }),
-    }),
-    {
-      name: 'kanban-board-v1',
-      // Only persist the data, not loading/error states
->>>>>>> origin/master
       partialize: (state) => ({ columns: state.columns })
     }
   )

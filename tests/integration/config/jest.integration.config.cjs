@@ -23,11 +23,11 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/integration/setup/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/integration/setup/jest.integration.setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   collectCoverageFrom: [
-    '<rootDir>/infrastructure/**/*.{ts,tsx}',
-    '!<rootDir>/infrastructure/**/*.d.ts',
+    '<rootDir>/integration/**/*.{ts,tsx}',
+    '!<rootDir>/integration/**/*.d.ts',
     '!<rootDir>/node_modules/**',
     '!<rootDir>/.next/**',
     '!<rootDir>/tests/**',

@@ -1,6 +1,6 @@
 import { Task } from './task';
 
-export type ProjectStatus = 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'archived';
+export type ProjectStatus = 'idea' | 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'archived';
 
 export type Project = {
   id: string;
