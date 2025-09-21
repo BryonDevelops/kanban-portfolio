@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./styles/globals.css";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 import { SidebarProvider, SidebarInset } from "@/presentation/components/ui/sidebar";
 import { AppSidebar } from "@/presentation/components/layout/app-sidebar";
 import { Topbar } from "@/presentation/components/layout/topbar";
@@ -31,10 +39,12 @@ async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SidebarProvider defaultOpen={defaultOpen}>
+        <ClerkProvider>
+          <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
           <SidebarInset>
             <div className="relative min-h-svh">
@@ -42,7 +52,9 @@ async function RootLayout({
               <div className="absolute inset-0 -z-10 bg-background transition-colors duration-300" />
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
                 <div className="flex items-center p-2 pointer-events-auto">
-                  <Topbar />
+                  <div className="flex items-center gap-4 w-full justify-between">
+                    <Topbar />
+                  </div>
                 </div>
               </div>
               <ScrollRouter />
@@ -55,7 +67,8 @@ async function RootLayout({
             </div>
           </SidebarInset>
           <Toaster />
-        </SidebarProvider>
+          </SidebarProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
