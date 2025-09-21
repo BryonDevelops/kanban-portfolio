@@ -39,6 +39,7 @@ async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -53,15 +54,6 @@ async function RootLayout({
                 <div className="flex items-center p-2 pointer-events-auto">
                   <div className="flex items-center gap-4 w-full justify-between">
                     <Topbar />
-                    <div className="pr-4">
-                      <SignedOut>
-                        <SignInButton />
-                        <SignUpButton />
-                      </SignedOut>
-                      <SignedIn>
-                        <UserButton />
-                      </SignedIn>
-                    </div>
                   </div>
                 </div>
               </div>
