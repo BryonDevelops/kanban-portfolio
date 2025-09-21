@@ -1,10 +1,6 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3, extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
-<<<<<<< HEAD:infrastructure/external-apis/openapi.ts
 import { TaskCreateSchema, TaskSchema } from '../../domain/board/schemas/task.schemas'
-=======
-import { TaskCreateSchema, TaskSchema } from '../domain/board/schemas/task.schemas'
->>>>>>> origin/master:lib/openapi.ts
 
 extendZodWithOpenApi(z)
 const registry = new OpenAPIRegistry()

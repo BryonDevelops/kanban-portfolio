@@ -6,11 +6,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-<<<<<<<< HEAD:presentation/components/layout/nav-main.tsx
 } from "@/presentation/components/ui/collapsible"
-========
-} from "../ui/collapsible"
->>>>>>>> origin/master:presentation/components/shared/nav-main.tsx
+
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -21,11 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarSeparator,
-<<<<<<<< HEAD:presentation/components/layout/nav-main.tsx
 } from "@/presentation/components/ui/sidebar"
-========
-} from "../ui/sidebar"
->>>>>>>> origin/master:presentation/components/shared/nav-main.tsx
 
 export function NavMain({
   items,

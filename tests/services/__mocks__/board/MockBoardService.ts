@@ -12,11 +12,9 @@ export class MockBoardService {
         id: 'mock-task-id',
         title: title || 'Default Task Title',
         description: description || 'Default Task Description',
-        status: columnId,
-        order: 0,
+        status: 'todo',
         columnId,
         created_at: new Date(),
-        filter: jest.fn(),
       };
     }
   );
@@ -45,47 +43,35 @@ export class MockBoardService {
   getTasks = jest.fn(async (): Promise<Record<string, Task[]>> => {
     return {
       column1: [
-        {
-            id: 'task1',
-            title: 'Task 1',
-            description: 'Description 1',
-            status: 'todo',
-            order: 0,
-            filter: jest.fn(),
-            created_at: new Date(),
-            columnId: undefined
-        },
-        {
-            id: 'task2',
-            title: 'Task 2',
-            description: 'Description 2',
-            status: 'todo',
-            order: 1,
-            columnId: 'column1',
-            filter: jest.fn(),
-            created_at: new Date(),
-        },
+      {
+          id: 'task1',
+          title: 'Task 1',
+          description: 'Description 1',
+          status: 'todo',
+          created_at: new Date(),
+          columnId: 'column1',
+      },
+      {
+        id: 'task2',
+        title: 'Task 2',
+        description: 'Description 2',
+        status: 'todo',
+        columnId: 'column1',
+        created_at: new Date(),
+      },
       ],
       column2: [
-        {
-            id: 'task3',
-            title: 'Task 3',
-            description: 'Description 3',
-            status: 'in-progress',
-            order: 0,
-            columnId: 'column2',
-            filter: jest.fn(),
-            created_at: new Date(),
-        },
+      {
+          id: 'task3',
+          title: 'Task 3',
+          description: 'Description 3',
+          status: 'in-progress',
+          columnId: 'column2',
+          created_at: new Date(),
+      },
       ],
-    };
+  };
   });
-
-  getTasksByColumn = jest.fn(
-    async (): Promise<Task[]> => {
-      return [];
-    }
-  );
 
   updateTask = jest.fn(
     async (
@@ -96,18 +82,10 @@ export class MockBoardService {
         id: taskId,
         title: updates.title || 'Updated Task Title',
         description: updates.description || 'Updated Task Description',
-        status: updates.status || 'Updated Task Status',
-        order: 0,
+        status: 'done',
         columnId: updates.columnId || 'Updated Column Id',
         created_at: new Date(),
-        filter: jest.fn(),
       };
-    }
-  );
-
-  deleteTask = jest.fn(
-    async (): Promise<void> => {
-      return;
     }
   );
 
@@ -157,8 +135,4 @@ export class MockBoardService {
       throw new Error(`Project with ID "${projectId}" not found`);
     }
   );
-}
-
-function async(): ((this: unknown, ...args: unknown[]) => unknown) | undefined {
-    throw new Error('Function not implemented.');
 }

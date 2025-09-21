@@ -13,11 +13,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-<<<<<<<< HEAD:presentation/components/layout/nav-user.tsx
 } from "@/presentation/components/ui/avatar"
-========
-} from "../ui/avatar"
->>>>>>>> origin/master:presentation/components/user/nav-user.tsx
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,21 +23,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-<<<<<<<< HEAD:presentation/components/layout/nav-user.tsx
 } from "@/presentation/components/ui/dropdown-menu"
-========
-} from "../ui/dropdown-menu"
->>>>>>>> origin/master:presentation/components/user/nav-user.tsx
+
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-<<<<<<<< HEAD:presentation/components/layout/nav-user.tsx
 } from "@/presentation/components/ui/sidebar"
-========
-} from "../ui/sidebar"
->>>>>>>> origin/master:presentation/components/user/nav-user.tsx
+
+
 
 export function NavUser({
   user,
