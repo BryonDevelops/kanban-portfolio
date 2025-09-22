@@ -28,7 +28,7 @@ export default function ProjectsPage() {
         ...newProject,
         tasks: newProject.tasks
       };
-      
+
       console.log('Created project:', fixedProject);
 
       // Show success toast
@@ -46,7 +46,9 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen">
+      {/* Full screen background that extends behind topbar */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 -z-10" />
       {/* Enhanced Background Effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Primary gradient orbs */}
@@ -60,66 +62,66 @@ export default function ProjectsPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
-      <div className="relative z-10 px-6 py-8 sm:px-8 sm:py-12">
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mx-auto max-w-7xl">
           {/* Modern Header Section */}
-          <div className="mb-8 sm:mb-12">
-            <div className="flex items-center justify-between">
+          <div className="mb-6 sm:mb-8 lg:mb-12">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
                   <span className="bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
                     Projects
                   </span>
                 </h1>
-                <p className="text-lg text-slate-400 max-w-md">
+                <p className="text-base sm:text-lg text-slate-400 max-w-md">
                   Organize, prioritize, and track progress across your creative work.
                 </p>
               </div>
 
               {/* Decorative element */}
               <div className="hidden sm:block">
-                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-white/10" />
+                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-white/10" />
               </div>
             </div>
           </div>
 
           {/* Enhanced Toolbar */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {/* Search and Filters */}
-              <div className="flex-1 max-w-md">
+              <div className="flex-1 max-w-full sm:max-w-md">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-3 shadow-lg">
+                  <div className="relative flex items-center gap-2 sm:gap-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-3 shadow-lg">
                     <div className="flex items-center gap-2 flex-1">
-                      <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                        <div className="h-2 w-2 rounded-full bg-white" />
+                      <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-white" />
                       </div>
                       <Input
                         placeholder="Search projects..."
-                        className="bg-transparent border-0 text-white placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                        className="bg-transparent border-0 text-white placeholder:text-slate-400 focus:ring-0 focus:outline-none text-sm sm:text-base"
                       />
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg"
+                      className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-2"
                     >
-                      <SlidersHorizontal className="h-4 w-4" />
+                      <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </div>
               </div>
 
               {/* Action Button */}
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Button
                   onClick={handleCreateProject}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="relative flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="font-medium">New Project</span>
                   </div>
                 </Button>
@@ -130,14 +132,14 @@ export default function ProjectsPage() {
           {/* Modern Board Container */}
           <div className="relative">
             {/* Container glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur opacity-20" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl sm:rounded-3xl blur opacity-20" />
 
-            <div className="relative rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl shadow-2xl overflow-hidden">
+            <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl shadow-2xl overflow-hidden">
               {/* Inner gradient border */}
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-50" />
+              <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-50" />
 
-              <div className="relative p-6 sm:p-8">
-                <div className="h-[85vh] overflow-hidden">
+              <div className="relative p-4 sm:p-6 lg:p-8">
+                <div className="h-[80vh] sm:h-[85vh] overflow-hidden">
                   <DndProvider backend={HTML5Backend}>
                     <Board />
                   </DndProvider>

@@ -129,26 +129,26 @@ export default function Board() {
   };
 
   return (
-    <div className="h-full flex gap-6 overflow-x-hidden">
+    <div className="h-full flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-x-hidden">
       {isLoading && (
-        <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
-          <div className="bg-white/10 text-white px-6 py-3 rounded-xl shadow-xl border border-white/20 backdrop-blur-md">
+        <div className="fixed top-6 right-4 sm:right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+          <div className="bg-white/10 text-white px-4 sm:px-6 py-3 rounded-xl shadow-xl border border-white/20 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span className="font-medium">Loading projects...</span>
+              <span className="font-medium text-sm sm:text-base">Loading projects...</span>
             </div>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
-          <div className="bg-white/10 text-white px-6 py-3 rounded-xl shadow-xl border border-white/20 backdrop-blur-md">
+        <div className="fixed top-6 right-4 sm:right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+          <div className="bg-white/10 text-white px-4 sm:px-6 py-3 rounded-xl shadow-xl border border-white/20 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
                 <div className="h-2 w-2 rounded-full bg-white" />
               </div>
-              <span className="font-medium">Error: {error}</span>
+              <span className="font-medium text-sm sm:text-base">Error: {error}</span>
             </div>
           </div>
         </div>
@@ -161,26 +161,26 @@ export default function Board() {
 
           <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0">
             {/* Enhanced Column Header */}
-            <div className="sticky top-0 z-20 -mx-6 -mt-6 px-8 py-6 bg-gradient-to-r from-white/[0.1] to-white/[0.05] backdrop-blur-xl border-b border-white/10 flex-shrink-0">
+            <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-6 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-white/[0.1] to-white/[0.05] backdrop-blur-xl border-b border-white/10 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 pl-6">
+                <div className="flex items-center gap-2 pl-4 sm:pl-6">
                   <div className={`h-3 w-3 rounded-full ${
                     colId === 'ideas' ? 'bg-blue-400 shadow-lg shadow-blue-400/50' :
                     colId === 'in-progress' ? 'bg-amber-400 shadow-lg shadow-amber-400/50' :
                     'bg-emerald-400 shadow-lg shadow-emerald-400/50'
                   }`} />
-                  <h3 className="font-bold text-lg capitalize text-white">{colId.replace('-', ' ')}</h3>
+                  <h3 className="font-bold text-base sm:text-lg capitalize text-white">{colId.replace('-', ' ')}</h3>
                   <button
                     type="button"
                     aria-label="Column settings"
                     title="Column settings"
-                    className="inline-flex size-8 items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
+                    className="inline-flex size-7 sm:size-8 items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
                   >
-                    <Settings className="h-5 w-5" />
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {/* Filter Button */}
                   <div className="relative">
                     <button
@@ -188,13 +188,13 @@ export default function Board() {
                       aria-label="Filter projects"
                       title="Filter projects"
                       onClick={() => setFilterDropdowns(prev => ({ ...prev, [colId]: !prev[colId] }))}
-                      className={`inline-flex size-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 ${
+                      className={`inline-flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 ${
                         Object.values(columnFilters[colId]).some(Boolean)
                           ? 'text-blue-400 bg-blue-500/20 hover:bg-blue-500/30'
                           : 'text-white/60 hover:text-white hover:bg-white/10'
                       }`}
                     >
-                      <Filter className="h-5 w-5" />
+                      <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
 
                     {/* Filter Dropdown */}
@@ -280,7 +280,7 @@ export default function Board() {
                     )}
                   </div>
 
-                  <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${badgeClasses()}`}>
+                  <span className={`rounded-full border px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold ${badgeClasses()}`}>
                     {(columns[colId] ?? []).length}
                   </span>
                   <button
@@ -288,16 +288,16 @@ export default function Board() {
                     aria-label="Add project"
                     title="Add project"
                     onClick={() => { setQuickAdd({ colId, title: '', description: '' }); setOpen(true); }}
-                    className="inline-flex size-8 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white/80 hover:bg-white/15 hover:text-white hover:border-white/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+                    className="inline-flex size-7 sm:size-8 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white/80 hover:bg-white/15 hover:text-white hover:border-white/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Enhanced Column Content */}
-            <div className="pt-8 px-6 pb-6 flex-1 space-y-4">
+            <div className="pt-6 sm:pt-8 px-4 sm:px-6 pb-4 sm:pb-6 flex-1 space-y-4">
               <Column
                 columnId={colId}
                 projects={columns[colId] ?? []}

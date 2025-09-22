@@ -127,7 +127,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
         backdrop-blur-sm
         shadow-[0_8px_32px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.2)]
         hover:shadow-[0_12px_40px_rgba(0,0,0,0.4),0_6px_20px_rgba(0,0,0,0.3)]
-        p-4 cursor-move select-none
+        p-3 sm:p-4 cursor-move select-none
         transition-all duration-300 ease-out
         transform hover:-translate-y-1
         ${isDragging
@@ -143,7 +143,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
         {/* Card content */}
         <div className="relative z-10">
           {/* Header with title and action buttons */}
-          <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-white text-sm leading-tight line-clamp-2">
                 {project.title}
@@ -155,10 +155,10 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
               {/* Delete button */}
               <button
                 onClick={handleDelete}
-                className="p-1.5 rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                className="p-1 sm:p-1.5 rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
                 title="Archive project (can be restored later)"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
 
               {/* Ellipsis menu */}
@@ -168,10 +168,10 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                     e.stopPropagation()
                     setShowMenu(!showMenu)
                   }}
-                  className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/10 transition-all duration-200"
+                  className="p-1 sm:p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/10 transition-all duration-200"
                   title="More options"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
                 </button>
 
                 {/* Dropdown menu */}
@@ -208,7 +208,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
           </div>
 
           {/* Status Badge */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className={`px-2 py-1 text-xs rounded-full font-medium ${
               project.status === 'completed'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -230,13 +230,13 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                 <span>tasks</span>
                 <div className="flex gap-0.5 ml-1">
                   {project.tasks.filter(t => t.status === 'done').length > 0 && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" title={`${project.tasks.filter(t => t.status === 'done').length} completed`} />
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400" title={`${project.tasks.filter(t => t.status === 'done').length} completed`} />
                   )}
                   {project.tasks.filter(t => t.status === 'in-progress').length > 0 && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" title={`${project.tasks.filter(t => t.status === 'in-progress').length} in progress`} />
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-blue-400" title={`${project.tasks.filter(t => t.status === 'in-progress').length} in progress`} />
                   )}
                   {project.tasks.filter(t => t.status === 'todo').length > 0 && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400" title={`${project.tasks.filter(t => t.status === 'todo').length} todo`} />
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-gray-400" title={`${project.tasks.filter(t => t.status === 'todo').length} todo`} />
                   )}
                 </div>
               </div>
@@ -245,17 +245,17 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
 
           {/* Technologies */}
           {project.technologies && project.technologies.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1 mb-1 sm:mb-2">
               {project.technologies.slice(0, 3).map((tech, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 text-xs rounded-md bg-white/10 text-white/80 border border-white/20"
+                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-white/10 text-white/80 border border-white/20"
                 >
                   {tech}
                 </span>
               ))}
               {project.technologies.length > 3 && (
-                <span className="px-2 py-0.5 text-xs rounded-md bg-white/5 text-white/60">
+                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-white/5 text-white/60">
                   +{project.technologies.length - 3}
                 </span>
               )}
@@ -268,13 +268,13 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
               {project.tags.slice(0, 3).map((tag, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 text-xs rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30"
                 >
                   #{tag}
                 </span>
               ))}
               {project.tags.length > 3 && (
-                <span className="px-2 py-0.5 text-xs rounded-md bg-purple-500/10 text-purple-400/60">
+                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-purple-500/10 text-purple-400/60">
                   +{project.tags.length - 3}
                 </span>
               )}
