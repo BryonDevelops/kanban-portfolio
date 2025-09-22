@@ -1,11 +1,11 @@
 "use client"
 
 import { ProtectedRoute } from "@/presentation/components/shared/ProtectedRoute"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card"
-import { Badge } from "@/presentation/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/button"
 import { Users, Settings, Database, Shield, Activity } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
+import { Badge } from "@/presentation/components/ui/badge"
 
 export default function AdminPage() {
   const { user } = useUser()
@@ -14,7 +14,7 @@ export default function AdminPage() {
     <ProtectedRoute requireAdmin={true}>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">
             Welcome back, {user?.firstName || 'Admin'}! Manage your portfolio and user data here.
           </p>

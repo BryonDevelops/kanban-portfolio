@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import { Trash2, MoreHorizontal } from 'lucide-react'
-import { Project } from '../../../../domain/board/schemas/project.schema'
+import { Project } from '../../../domain/board/schemas/project.schema'
 
 type Props = {
   project: Project

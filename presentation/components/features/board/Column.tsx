@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { Plus } from 'lucide-react';
-import Card from './Card';
+import Card from '../Card';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 import { useBoardStore } from '../../../stores/board/boardStore';
 

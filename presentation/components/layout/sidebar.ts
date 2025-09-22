@@ -62,12 +62,6 @@ export const sidebarConfig = {
 
   // Secondary navigation items - settings, tools, etc.
   navSecondary: [
-    {
-      title: "Contact",
-      url: "/contact",
-      icon: Mail,
-      description: "Get in touch"
-    }
   ],
 
   // Admin navigation items - only shown to admin users

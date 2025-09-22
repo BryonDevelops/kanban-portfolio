@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
