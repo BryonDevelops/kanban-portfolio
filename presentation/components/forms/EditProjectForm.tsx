@@ -4,7 +4,7 @@ import { useDrop, useDrag } from 'react-dnd'
 import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Project } from '../../../../domain/board/schemas/project.schema'
+import { Project } from '../../../domain/board/schemas/project.schema'
 import { createPortal } from 'react-dom'
 
 type Props = {

@@ -13,8 +13,6 @@ import { SidebarProvider, SidebarInset } from "@/presentation/components/ui/side
 import { AppSidebar } from "@/presentation/components/layout/app-sidebar";
 import { Topbar } from "@/presentation/components/layout/topbar";
 import { cookies } from "next/headers";
-import PageTransition from "@/presentation/components/shared/PageTransition";
-import ScrollRouter from "@/presentation/components/shared/scrollrouter";
 import { Toaster } from "@/presentation/components/ui/toaster";
 
 const geistSans = Geist({
@@ -58,14 +56,8 @@ async function RootLayout({
                 </div>
               </div>
               <div className="sm:mt-12">
-                <ScrollRouter />
+                {children}
               </div>
-              {/* Split transition: outer for exit, inner for enter */}
-              {/* @ts-expect-error: custom props for split transitions */}
-              <PageTransition exitOnly={true}>
-                {/* @ts-expect-error: custom props for split transitions */}
-                <PageTransition enterOnly={true}>{children}</PageTransition>
-              </PageTransition>
             </div>
           </SidebarInset>
           <Toaster />

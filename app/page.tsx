@@ -1,174 +1,134 @@
 "use client"
 
-import { ChevronDown } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import { ArrowRight, Code, Palette, Zap } from "lucide-react"
+import Link from "next/link"
 
 export default function Home() {
-  const mainRef = useRef<HTMLElement | null>(null)
-  const [active, setActive] = useState<"hero" | "projects">("hero")
-  const [snapped, setSnapped] = useState<"hero" | "projects" | null>("hero")
-  const scrollEndTimer = useRef<number | null>(null)
-  const routeDelayTimer = useRef<number | null>(null)
-  const router = useRouter()
-
-  const scrollToSection = useCallback((id: string) => {
-    const container = mainRef.current
-    const el = document.getElementById(id)
-    if (!container || !el) return
-    const target = el.offsetTop
-    const start = container.scrollTop
-    const distance = target - start
-    const duration = 800
-    const startTime = performance.now()
-    const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t)
-
-    const step = (now: number) => {
-      const t = Math.min(1, (now - startTime) / duration)
-      const eased = easeInOutQuad(t)
-      container.scrollTop = start + distance * eased
-      if (t < 1) requestAnimationFrame(step)
-    }
-    requestAnimationFrame(step)
-  }, [])
-
-  useEffect(() => {
-    const container = mainRef.current
-    if (!container) return
-
-    const onScroll = () => {
-      const hero = document.getElementById('hero')
-      const projects = document.getElementById('projects')
-      if (!hero || !projects) return
-      const cTop = container.scrollTop
-      const cH = container.clientHeight
-      const heroMid = hero.offsetTop + hero.clientHeight / 2
-      const projMid = projects.offsetTop + projects.clientHeight / 2
-      const distHero = Math.abs(heroMid - (cTop + cH / 2))
-      const distProj = Math.abs(projMid - (cTop + cH / 2))
-      const isHero = distHero <= distProj
-      setActive(isHero ? 'hero' : 'projects')
-      // Set body class immediately based on active section
-      if (isHero) {
-        document.body.classList.add('hero-active')
-      } else {
-        document.body.classList.remove('hero-active')
-      }
-      // Debounced check for snap completion (scroll idle)
-      if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current)
-      scrollEndTimer.current = window.setTimeout(() => {
-        const near = (a: number, b: number, tol = 1) => Math.abs(a - b) <= tol
-        if (near(container.scrollTop, projects.offsetTop)) {
-          setSnapped('projects')
-        } else if (near(container.scrollTop, hero.offsetTop)) {
-          setSnapped('hero')
-        } else {
-          setSnapped(null)
-        }
-      }, 120)
-    }
-    onScroll()
-    container.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      container.removeEventListener('scroll', onScroll)
-      if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current)
-    }
-  }, [])
-
-  // Toggle a body class so the sidebar only fades in when snapped to Projects
-  // Remove scroll-based sidebar fade logic; now handled by route in PageTransition
-
-  // When home snaps to Projects, transition to the /projects route after a short delay
-  useEffect(() => {
-    if (routeDelayTimer.current) {
-      window.clearTimeout(routeDelayTimer.current)
-      routeDelayTimer.current = null
-    }
-    if (snapped === 'projects') {
-      routeDelayTimer.current = window.setTimeout(() => {
-        router.push('/projects')
-      }, 400)
-    }
-    return () => {
-      if (routeDelayTimer.current) window.clearTimeout(routeDelayTimer.current)
-    }
-  }, [snapped, router])
-
   return (
-  <main ref={mainRef} className="no-scrollbar h-screen overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth">
-      {/* Snap indicators */}
-      {(() => {
-        const sections = [
-          { id: "hero", label: "Hero" },
-          { id: "projects", label: "Projects" },
-        ] as const
-        const DOT = 12 // px (visual size only)
-        const PADDING_REM = 1.5 // ~24px top/bottom padding
-        const activeIndex = sections.findIndex((s) => s.id === active)
-        const ratio = sections.length > 1 ? (activeIndex / (sections.length - 1)) : 0
-        const progressPct = `${Math.round(Math.max(0, Math.min(100, ratio * 100)))}%`
-        return (
-          <div className="fixed right-4 top-1/2 z-30 -translate-y-1/2">
-            {/* Wrapper is nearly full viewport height with subtle padding */}
-            <div className="relative flex items-center" style={{ height: `calc(80vh - ${PADDING_REM * 2}rem)` }}>
-              {/* Rail (fainter, wider) with subtle gradient + glow */}
-              <div className="absolute left-1/2 top-0 -translate-x-1/2 h-full w-[6px] rounded-full bg-gradient-to-b from-white/0 via-white/15 to-white/0 shadow-[0_0_12px_rgba(255,255,255,0.08)]" />
-              {/* Progress line (animated) with vibrant gradient + glow */}
-              <div
-                className="absolute left-1/2 top-0 -translate-x-1/2 w-[4px] rounded-full bg-gradient-to-b from-sky-400 via-white to-violet-400 shadow-[0_0_12px_rgba(96,165,250,0.45),0_0_18px_rgba(167,139,250,0.35)] transition-[height] duration-500 ease-out"
-                style={{ height: progressPct }}
-              />
-              {/* Dots evenly spaced with top/bottom padding */}
-              <div className="absolute inset-0 flex flex-col items-center justify-between py-6">
-                {sections.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => scrollToSection(s.id)}
-                    aria-label={`Go to ${s.label}`}
-                    className={`h-3 w-3 rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 ${
-                      active === s.id
-                        ? "bg-white/90 border-white/70 ring-white/30 shadow-[0_0_10px_rgba(255,255,255,0.25)] scale-110"
-                        : "bg-white/8 border-white/20 hover:bg-white/15"
-                    }`}
-                    title={s.label}
-                    style={{ minWidth: DOT, minHeight: DOT }}
-                  />
-                ))}
-              </div>
+    <div className="relative min-h-screen">
+      {/* Full screen background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 -z-10" />
+
+      {/* Enhanced Background Effects */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Primary gradient orbs */}
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-emerald-500/20 via-cyan-500/20 to-blue-500/20 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+
+        {/* Secondary accent orbs */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 blur-2xl animate-pulse" style={{ animationDelay: '4s' }} />
+
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      </div>
+
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 xl:py-20">
+        <div className="mx-auto max-w-7xl">
+          {/* Hero Section */}
+          <div className="text-center mb-12 sm:mb-16 lg:mb-20 xl:mb-24">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 mb-6">
+              <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
+              <span className="text-sm text-white/80 font-medium">Portfolio</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
+              <span className="bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
+                Building Digital
+              </span>
+              <br />
+              <span className="text-white/90">Experiences</span>
+            </h1>
+
+            <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-6 sm:mb-8 px-2 sm:px-0">
+              Full-stack developer crafting modern web applications with Next.js, TypeScript, and cutting-edge technologies.
+              Passionate about clean code, beautiful design, and exceptional user experiences.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-8 sm:mb-12">
+              <Link href="/projects">
+                <button className="group relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg w-full sm:w-auto">
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative flex items-center justify-center gap-2">
+                    <Code className="h-4 w-4 flex-shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">View My Work</span>
+                  </div>
+                </button>
+              </Link>
+
+              <Link href="/about">
+                <button className="group flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm text-white hover:bg-white/10 transition-all duration-300 w-full sm:w-auto">
+                  <Palette className="h-4 w-4 flex-shrink-0" />
+                  <span className="font-medium text-sm sm:text-base">Learn More</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+                </button>
+              </Link>
             </div>
           </div>
-        )
-      })()}
-      {/* Hero section */}
-      <section id="hero" className="relative min-h-screen snap-start flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
-        <div className="max-w-4xl w-full flex flex-col items-center gap-6 sm:gap-8">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
-            Welcome to My Portfolio
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            I build modern web applications with Next.js, Supabase, Tailwind CSS, and more. Explore my projects, skills, and experience below.
-          </p>
-          <a
-            href="#projects"
-            aria-label="Scroll to projects"
-            onClick={(e) => {
-              e.preventDefault()
-              scrollToSection("projects")
-            }}
-            className="mt-2 sm:mt-4 rounded-full border border-white/20 bg-white/10 p-3 sm:p-4 text-white shadow-lg backdrop-blur transition-colors duration-200 hover:bg-white/20 focus:outline-none focus-visible:ring-2 ring-white/40"
-          >
-            <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" style={{ animationDuration: "1.8s" }} />
-          </a>
-        </div>
-      </section>
 
-      {/* Projects section */}
-      <section id="projects" className="relative min-h-screen snap-start flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="text-center text-gray-300 max-w-md mx-auto">
-          <div className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-12 sm:w-12 animate-spin rounded-full border-2 border-white/30 border-t-white/80" />
-          <p className="text-sm sm:text-base">Opening Projects…</p>
+          {/* Feature Highlights */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="group p-4 sm:p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400 flex-shrink-0">
+                  <Code className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">Full-Stack Development</h3>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed break-words">
+                Building end-to-end solutions with modern frameworks like Next.js, React, and Node.js.
+              </p>
+            </div>
+
+            <div className="group p-4 sm:p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 flex-shrink-0">
+                  <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">UI/UX Design</h3>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed break-words">
+                Creating beautiful, accessible interfaces with Tailwind CSS and modern design principles.
+              </p>
+            </div>
+
+            <div className="group p-4 sm:p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 flex-shrink-0">
+                  <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">Performance Focus</h3>
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed break-words">
+                Optimizing applications for speed, accessibility, and exceptional user experiences.
+              </p>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center mt-12 sm:mt-16 lg:mt-24 px-4 sm:px-0">
+            <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-white/10 mb-4 sm:mb-6">
+              <Zap className="h-4 w-4 text-blue-400 flex-shrink-0" />
+              <span className="text-sm text-white/80">Ready to collaborate?</span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-4 px-2">
+              Let&apos;s Build Something Amazing
+            </h2>
+
+            <p className="text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base px-4 sm:px-0">
+              Whether you have a project in mind or just want to connect, I&apos;d love to hear from you.
+              Use the sidebar to explore my work or get in touch.
+            </p>
+
+            <Link href="/contact">
+              <button className="group inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 w-full sm:w-auto">
+                <span className="text-sm sm:text-base">Get In Touch</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+              </button>
+            </Link>
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   )
 }
