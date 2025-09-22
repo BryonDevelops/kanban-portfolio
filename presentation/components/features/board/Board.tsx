@@ -5,7 +5,7 @@ import { Plus, Settings, Filter, Search } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Project } from '../../../../domain/board/schemas/project.schema';
-import EditProjectForm from './EditProjectForm';
+import EditProjectForm from '../../forms/EditProjectForm';
 
 const columnOrder = ['ideas', 'in-progress', 'completed'];
 
