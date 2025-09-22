@@ -133,17 +133,17 @@ const Column: React.FC<ColumnProps> = ({ projects, columnId, filters, onAddProje
   return (
     <div
       ref={ref}
-      className={`
+      className="
         relative flex flex-col gap-4 rounded-xl border border-white/10
         bg-gradient-to-b from-white/[0.06] to-white/[0.02]
         backdrop-blur-sm shadow-lg
-        p-4 min-h-[200px]
+        p-3 sm:p-4 min-h-[200px]
         transition-all duration-300 ease-out
         ${isOver
           ? 'ring-2 ring-white/50 shadow-2xl shadow-white/20 bg-white/10 scale-[1.02]'
           : 'hover:shadow-xl hover:shadow-white/5 hover:bg-white/8'
         }
-      `}
+      "
     >
       {/* Subtle inner glow effect when hovering */}
       <div className={`

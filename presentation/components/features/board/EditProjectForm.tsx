@@ -161,7 +161,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   }
 
   // Task drag and drop functions
-  const moveTask = (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: string) => {
+  const moveTask = (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => {
     setFormData(prev => {
       const tasks = [...prev.tasks]
 
@@ -398,7 +398,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   interface TaskCardProps {
     task: Project['tasks'][0]
     index: number
-    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: string) => void
+    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => void
     onRemoveTask: (taskId: string) => void
     onUpdateTask: (taskId: string, newTitle: string) => void
     editingTaskId: string | null
@@ -432,7 +432,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
         const dragIndex = item.index
         const hoverIndex = index
         const dragStatus = item.status
-        const hoverStatus = task.status
+        const hoverStatus = task.status || 'todo'
 
         // Don't replace items with themselves
         if (dragIndex === hoverIndex && dragStatus === hoverStatus) return
@@ -461,7 +461,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
     const [{ isDragging }, drag] = useDrag({
       type: 'TASK',
-      item: () => ({ id: task.id, index, status: task.status, type: 'TASK' }),
+      item: () => ({ id: task.id, index, status: task.status || 'todo', type: 'TASK' }),
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
       }),
@@ -555,7 +555,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     status: 'todo' | 'in-progress' | 'done'
     tasks: Project['tasks']
     onDropTask: (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => void
-    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: string) => void
+    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => void
     onRemoveTask: (taskId: string) => void
     icon: React.ReactNode
   }
@@ -1144,7 +1144,7 @@ React, TypeScript, Tailwind CSS
               </div>
 
               {/* Mini Kanban Board */}
-              <div className="grid grid-cols-3 gap-3 min-h-[160px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[160px]">
                 <TaskColumn
                   title="To Do"
                   status="todo"

@@ -140,12 +140,12 @@ export default function Home() {
         )
       })()}
       {/* Hero section */}
-      <section id="hero" className="relative min-h-screen snap-start flex flex-col items-center justify-center px-4 py-12 text-center">
-        <div className="max-w-2xl w-full flex flex-col items-center gap-8">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight">
+      <section id="hero" className="relative min-h-screen snap-start flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
+        <div className="max-w-4xl w-full flex flex-col items-center gap-6 sm:gap-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
             Welcome to My Portfolio
           </h1>
-          <p className="text-lg sm:text-xl text-gray-300 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
             I build modern web applications with Next.js, Supabase, Tailwind CSS, and more. Explore my projects, skills, and experience below.
           </p>
           <a
@@ -155,18 +155,18 @@ export default function Home() {
               e.preventDefault()
               scrollToSection("projects")
             }}
-            className="mt-4 rounded-full border border-white/20 bg-white/10 p-3 text-white shadow-lg backdrop-blur transition-colors duration-200 hover:bg-white/20 focus:outline-none focus-visible:ring-2 ring-white/40"
+            className="mt-2 sm:mt-4 rounded-full border border-white/20 bg-white/10 p-3 sm:p-4 text-white shadow-lg backdrop-blur transition-colors duration-200 hover:bg-white/20 focus:outline-none focus-visible:ring-2 ring-white/40"
           >
-            <ChevronDown className="h-6 w-6 animate-bounce" style={{ animationDuration: "1.8s" }} />
+            <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" style={{ animationDuration: "1.8s" }} />
           </a>
         </div>
       </section>
 
       {/* Projects section */}
-      <section id="projects" className="relative min-h-screen snap-start flex items-center justify-center px-4 py-12">
-        <div className="text-center text-gray-300">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white/80" />
-          <p className="text-sm">Opening Projects…</p>
+      <section id="projects" className="relative min-h-screen snap-start flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="text-center text-gray-300 max-w-md mx-auto">
+          <div className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-12 sm:w-12 animate-spin rounded-full border-2 border-white/30 border-t-white/80" />
+          <p className="text-sm sm:text-base">Opening Projects…</p>
         </div>
       </section>
     </main>

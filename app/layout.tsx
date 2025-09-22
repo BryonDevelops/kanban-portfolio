@@ -39,7 +39,7 @@ async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -49,15 +49,17 @@ async function RootLayout({
           <SidebarInset>
             <div className="relative min-h-svh">
               {/* Shared background wrapper for smooth transitions */}
-              <div className="absolute inset-0 -z-10 bg-background transition-colors duration-300" />
+              <div className="absolute inset-0 -z-20 bg-background transition-colors duration-300" />
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
-                <div className="flex items-center p-2 pointer-events-auto">
-                  <div className="flex items-center gap-4 w-full justify-between">
+                <div className="flex items-center p-1 sm:p-2 pointer-events-auto">
+                  <div className="flex items-center gap-2 sm:gap-4 w-full justify-between">
                     <Topbar />
                   </div>
                 </div>
               </div>
-              <ScrollRouter />
+              <div className="sm:mt-12">
+                <ScrollRouter />
+              </div>
               {/* Split transition: outer for exit, inner for enter */}
               {/* @ts-expect-error: custom props for split transitions */}
               <PageTransition exitOnly={true}>
