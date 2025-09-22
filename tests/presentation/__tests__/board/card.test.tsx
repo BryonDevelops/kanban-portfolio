@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 <<<<<<<< HEAD:tests/unit/__tests__/board/Card.test.tsx
-import Card from '@/presentation/components/features/board/Card';
+import Card from '@/presentation/components/features/Card';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 ========
 <<<<<<<< HEAD:tests/presentation/__tests__/board/card.test.tsx

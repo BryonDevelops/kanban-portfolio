@@ -2,21 +2,21 @@
 
 import * as React from "react"
 import { NavMain } from "@/presentation/components/layout/nav-main"
-import { NavUser } from "@/presentation/components/layout/nav-user"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   SidebarSeparator,
   useSidebar,
 } from "@/presentation/components/ui/sidebar"
+import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar()
+  const isAdmin = useIsAdmin()
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -42,11 +42,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <NavMain items={sidebarConfig.navSecondary} />
           </>
         )}
+        {isAdmin && sidebarConfig.navAdmin.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <div className="px-2 py-2">
+              <h3 className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider mb-2">
+                Admin
+              </h3>
+            </div>
+            <NavMain items={sidebarConfig.navAdmin} />
+          </>
+        )}
       </SidebarContent>
-
-      {/* <SidebarFooter className="border-t border-sidebar-border/50">
-        <NavUser user={sidebarConfig.user} />
-      </SidebarFooter> */}
 
       <SidebarRail />
     </Sidebar>

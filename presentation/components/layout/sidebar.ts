@@ -4,6 +4,9 @@ import {
   Frame,
   Home,
   Mail,
+  Shield,
+  Settings,
+  Users,
 } from "lucide-react"
 
 // Sidebar navigation configuration
@@ -58,7 +61,30 @@ export const sidebarConfig = {
   ],
 
   // Secondary navigation items - settings, tools, etc.
-  navSecondary: [],
+  navSecondary: [
+  ],
+
+  // Admin navigation items - only shown to admin users
+  navAdmin: [
+    {
+      title: "Admin Dashboard",
+      url: "/admin",
+      icon: Shield,
+      description: "Administrative controls"
+    },
+    {
+      title: "User Management",
+      url: "/admin/users",
+      icon: Users,
+      description: "Manage users and permissions"
+    },
+    {
+      title: "System Settings",
+      url: "/admin/settings",
+      icon: Settings,
+      description: "Application configuration"
+    }
+  ],
 }
 
 // Helper function to get all navigation items

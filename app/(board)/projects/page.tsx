@@ -12,6 +12,7 @@ import { ProjectService } from "@/services/board/projectService"
 import { SupabaseBoardRepository } from "@/infrastructure/database/repositories/supaBaseBoardRepository"
 import { IBoardRepository } from "@/domain/board/repositories/boardRepository.interface"
 import { Project } from "@/domain/board/schemas/project.schema"
+import { ProtectedRoute } from "@/presentation/components/shared/ProtectedRoute"
 
 export default function ProjectsPage() {
 
@@ -46,7 +47,8 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <ProtectedRoute>
+      <div className="relative min-h-screen">
       {/* Full screen background that extends behind topbar */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 -z-10" />
       {/* Enhanced Background Effects */}
@@ -150,5 +152,6 @@ export default function ProjectsPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
