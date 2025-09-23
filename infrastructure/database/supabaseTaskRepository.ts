@@ -1,4 +1,4 @@
-import { getSupabase } from '../database/supabaseClient';
+import { getSupabase } from './supabaseClient';
 import { Task } from '../../domain/board/entities/task';
 
 import { TaskRepository } from '../../domain/board/repositories/taskRepository';
