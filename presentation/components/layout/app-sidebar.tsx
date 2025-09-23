@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
-import { SignedIn, UserButton, useUser } from "@clerk/nextjs"
+import { SignedIn, UserButton, useUser, useClerk } from "@clerk/nextjs"
 import { ChevronDown, ChevronRight, Settings } from "lucide-react"
 
 import {
@@ -21,6 +21,7 @@ import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, setOpen } = useSidebar()
   const { user } = useUser()
+  const { openUserProfile } = useClerk()
   const isAdmin = useIsAdmin()
   const [adminOpen, setAdminOpen] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
@@ -54,10 +55,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {state === "collapsed" && (
         <div>
           <SidebarHeader className="border-b border-sidebar-border/30">
-            <div className="flex items-center justify-center py-3">
+            <div className="flex flex-col items-center justify-center py-3 space-y-2">
               {isHydrated && (
                 <SignedIn>
                   <UserButton afterSignOutUrl="/" />
+                  <button
+                    onClick={() => openUserProfile()}
+                    className="text-center hover:bg-sidebar-accent/30 rounded-md px-2 py-1 transition-colors cursor-pointer w-full"
+                  >
+                    <span className="text-xs font-bold bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent truncate block">
+                      {user?.firstName}
+                    </span>
+                  </button>
                 </SignedIn>
               )}
             </div>
@@ -105,9 +114,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SignedIn>
             )}
             <div className="flex flex-col min-w-0 flex-1 ml-2">
-              <span className="text-sm font-bold bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
-                {user?.firstName}
-              </span>
+              <SignedIn>
+                <button
+                  onClick={() => openUserProfile()}
+                  className="text-left hover:bg-sidebar-accent/30 rounded-md px-2 py-1 -mx-2 -my-1 transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-bold bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent truncate block">
+                    {user?.firstName}
+                  </span>
+                </button>
+              </SignedIn>
             </div>
 
             {/* Decorative element */}
