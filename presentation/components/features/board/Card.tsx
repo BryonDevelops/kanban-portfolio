@@ -1,9 +1,9 @@
 "use client"
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Trash2, MoreHorizontal } from 'lucide-react'
-import { Project } from '../../../domain/board/schemas/project.schema'
+import { Trash2, MoreHorizontal, GripVertical } from 'lucide-react'
+import { Project } from '../../../../domain/board/schemas/project.schema'
 
 type Props = {
   project: Project
@@ -11,27 +11,13 @@ type Props = {
   index: number
   onDelete?: (projectId: string) => void
   onOpenEditModal?: (project: Project) => void
-  onMoveCard?: (dragIndex: number, hoverIndex: number) => void
+  isDragOverlay?: boolean
 }
 
-interface DragItem {
-  id: string
-  index: number
-  fromCol: string
-  type: string
-}
-
-export default function Card({ project, fromCol, index, onDelete, onOpenEditModal }: Props) {
+export default function Card({ project, fromCol, index, onDelete, onOpenEditModal, isDragOverlay = false }: Props) {
   const [showMenu, setShowMenu] = useState(false)
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const sortableData = useSortable({
     id: project.id,
     data: {
       type: 'card',
@@ -41,7 +27,16 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
     },
   });
 
-  const style = {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = sortableData;
+
+  const style = isDragOverlay ? {} : {
     transform: CSS.Transform.toString(transform),
     transition,
   };
@@ -56,19 +51,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  })
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showMenu && !(event.target as Element).closest('.menu-container')) {
-        setShowMenu(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  })
+  }, [showMenu])
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -85,47 +68,44 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
 
   return (
     <div
-      ref={setNodeRef}
+      ref={isDragOverlay ? undefined : setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(isDragOverlay ? {} : attributes)}
       className={`
-        relative rounded-xl border border-pink-200/50 dark:border-white/10
-        bg-white/90 dark:bg-gradient-to-br dark:from-white/[0.08] dark:to-white/[0.04]
+        relative rounded-xl border border-border
+        bg-card
         backdrop-blur-sm
-        shadow-[0_8px_32px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.2)]
-        dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.2)]
-        hover:shadow-[0_12px_40px_rgba(0,0,0,0.4),0_6px_20px_rgba(0,0,0,0.3)]
-        dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.4),0_6px_20px_rgba(0,0,0,0.3)]
-        p-3 sm:p-4 cursor-move select-none
+        shadow-[0_8px_32px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_8px_32px_rgba(255,255,255,0.08),0_4px_16px_rgba(255,255,255,0.04)]
+        p-3 sm:p-4 select-none
         transition-all duration-300 ease-out
-        transform hover:-translate-y-1
-        ${isDragging
+        hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_6px_20px_rgba(0,0,0,0.1)]
+        dark:hover:shadow-[0_12px_40px_rgba(255,255,255,0.12),0_6px_20px_rgba(255,255,255,0.06)]
+        ${isDragging && !isDragOverlay
           ? 'opacity-50 scale-95 shadow-2xl rotate-2'
-          : 'hover:scale-[1.02] hover:bg-pink-50/50 dark:hover:bg-gradient-to-br dark:hover:from-white/[0.12] dark:hover:to-white/[0.06]'
+          : ''
         }
       `}
-      onClick={handleCardClick}
     >
-        {/* Subtle hover glow */}
-        <div className="absolute inset-0 rounded-xl bg-pink-100/50 dark:bg-white/5 opacity-0 hover:opacity-100 transition-opacity duration-200" />
-
+      {/* Drag handle - only this area initiates drag */}
+      <div {...(isDragOverlay ? {} : listeners)} className={isDragOverlay ? "" : "cursor-move"}>
         {/* Card content */}
         <div className="relative z-10">
           {/* Header with title and action buttons */}
-          <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-slate-800 dark:text-white text-sm leading-tight line-clamp-2">
+          <div className="flex items-start justify-between gap-2 mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-border/50">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
+              <h4 className="font-semibold text-card-foreground text-sm leading-tight line-clamp-2">
                 {project.title}
               </h4>
             </div>
 
-            {/* Always visible action buttons */}
+            {/* Action buttons in header */}
             <div className="flex items-center gap-1 flex-shrink-0">
               {/* Delete button */}
               <button
                 onClick={handleDelete}
-                className="p-1 sm:p-1.5 rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200"
+                className="p-1 sm:p-1.5 rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
                 title="Archive project (can be restored later)"
               >
                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -138,7 +118,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                     e.stopPropagation()
                     setShowMenu(!showMenu)
                   }}
-                  className="p-1 sm:p-1.5 rounded-lg text-slate-600 dark:text-white/50 hover:text-slate-800 dark:hover:text-white/70 hover:bg-pink-50 dark:hover:bg-white/10 transition-all duration-200"
+                  className="p-1 sm:p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                   title="More options"
                 >
                   <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -146,7 +126,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
 
                 {/* Dropdown menu */}
                 {showMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-32 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-pink-200/50 dark:border-white/20 rounded-lg shadow-xl z-50">
+                  <div className="absolute right-0 top-full mt-1 w-32 bg-popover backdrop-blur-sm border border-border rounded-lg shadow-xl z-[100]">
                     <div className="py-1">
                       <button
                         onClick={(e) => {
@@ -156,7 +136,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                             onOpenEditModal(project)
                           }
                         }}
-                        className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-white/80 hover:text-slate-800 dark:hover:text-white hover:bg-pink-50 dark:hover:bg-white/10 transition-colors duration-200"
+                        className="w-full px-3 py-2 text-left text-sm text-popover-foreground hover:text-popover-foreground hover:bg-accent transition-colors duration-200"
                       >
                         Edit
                       </button>
@@ -166,7 +146,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                           setShowMenu(false)
                           handleDelete(e)
                         }}
-                        className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-200"
+                        className="w-full px-3 py-2 text-left text-sm text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
                       >
                         Archive Project
                       </button>
@@ -176,7 +156,14 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
+
+
+      {/* Clickable content area - separate from drag handle */}
+      <div onClick={handleCardClick} className="cursor-pointer">
+        <div className="relative z-10">
           {/* Status Badge */}
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className={`px-2 py-1 text-xs rounded-full font-medium ${
@@ -195,7 +182,7 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
 
             {/* Task Count */}
             {project.tasks && project.tasks.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-white/60">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="font-medium">{project.tasks.length}</span>
                 <span>tasks</span>
                 <div className="flex gap-0.5 ml-1">
@@ -219,13 +206,13 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
               {project.technologies.slice(0, 3).map((tech, i) => (
                 <span
                   key={i}
-                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/80 border border-pink-200/50 dark:border-white/20"
+                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-secondary text-secondary-foreground border border-border"
                 >
                   {tech}
                 </span>
               ))}
               {project.technologies.length > 3 && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-pink-50/50 dark:bg-white/5 text-slate-600 dark:text-white/60">
+                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-muted text-muted-foreground">
                   +{project.technologies.length - 3}
                 </span>
               )}
@@ -238,19 +225,20 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
               {project.tags.slice(0, 3).map((tag, i) => (
                 <span
                   key={i}
-                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-purple-100/50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200/50 dark:border-purple-500/30"
+                  className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-accent text-accent-foreground border border-border"
                 >
                   #{tag}
                 </span>
               ))}
               {project.tags.length > 3 && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-purple-50/50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400/60">
+                <span className="px-1.5 sm:px-2 py-0.5 text-xs rounded-md bg-muted text-muted-foreground">
                   +{project.tags.length - 3}
                 </span>
               )}
             </div>
           )}
         </div>
+      </div>
     </div>
   )
 }

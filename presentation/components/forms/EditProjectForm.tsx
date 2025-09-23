@@ -1,11 +1,17 @@
 "use client"
+
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useDrop, useDrag } from 'react-dnd'
+import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { DndContext, DragEndEvent, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Project } from '../../../domain/board/schemas/project.schema'
 import { createPortal } from 'react-dom'
+import { useIsAdmin } from '../shared/ProtectedRoute'
 
 type Props = {
   project: Project
@@ -15,7 +21,44 @@ type Props = {
   onDelete: (projectId: string) => void
 }
 
+// localStorage utilities for non-admin users
+const LOCAL_STORAGE_KEY = 'kanban-project-changes'
+
+const saveProjectToLocalStorage = (projectId: string, projectData: Partial<Project>) => {
+  try {
+    const existingData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}')
+    existingData[projectId] = {
+      ...projectData,
+      savedAt: new Date().toISOString()
+    }
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData))
+  } catch (error) {
+    console.error('Failed to save project to localStorage:', error)
+  }
+}
+
+const loadProjectFromLocalStorage = (projectId: string): Partial<Project> | null => {
+  try {
+    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}')
+    return data[projectId] || null
+  } catch (error) {
+    console.error('Failed to load project from localStorage:', error)
+    return null
+  }
+}
+
+const clearProjectFromLocalStorage = (projectId: string) => {
+  try {
+    const existingData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}')
+    delete existingData[projectId]
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData))
+  } catch (error) {
+    console.error('Failed to clear project from localStorage:', error)
+  }
+}
+
 export default function EditProjectForm({ project, isOpen, onClose, onSave, onDelete }: Props) {
+  const isAdmin = useIsAdmin()
   const [formData, setFormData] = useState({
     title: project.title,
     description: project.description || '',
@@ -36,6 +79,167 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   const [isDescriptionPreview, setIsDescriptionPreview] = useState(false)
   const descriptionTextareaRef = React.useRef<HTMLTextAreaElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
+
+  // Client-only drag and drop wrapper to prevent hydration mismatches
+  const TaskBoardClientOnly: React.FC<{
+    formData: { tasks: Project['tasks'] };
+    onDropTask: (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => void;
+    onRemoveTaskById: (taskId: string) => void;
+    setFormData: React.Dispatch<React.SetStateAction<typeof formData>>;
+    editingTaskId: string | null;
+    setEditingTaskId: (taskId: string | null) => void;
+    updateTaskTitle: (taskId: string, newTitle: string) => void;
+  }> = ({ formData, onDropTask, onRemoveTaskById, setFormData, editingTaskId, setEditingTaskId, updateTaskTitle }) => {
+    const [isClient, setIsClient] = React.useState(false);
+
+    // Dnd-kit sensors - must be called unconditionally
+    const sensors = useSensors(
+      useSensor(PointerSensor),
+      useSensor(KeyboardSensor)
+    )
+
+    React.useEffect(() => {
+      setIsClient(true);
+    }, []);
+
+    // Handle drag end for task reordering and status changes
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event
+
+      if (!over) return
+
+      const activeId = active.id as string
+      const overId = over.id as string
+
+      // Find the active task
+      const activeTask = formData.tasks.find((task: Project['tasks'][0]) => task.id === activeId)
+      if (!activeTask) return
+
+      // Check if dropping on a column (status change)
+      if (overId.startsWith('column-')) {
+        const newStatus = overId.replace('column-', '') as 'todo' | 'in-progress' | 'done'
+        if (activeTask.status !== newStatus) {
+          onDropTask(activeId, newStatus)
+        }
+        return
+      }
+
+      // Check if dropping on another task (reordering)
+      const overTask = formData.tasks.find((task: Project['tasks'][0]) => task.id === overId)
+      if (!overTask) return
+
+      // If same status, reorder within column
+      if (activeTask.status === overTask.status) {
+        const statusTasks = formData.tasks.filter((task: Project['tasks'][0]) => task.status === activeTask.status)
+        const activeIndex = statusTasks.findIndex((task: Project['tasks'][0]) => task.id === activeId)
+        const overIndex = statusTasks.findIndex((task: Project['tasks'][0]) => task.id === overId)
+
+        if (activeIndex !== overIndex) {
+          // Reorder tasks within the same status
+          const reorderedTasks = [...formData.tasks]
+          const statusTasksCopy = statusTasks.filter((task: Project['tasks'][0]) => task.id !== activeId)
+          statusTasksCopy.splice(overIndex, 0, activeTask)
+
+          // Update the main tasks array
+          const updatedTasks = reorderedTasks.map((task: Project['tasks'][0]) => {
+            if (task.status === activeTask.status) {
+              return statusTasksCopy.shift() || task
+            }
+            return task
+          })
+
+          setFormData((prev) => ({
+            ...prev,
+            tasks: updatedTasks
+          }))
+        }
+      } else {
+        // Different status - move to new column
+        onDropTask(activeId, overTask.status || 'todo')
+      }
+    }
+
+    if (!isClient) {
+      // Server-side rendering fallback
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[160px]">
+          <TaskColumn
+            title="To Do"
+            status="todo"
+            tasks={formData.tasks}
+            onRemoveTask={onRemoveTaskById}
+            icon={<Circle className="h-3 w-3 text-slate-500" />}
+            editingTaskId={editingTaskId}
+            setEditingTaskId={setEditingTaskId}
+            updateTaskTitle={updateTaskTitle}
+          />
+          <TaskColumn
+            title="In Progress"
+            status="in-progress"
+            tasks={formData.tasks}
+            onRemoveTask={onRemoveTaskById}
+            icon={<CheckSquare className="h-3 w-3 text-blue-500" />}
+            editingTaskId={editingTaskId}
+            setEditingTaskId={setEditingTaskId}
+            updateTaskTitle={updateTaskTitle}
+          />
+          <TaskColumn
+            title="Done"
+            status="done"
+            tasks={formData.tasks}
+            onRemoveTask={onRemoveTaskById}
+            icon={<CheckCircle2 className="h-3 w-3 text-green-500" />}
+            editingTaskId={editingTaskId}
+            setEditingTaskId={setEditingTaskId}
+            updateTaskTitle={updateTaskTitle}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[160px]">
+          <SortableContext items={formData.tasks.map((task: Project['tasks'][0]) => task.id)} strategy={verticalListSortingStrategy}>
+            <TaskColumn
+              title="To Do"
+              status="todo"
+              tasks={formData.tasks}
+              onRemoveTask={onRemoveTaskById}
+              icon={<Circle className="h-3 w-3 text-slate-500" />}
+              editingTaskId={editingTaskId}
+              setEditingTaskId={setEditingTaskId}
+              updateTaskTitle={updateTaskTitle}
+            />
+            <TaskColumn
+              title="In Progress"
+              status="in-progress"
+              tasks={formData.tasks}
+              onRemoveTask={onRemoveTaskById}
+              icon={<CheckSquare className="h-3 w-3 text-blue-500" />}
+              editingTaskId={editingTaskId}
+              setEditingTaskId={setEditingTaskId}
+              updateTaskTitle={updateTaskTitle}
+            />
+            <TaskColumn
+              title="Done"
+              status="done"
+              tasks={formData.tasks}
+              onRemoveTask={onRemoveTaskById}
+              icon={<CheckCircle2 className="h-3 w-3 text-green-500" />}
+              editingTaskId={editingTaskId}
+              setEditingTaskId={setEditingTaskId}
+              updateTaskTitle={updateTaskTitle}
+            />
+          </SortableContext>
+        </div>
+      </DndContext>
+    );
+  }
 
   // Click outside to close modal
   useEffect(() => {
@@ -101,14 +305,39 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
         tasks: formData.tasks,
         updated_at: new Date()
       }
-      await onSave(updatedProject)
-      onClose()
+
+      if (isAdmin) {
+        // Admin users save to database
+        await onSave(updatedProject)
+        onClose()
+        // Show success toast for database save
+        import("@/presentation/utils/toast").then(({ success }) => {
+          success("Project saved!", "Your changes have been saved to the database.");
+        });
+      } else {
+        // Non-admin users save to localStorage
+        saveProjectToLocalStorage(project.id, {
+          title: updatedProject.title,
+          description: updatedProject.description,
+          url: updatedProject.url,
+          status: updatedProject.status,
+          technologies: updatedProject.technologies,
+          tags: updatedProject.tags,
+          tasks: updatedProject.tasks,
+          updated_at: updatedProject.updated_at
+        })
+        onClose()
+        // Show info toast for localStorage save
+        import("@/presentation/utils/toast").then(({ info }) => {
+          info("Project saved locally!", "Your changes are saved in your browser. Only admins can save to the database.");
+        });
+      }
     } catch (error) {
       console.error('Failed to save project:', error)
     } finally {
       setIsSaving(false)
     }
-  }, [formData, project, onSave, onClose])
+  }, [formData, project, onSave, onClose, isAdmin])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -161,53 +390,6 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   }
 
   // Task drag and drop functions
-  const moveTask = (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => {
-    setFormData(prev => {
-      const tasks = [...prev.tasks]
-
-      if (dragStatus === hoverStatus) {
-        // Reordering within the same column
-        const statusTasks = tasks.filter(task => task.status === dragStatus)
-
-        const [draggedTask] = statusTasks.splice(dragIndex, 1)
-        statusTasks.splice(hoverIndex, 0, draggedTask)
-
-        // Preserve original order by maintaining position of other status groups
-        // Create a map to preserve the original order structure
-        const reorderedTasks = [...tasks]
-        let statusTaskIndex = 0
-
-        for (let i = 0; i < reorderedTasks.length; i++) {
-          if (reorderedTasks[i].status === dragStatus) {
-            reorderedTasks[i] = statusTasks[statusTaskIndex]
-            statusTaskIndex++
-          }
-        }
-
-        return {
-          ...prev,
-          tasks: reorderedTasks
-        }
-      } else {
-        // Moving between columns
-        const statusTasks = tasks.filter(task => task.status === dragStatus)
-        const draggedTask = statusTasks[dragIndex]
-        if (!draggedTask) return prev
-
-        const updatedTasks = tasks.map(task =>
-          task.id === draggedTask.id
-            ? { ...task, status: hoverStatus as 'todo' | 'in-progress' | 'done', updated_at: new Date() }
-            : task
-        )
-
-        return {
-          ...prev,
-          tasks: updatedTasks
-        }
-      }
-    })
-  }
-
   const onDropTask = (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => {
     setFormData(prev => ({
       ...prev,
@@ -387,26 +569,38 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     }
   }
 
-  // Mini task card component
-  interface TaskDragItem {
-    id: string
-    index: number
-    status: 'todo' | 'in-progress' | 'done'
-    type: string
-  }
-
   interface TaskCardProps {
     task: Project['tasks'][0]
     index: number
-    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => void
     onRemoveTask: (taskId: string) => void
     onUpdateTask: (taskId: string, newTitle: string) => void
     editingTaskId: string | null
     setEditingTaskId: (taskId: string | null) => void
   }
 
-  const TaskCard: React.FC<TaskCardProps> = ({ task, index, moveTask, onRemoveTask, onUpdateTask, editingTaskId, setEditingTaskId }) => {
-    const ref = React.useRef<HTMLDivElement>(null)
+  const TaskCard: React.FC<TaskCardProps> = ({ task, index, onRemoveTask, onUpdateTask, editingTaskId, setEditingTaskId }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({
+      id: task.id,
+      data: {
+        type: 'TASK',
+        task,
+        index,
+        status: task.status || 'todo'
+      }
+    })
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    }
+
     const [tempTitle, setTempTitle] = React.useState(task.title)
     const isEditing = editingTaskId === task.id
 
@@ -424,53 +618,6 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
       setEditingTaskId(null)
     }
 
-    const [, drop] = useDrop<TaskDragItem, void, Record<string, never>>({
-      accept: 'TASK',
-      hover(item: TaskDragItem, monitor) {
-        if (!ref.current) return
-
-        const dragIndex = item.index
-        const hoverIndex = index
-        const dragStatus = item.status
-        const hoverStatus = task.status || 'todo'
-
-        // Don't replace items with themselves
-        if (dragIndex === hoverIndex && dragStatus === hoverStatus) return
-
-        // Determine rectangle on screen
-        const hoverBoundingRect = ref.current.getBoundingClientRect()
-        const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
-        const clientOffset = monitor.getClientOffset()
-
-        if (!clientOffset) return
-
-        const hoverClientY = clientOffset.y - hoverBoundingRect.top
-
-        // Only perform the move when the mouse has crossed half of the items height
-        if (dragStatus === hoverStatus) {
-          // Dragging within the same column
-          if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return
-          if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return
-        }
-
-        moveTask(dragIndex, hoverIndex, dragStatus, hoverStatus)
-        item.index = hoverIndex
-        item.status = hoverStatus
-      },
-    })
-
-    const [{ isDragging }, drag] = useDrag({
-      type: 'TASK',
-      item: () => ({ id: task.id, index, status: task.status || 'todo', type: 'TASK' }),
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    })
-
-    React.useEffect(() => {
-      drag(drop(ref))
-    }, [drag, drop])
-
     const getStatusIcon = () => {
       switch (task.status) {
         case 'done':
@@ -484,7 +631,10 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
     return (
       <div
-        ref={ref}
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
         className={`
           flex items-center gap-2 p-2 bg-white dark:bg-slate-800/50 rounded-md border border-slate-200 dark:border-slate-700
           cursor-move transition-all duration-200 group
@@ -554,31 +704,23 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     title: string
     status: 'todo' | 'in-progress' | 'done'
     tasks: Project['tasks']
-    onDropTask: (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => void
-    moveTask: (dragIndex: number, hoverIndex: number, dragStatus: string, hoverStatus: 'todo' | 'in-progress' | 'done') => void
     onRemoveTask: (taskId: string) => void
     icon: React.ReactNode
+    editingTaskId: string | null
+    setEditingTaskId: (taskId: string | null) => void
+    updateTaskTitle: (taskId: string, newTitle: string) => void
   }
 
-  const TaskColumn: React.FC<TaskColumnProps> = ({ title, status, tasks, onDropTask, moveTask, onRemoveTask, icon }) => {
-    const [{ isOver }, drop] = useDrop<TaskDragItem, void, { isOver: boolean }>({
-      accept: 'TASK',
-      drop: (item) => {
-        if (item.status !== status) {
-          onDropTask(item.id, status)
-        }
-      },
-      collect: (monitor) => ({
-        isOver: monitor.isOver(),
-      }),
+  const TaskColumn: React.FC<TaskColumnProps> = ({ title, status, tasks, onRemoveTask, icon, editingTaskId, setEditingTaskId, updateTaskTitle }) => {
+    const { isOver, setNodeRef } = useDroppable({
+      id: `column-${status}`,
+      data: {
+        type: 'COLUMN',
+        status
+      }
     })
 
     const columnTasks = tasks.filter(task => task.status === status)
-    const dropRef = React.useRef<HTMLDivElement>(null)
-
-    React.useEffect(() => {
-      drop(dropRef)
-    }, [drop])
 
     const handleAddTask = () => {
       const newTask = {
@@ -597,7 +739,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
     return (
       <div
-        ref={dropRef}
+        ref={setNodeRef}
         className={`
           relative flex flex-col gap-3 rounded-xl border border-white/10
           bg-gradient-to-b from-white/[0.06] to-white/[0.02]
@@ -643,7 +785,6 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                   key={task.id}
                   task={task}
                   index={index}
-                  moveTask={moveTask}
                   onRemoveTask={onRemoveTask}
                   onUpdateTask={updateTaskTitle}
                   editingTaskId={editingTaskId}
@@ -1144,48 +1285,36 @@ React, TypeScript, Tailwind CSS
               </div>
 
               {/* Mini Kanban Board */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[160px]">
-                <TaskColumn
-                  title="To Do"
-                  status="todo"
-                  tasks={formData.tasks}
-                  onDropTask={onDropTask}
-                  moveTask={moveTask}
-                  onRemoveTask={onRemoveTaskById}
-                  icon={<Circle className="h-3 w-3 text-slate-500" />}
-                />
-                <TaskColumn
-                  title="In Progress"
-                  status="in-progress"
-                  tasks={formData.tasks}
-                  onDropTask={onDropTask}
-                  moveTask={moveTask}
-                  onRemoveTask={onRemoveTaskById}
-                  icon={<CheckSquare className="h-3 w-3 text-blue-500" />}
-                />
-                <TaskColumn
-                  title="Done"
-                  status="done"
-                  tasks={formData.tasks}
-                  onDropTask={onDropTask}
-                  moveTask={moveTask}
-                  onRemoveTask={onRemoveTaskById}
-                  icon={<CheckCircle2 className="h-3 w-3 text-green-500" />}
-                />
-              </div>
+              <TaskBoardClientOnly
+                formData={{ tasks: formData.tasks }}
+                onDropTask={onDropTask}
+                onRemoveTaskById={onRemoveTaskById}
+                setFormData={setFormData}
+                editingTaskId={editingTaskId}
+                setEditingTaskId={setEditingTaskId}
+                updateTaskTitle={updateTaskTitle}
+              />
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50" style={{ minHeight: '60px', flexShrink: 0 }}>
-          <button
-            onClick={() => onDelete(project.id)}
-            className="flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium text-sm"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Project
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onDelete(project.id)}
+              className="flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium text-sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Project
+            </button>
+            {!isAdmin && (
+              <div className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                Non-admin: Changes saved locally only
+              </div>
+            )}
+          </div>
 
           <div className="flex gap-2">
             <button
@@ -1216,7 +1345,7 @@ React, TypeScript, Tailwind CSS
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  Save Project
+                  {isAdmin ? 'Save to Database' : 'Save Locally'}
                 </>
               )}
             </button>
