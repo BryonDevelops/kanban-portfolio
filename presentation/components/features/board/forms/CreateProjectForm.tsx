@@ -3,7 +3,7 @@ import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
 import { SupabaseBoardRepository } from '@/infrastructure/database/repositories/supaBaseBoardRepository';
-import { ProjectCreate } from '../../../domain/board/schemas/project.schema';
+import { ProjectCreate } from '../../../../../domain/board/schemas/project.schema';
 import { Plus, X } from 'lucide-react';
 
 interface CreateProjectFormProps {

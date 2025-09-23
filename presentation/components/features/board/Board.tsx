@@ -8,7 +8,7 @@ import { Trash2, MoreHorizontal } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Project } from '../../../../domain/board/schemas/project.schema';
-import EditProjectForm from '../../forms/EditProjectForm';
+import EditProjectForm from './forms/EditProjectForm';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useIsAdmin } from '../../shared/ProtectedRoute';
