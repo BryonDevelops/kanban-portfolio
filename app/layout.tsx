@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./styles/globals.css";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { SidebarProvider, SidebarInset } from "@/presentation/components/ui/sidebar";
 import { AppSidebar } from "@/presentation/components/layout/app-sidebar";
 import { Topbar } from "@/presentation/components/layout/topbar";
+import { FloatingActionContainer } from "@/presentation/components/layout/FloatingContactButton";
 import { cookies } from "next/headers";
 import { Toaster } from "@/presentation/components/ui/toaster";
+import { ThemeProvider } from "@/presentation/components/shared/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,26 +37,36 @@ async function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ClerkProvider>
-          <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <SidebarInset>
-            <div className="relative min-h-svh">
-              {/* Shared background wrapper for smooth transitions */}
-              <div className="absolute inset-0 -z-20 bg-background transition-colors duration-300" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
-                <div className="flex items-center p-1 sm:p-2 pointer-events-auto">
-                  <div className="flex items-center gap-2 sm:gap-4 w-full justify-between">
-                    <Topbar />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <AppSidebar />
+              <SidebarInset>
+                <div className="relative min-h-svh">
+                  {/* Shared background wrapper for smooth transitions - transparent for homepage */}
+                  <div className="absolute inset-0 -z-20 bg-transparent transition-colors duration-300" />
+                  {/* Lattice pattern covering entire viewport */}
+                  <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-transparent">
+                    <div className="flex items-center p-1 sm:p-2 pointer-events-auto bg-transparent">
+                      <div className="flex items-center gap-2 sm:gap-4 w-full justify-between">
+                        <Topbar />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="sm:mt-12">
+                    {children}
                   </div>
                 </div>
-              </div>
-              <div className="sm:mt-12">
-                {children}
-              </div>
-            </div>
-          </SidebarInset>
-          <Toaster />
-          </SidebarProvider>
+              </SidebarInset>
+              <FloatingActionContainer />
+              <Toaster />
+            </SidebarProvider>
+          </ThemeProvider>
         </ClerkProvider>
       </body>
     </html>

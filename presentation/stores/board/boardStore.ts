@@ -2,7 +2,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Project } from '../../../domain/board/schemas/project.schema';
-// import { Task } from '../../../domain/board/entities/task'; // Removed unused import
 import { BoardService } from '../../../services/board/boardService';
 import { SupabaseBoardRepository } from '../../../infrastructure/database/repositories/supaBaseBoardRepository';
 import { TaskService } from '../../../services/board/taskService';
@@ -15,13 +14,14 @@ type BoardState = {
   columns: Columns;
   isLoading: boolean;
   error: string | null;
+  lastFetched: number | null;
   addProject: (columnId: string, title: string, description?: string) => Promise<void>;
   updateProject: (projectId: string, updates: Partial<Project>) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
   moveProject: (fromCol: string, toCol: string, fromIndex: number, toIndex: number) => void;
   reorderProjectsInColumn: (columnId: string, newOrder: Project[]) => void;
   setColumns: (cols: Columns) => void;
-  loadProjects: () => Promise<void>;
+  loadProjects: (forceRefresh?: boolean) => Promise<void>;
 };
 
 // Initialize services
@@ -41,13 +41,30 @@ const defaultColumns: Columns = {
 
 export const useBoardStore = create<BoardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       columns: defaultColumns,
       isLoading: false,
       error: null,
+      lastFetched: null,
 
-      loadProjects: async () => {
-        set({ isLoading: true, error: null });
+      loadProjects: async (forceRefresh = false) => {
+        const state = get();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const now = Date.now();
+
+        // If we have cached data and it's still fresh (unless force refresh), use it
+        if (!forceRefresh && state.columns && Object.keys(state.columns).length > 0 &&
+            state.lastFetched && (now - state.lastFetched) < CACHE_DURATION) {
+          return; // Use cached data
+        }
+
+        // Always show cached data first if available, then fetch in background
+        const hasCachedData = state.columns && Object.keys(state.columns).some(key => state.columns[key].length > 0);
+
+        if (!hasCachedData || forceRefresh) {
+          set({ isLoading: true, error: null });
+        }
+
         try {
           const projects = await boardService.getProjects();
           const activeProjects = projects.filter((p: Project) => p.status !== 'archived');
@@ -56,12 +73,23 @@ export const useBoardStore = create<BoardState>()(
             'in-progress': activeProjects.filter((p: Project) => p.status === 'in-progress'),
             completed: activeProjects.filter((p: Project) => p.status === 'completed'),
           };
-          set({ columns: groupedProjects, isLoading: false });
-        } catch (error) {
+
           set({
-            error: error instanceof Error ? error.message : 'Failed to load projects',
-            isLoading: false
+            columns: groupedProjects,
+            isLoading: false,
+            lastFetched: now,
+            error: null
           });
+        } catch (error) {
+          // If we have cached data, keep using it even if fetch fails
+          if (hasCachedData && !forceRefresh) {
+            set({ isLoading: false });
+          } else {
+            set({
+              error: error instanceof Error ? error.message : 'Failed to load projects',
+              isLoading: false
+            });
+          }
         }
       },
 
@@ -179,8 +207,11 @@ export const useBoardStore = create<BoardState>()(
       setColumns: (cols: Columns) => set(() => ({ columns: cols })),
     }),
     {
-      name: 'kanban-board-v1',
-      partialize: (state) => ({ columns: state.columns })
+      name: 'kanban-board-v2', // Updated version to clear old cache
+      partialize: (state) => ({
+        columns: state.columns,
+        lastFetched: state.lastFetched
+      })
     }
   )
 );

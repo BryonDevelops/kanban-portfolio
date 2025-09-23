@@ -82,45 +82,45 @@ export default function MicroblogPage() {
   return (
     <div className="relative min-h-screen">
       {/* Full screen background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 -z-10" />
+      <div className="fixed inset-0 bg-gradient-to-br from-pink-50/80 via-blue-50/60 to-purple-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 -z-10" />
 
       {/* Enhanced Background Effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Primary gradient orbs */}
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-emerald-500/20 via-cyan-500/20 to-blue-500/20 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-pink-300/20 via-purple-300/20 to-blue-300/20 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-pink-500/20 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-cyan-300/20 via-emerald-300/20 to-teal-300/20 dark:from-emerald-500/20 dark:via-cyan-500/20 dark:to-blue-500/20 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
 
         {/* Secondary accent orbs */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 blur-2xl animate-pulse" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-violet-300/15 to-fuchsia-300/15 dark:from-violet-500/10 dark:to-fuchsia-500/10 blur-2xl animate-pulse" style={{ animationDelay: '4s' }} />
 
         {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.01)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl">
           {/* Hero Section */}
           <div className="text-center mb-16 sm:mb-20 lg:mb-24">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 mb-6">
-              <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
-              <span className="text-sm text-white/80 font-medium">Microblog</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 mb-6">
+              <div className="h-2 w-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 dark:from-blue-500 dark:to-purple-500 animate-pulse" />
+              <span className="text-sm text-slate-700 dark:text-white/80 font-medium">Microblog</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-slate-800 via-pink-600 to-purple-600 dark:from-white dark:via-blue-100 dark:to-purple-200 bg-clip-text text-transparent">
                 Thoughts & Insights
               </span>
               <br />
-              <span className="text-white/90">From Code to Creation</span>
+              <span className="text-slate-800 dark:text-white/90">From Code to Creation</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
               Sharing my journey through web development, design principles, and the latest in technology.
               Quick insights, deep dives, and everything in between.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button className="group relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-6 py-3">
+              <Button className="group relative overflow-hidden bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-600 dark:from-blue-600 dark:via-purple-600 dark:to-pink-600 hover:from-pink-400 hover:via-purple-500 hover:to-cyan-500 dark:hover:from-blue-500 dark:hover:via-purple-500 dark:hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-6 py-3">
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
@@ -128,7 +128,7 @@ export default function MicroblogPage() {
                 </div>
               </Button>
 
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400">
                 <TrendingUp className="h-4 w-4" />
                 <span>Weekly insights on web development</span>
               </div>
@@ -138,19 +138,19 @@ export default function MicroblogPage() {
           {/* Featured Posts */}
           <div className="mb-16 sm:mb-20 lg:mb-24">
             <div className="flex items-center gap-3 mb-8">
-              <Sparkles className="h-6 w-6 text-yellow-400" />
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Posts</h2>
+              <Sparkles className="h-6 w-6 text-pink-500 dark:text-yellow-400" />
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Featured Posts</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {featuredPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="group relative overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-white/5"
+                  className="group relative overflow-hidden bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 rounded-2xl hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-200/20 dark:hover:shadow-white/5"
                 >
                   {/* Featured badge */}
                   <div className="absolute top-4 right-4 z-10">
-                    <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 dark:from-yellow-500 dark:to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                       Featured
                     </div>
                   </div>
@@ -160,21 +160,21 @@ export default function MicroblogPage() {
                       <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${getCategoryColor(post.category)} text-white text-xs font-medium`}>
                         {post.category}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-gray-400">
                         <Calendar className="h-3 w-3" />
                         {new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-gray-400">
                         <Clock className="h-3 w-3" />
                         {post.readTime}
                       </div>
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
                       {post.title}
                     </h3>
 
-                    <p className="text-gray-300 leading-relaxed mb-4 line-clamp-3">
+                    <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-4 line-clamp-3">
                       {post.excerpt}
                     </p>
 
@@ -182,7 +182,7 @@ export default function MicroblogPage() {
                       {post.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-white/10 text-white/80 text-xs rounded-md"
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs rounded-md"
                         >
                           <Tag className="h-2 w-2" />
                           {tag}
@@ -190,7 +190,7 @@ export default function MicroblogPage() {
                       ))}
                     </div>
 
-                    <Button variant="ghost" className="group/btn p-0 h-auto text-blue-400 hover:text-blue-300 hover:bg-transparent">
+                    <Button variant="ghost" className="group/btn p-0 h-auto text-pink-600 dark:text-blue-400 hover:text-pink-700 dark:hover:text-blue-300 hover:bg-transparent">
                       <span className="flex items-center gap-2">
                         Read More
                         <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
@@ -207,20 +207,20 @@ export default function MicroblogPage() {
             {/* Categories Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-8">
-                <h3 className="text-xl font-bold text-white mb-6">Categories</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">Categories</h3>
                 <div className="space-y-3">
                   {categories.map((category) => (
                     <div
                       key={category.name}
-                      className="group flex items-center justify-between p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer"
+                      className="group flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${category.color}`} />
-                        <span className="text-white/90 group-hover:text-white transition-colors">
+                        <span className="text-slate-700 dark:text-white/90 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">
                           {category.name}
                         </span>
                       </div>
-                      <span className="text-xs text-white/60 bg-white/10 px-2 py-1 rounded-full">
+                      <span className="text-xs text-slate-600 dark:text-white/60 bg-pink-100/50 dark:bg-white/10 px-2 py-1 rounded-full">
                         {category.count}
                       </span>
                     </div>
@@ -232,15 +232,15 @@ export default function MicroblogPage() {
             {/* Recent Posts */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-8">
-                <Clock className="h-5 w-5 text-blue-400" />
-                <h3 className="text-xl font-bold text-white">Recent Posts</h3>
+                <Clock className="h-5 w-5 text-pink-500 dark:text-blue-400" />
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Recent Posts</h3>
               </div>
 
               <div className="space-y-6">
                 {recentPosts.map((post) => (
                   <div
                     key={post.id}
-                    className="group p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                    className="group p-6 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.01] cursor-pointer"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
@@ -248,18 +248,18 @@ export default function MicroblogPage() {
                           <div className={`px-2 py-1 rounded-md bg-gradient-to-r ${getCategoryColor(post.category)} text-white text-xs font-medium`}>
                             {post.category}
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-slate-500 dark:text-gray-400">
                             {new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
-                          <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-400">{post.readTime}</span>
+                          <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
+                          <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime}</span>
                         </div>
 
-                        <h4 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
+                        <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
                           {post.title}
                         </h4>
 
-                        <p className="text-gray-300 text-sm leading-relaxed mb-3 line-clamp-2">
+                        <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed mb-3 line-clamp-2">
                           {post.excerpt}
                         </p>
 
@@ -267,7 +267,7 @@ export default function MicroblogPage() {
                           {post.tags.slice(0, 2).map((tag) => (
                             <span
                               key={tag}
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-white/10 text-white/70 text-xs rounded-md"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/70 text-xs rounded-md"
                             >
                               {tag}
                             </span>
@@ -276,7 +276,7 @@ export default function MicroblogPage() {
                       </div>
 
                       <div className="flex-shrink-0">
-                        <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300 hover:bg-white/10">
+                        <Button variant="ghost" size="sm" className="text-pink-600 dark:text-blue-400 hover:text-pink-700 dark:hover:text-blue-300 hover:bg-pink-50 dark:hover:bg-white/10">
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </div>
@@ -287,7 +287,7 @@ export default function MicroblogPage() {
 
               {/* Load More */}
               <div className="text-center mt-8">
-                <Button variant="outline" className="border-white/20 bg-white/5 hover:bg-white/10 text-white px-6 py-3">
+                <Button variant="outline" className="border-pink-200/50 dark:border-white/20 bg-white/80 dark:bg-white/5 hover:bg-pink-50 dark:hover:bg-white/10 text-slate-700 dark:text-white px-6 py-3">
                   Load More Posts
                 </Button>
               </div>
