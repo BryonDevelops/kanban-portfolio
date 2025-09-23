@@ -14,4 +14,4 @@ export * from './shared';
 export { useBoardStore } from './board/boardStore';
 
 // Type exports for consumers
-export type { BoardState, Columns } from './board/boardStore';
+export type { Columns } from './board/boardStore';

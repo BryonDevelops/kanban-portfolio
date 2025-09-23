@@ -1,13 +1,12 @@
 // Project data utilities for flexible project creation
 import { Project, ProjectCreate } from '../../../domain/board/schemas/project.schema';
-import { Project as EntityProject } from '../../../domain/board/entities/project';
 import { Tag } from 'storybook/internal/types';
 
 // Simple project data interface for easy test creation
 export interface ProjectData {
   title: string;
   description?: string;
-  status?: 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'archived';
+  status?: 'idea' | 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'archived';
   technologies?: string[];
   tags?: Tag[];
   url?: string;

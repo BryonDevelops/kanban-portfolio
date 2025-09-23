@@ -1,8 +1,21 @@
-import { Task } from '../../domain/board/entities/task';
+import { Task, TaskStatus } from '../../domain/board/entities/task';
 import { IBoardRepository } from '../../domain/board/repositories/boardRepository.interface';
 
 export class TaskService {
   constructor(private repository: IBoardRepository) {}
+
+  private static mapColumnIdToStatus(columnId: string): TaskStatus {
+    switch (columnId) {
+      case 'ideas':
+        return 'todo';
+      case 'in-progress':
+        return 'in-progress';
+      case 'completed':
+        return 'done';
+      default:
+        return 'todo'; // fallback
+    }
+  }
 
   async addTask(columnId: string, title: string, description?: string): Promise<Task> {
     if (!title.trim()) {
@@ -13,12 +26,8 @@ export class TaskService {
       id: this.generateId(),
       title: title.trim(),
       description: description?.trim(),
-      status: columnId,
-      order: 0,
+      status: TaskService.mapColumnIdToStatus(columnId),
       columnId: columnId,
-      filter: function (): unknown {
-        throw new Error('Function not implemented.');
-      },
       created_at: new Date()
     };
 
@@ -140,7 +149,7 @@ export class TaskService {
 
     // Update status if moving between columns
     if (fromCol !== toCol) {
-      moved.status = toCol;
+      moved.status = TaskService.mapColumnIdToStatus(toCol);
     }
 
     const dest = fromCol === toCol ? source : Array.from(columns[toCol] ?? []);

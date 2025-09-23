@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-<<<<<<<< HEAD:tests/presentation/stories/.storybook/board/Card.stories.tsx
-import Card from '../../../../../presentation/components/board/Card'
-========
-import Card from '../../../../presentation/components/board/Card'
->>>>>>>> origin/master:tests/presentation/storybook/board/Card.stories.tsx
+import Card from '../../../../presentation/components/features/board/Card'
+import { Project } from '../../../../domain/board/schemas/project.schema'
+
 
 const meta: Meta<typeof Card> = {
   title: 'Components/Card',
@@ -20,7 +18,10 @@ export const Default: Story = {
       id: '1',
       title: 'Sample Project',
       description: 'Optional description',
-      status: 'idea'
+      status: 'idea',
+      technologies: [],
+      tags: [],
+      tasks: []
     },
     fromCol: 'ideas',
     index: 0,
