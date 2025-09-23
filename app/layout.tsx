@@ -51,14 +51,14 @@ async function RootLayout({
                   <div className="absolute inset-0 -z-20 bg-transparent transition-colors duration-300" />
                   {/* Lattice pattern covering entire viewport */}
                   <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-transparent">
-                    <div className="flex items-center p-1 sm:p-2 pointer-events-auto bg-transparent">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-transparent sticky top-0">
+                    <div className="flex items-center p-1 sm:p-2 pointer-events-auto bg-transparent backdrop-blur-sm">
                       <div className="flex items-center gap-2 sm:gap-4 w-full justify-between">
                         <Topbar />
                       </div>
                     </div>
                   </div>
-                  <div className="sm:mt-12">
+                  <div className="pt-12 sm:pt-16 md:pt-20">
                     {children}
                   </div>
                 </div>
