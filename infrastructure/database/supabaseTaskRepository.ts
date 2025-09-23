@@ -1,5 +1,6 @@
-import { getSupabase } from '../../lib/supabaseClient';
-import { Task } from '../../domain/task';
+import { getSupabase } from '../database/supabaseClient';
+import { Task } from '../../domain/board/entities/task';
+
 import { TaskRepository } from '../../domain/board/repositories/taskRepository';
 
 export class SupabaseTaskRepository implements TaskRepository {
