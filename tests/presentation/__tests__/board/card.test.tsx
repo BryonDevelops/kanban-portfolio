@@ -1,19 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-<<<<<<<< HEAD:tests/unit/__tests__/board/Card.test.tsx
-import Card from '@/presentation/components/features/board/Card';
-import { Project } from '../../../../domain/board/schemas/project.schema';
-========
-<<<<<<<< HEAD:tests/presentation/__tests__/board/card.test.tsx
-import Card from '../../../../presentation/components/board/Card';
-import { Project } from '../../../../domain/project';
-========
-import Card from '../../../components/Card';
-import { Project } from '../../../domain/project';
->>>>>>>> master:tests/__tests__/board/card.test.tsx
->>>>>>>> origin/master:tests/presentation/__tests__/board/card.test.tsx
+import Card from '../../../../presentation/components/features/board/Card';
+import { Project } from '../../../../domain/board/entities/project';
+import { DndProvider } from '../../__mocks__/react-dnd';
+import { HTML5Backend } from '../../__mocks__/react-dnd-html5-backend';
 
 const mockProject: Project = {
   id: '1',
@@ -28,7 +18,7 @@ const mockProject: Project = {
 };
 
 const CardWithDnd = ({ project, fromCol, index }: { project: Project; fromCol: string; index: number }) => (
-  <DndProvider backend={HTML5Backend}>
+  <DndProvider>
     <Card project={project} fromCol={fromCol} index={index} />
   </DndProvider>
 );
