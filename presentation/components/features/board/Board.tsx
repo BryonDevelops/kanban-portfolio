@@ -6,7 +6,7 @@ import Card from './Card';
 import { Plus, Settings, Filter, Search } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
 import { Project } from '../../../../domain/board/schemas/project.schema';
-import EditProjectForm from '../../forms/EditProjectForm';
+import EditProjectForm from './forms/EditProjectForm';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { useIsAdmin } from '../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';

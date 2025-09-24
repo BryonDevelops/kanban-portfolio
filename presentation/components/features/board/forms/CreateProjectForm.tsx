@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
-import { ProjectCreate, Project } from '../../../domain/board/schemas/project.schema';
+import { ProjectCreate, Project } from '../../../../../domain/board/schemas/project.schema';
 import { Plus, X } from 'lucide-react';
-import { useBoardStore } from '../../stores/board/boardStore';
-import { useIsAdmin } from '../shared/ProtectedRoute';
+import { useBoardStore } from '../../../../stores/board/boardStore';
+import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 
 interface CreateProjectFormProps {
