@@ -1,6 +1,6 @@
 "use client"
 
-import { useUser } from "@clerk/nextjs"
+import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
@@ -16,12 +16,13 @@ export function ProtectedRoute({
   fallback
 }: ProtectedRouteProps) {
   const { user, isLoaded } = useUser()
+  const { redirectToSignIn } = useClerk()
   const router = useRouter()
 
   useEffect(() => {
     if (isLoaded && !user) {
       // User is not signed in, redirect to sign in
-      router.push("/sign-in")
+      redirectToSignIn()
       return
     }
 
@@ -40,7 +41,7 @@ export function ProtectedRoute({
         return
       }
     }
-  }, [user, isLoaded, requireAdmin, router])
+  }, [user, isLoaded, requireAdmin, router, redirectToSignIn])
 
   // Show loading state while checking authentication
   if (!isLoaded) {

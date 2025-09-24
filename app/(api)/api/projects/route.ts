@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const projectData = validationResult.data;
-    const newProject = await boardService.createProject(projectData.title, projectData.description);
+    const newProject = await projectService.createProject(projectData);
 
     return NextResponse.json(newProject, { status: 201 });
   } catch (error) {
