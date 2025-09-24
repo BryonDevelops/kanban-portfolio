@@ -30,11 +30,14 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+          registry-url: "https://registry.tiptap.dev/"
 
       - name: Configure npm registry
         run: |
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
-          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" > .npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TIPTAP_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
@@ -71,8 +74,10 @@ jobs:
 
       - name: Configure npm registry
         run: |
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
-          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" > .npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TIPTAP_TOKEN }}
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
@@ -127,8 +132,10 @@ jobs:
 
       - name: Configure npm registry
         run: |
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
-          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" > .npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TIPTAP_TOKEN }}
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
@@ -155,8 +162,10 @@ jobs:
 
       - name: Configure npm registry
         run: |
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
-          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" > .npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TIPTAP_TOKEN }}
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
