@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 @import "tailwindcss";
+/* @import "../styles/_variables.scss"; */ /* Commented out - conflicting with Tailwind */
+/* @import "../styles/_keyframe-animations.scss"; */ /* Commented out - not needed */
+@import "./tiptap-editor.css";
 
 @custom-variant dark (&:is(.dark *));
 
