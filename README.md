@@ -1,5 +1,8 @@
 # Kanban Portfolio
 
+[![CI/CD](https://github.com/BryonDevelops/kanban-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/BryonDevelops/kanban-portfolio/actions/workflows/ci.yml)
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com)
+
 A modern, full-stack Kanban board application built with Next.js 15, TypeScript, and Supabase. Features include user authentication, admin functionality, dark/light theme support, and a clean, responsive UI.
 
 ## Features

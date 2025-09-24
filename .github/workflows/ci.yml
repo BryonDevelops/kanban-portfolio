@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - master
+      - "feature/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +18,9 @@ jobs:
   ci:
     name: Lint, Unit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,6 +30,11 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+
+      - name: Configure npm registry
+        run: |
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
 
       - name: Install dependencies
         run: npm ci
@@ -59,6 +68,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
+
+      - name: Configure npm registry
+        run: |
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
@@ -111,6 +125,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Configure npm registry
+        run: |
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
+
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
@@ -133,6 +152,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
+
+      - name: Configure npm registry
+        run: |
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> ~/.npmrc
+          echo "//registry.tiptap.dev/:_authToken=${{ secrets.NPM_TIPTAP_TOKEN }}" >> ~/.npmrc
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
