@@ -47,7 +47,7 @@ const useAvatarContext = () => {
 }
 
 const useImageLoadingStatus = (
-  src?: string,
+  src?: string | Blob,
   referrerPolicy?: React.HTMLAttributeReferrerPolicy
 ): ImageLoadingStatus => {
   const [loadingStatus, setLoadingStatus] =
@@ -70,11 +70,22 @@ const useImageLoadingStatus = (
     setLoadingStatus("loading")
     image.onload = updateStatus("loaded")
     image.onerror = updateStatus("error")
-    image.src = src
+
+    // Handle both string URLs and Blob objects
+    if (src instanceof Blob) {
+      image.src = URL.createObjectURL(src)
+    } else {
+      image.src = src
+    }
+
     if (referrerPolicy) image.referrerPolicy = referrerPolicy
 
     return () => {
       isMounted = false
+      // Clean up object URL if we created one
+      if (src instanceof Blob) {
+        URL.revokeObjectURL(image.src)
+      }
     }
   }, [src, referrerPolicy])
 
@@ -133,6 +144,11 @@ export const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
     const { onImageLoadingStatusChange } = useAvatarContext()
     const imageLoadingStatus = useImageLoadingStatus(src, props.referrerPolicy)
 
+    // Handle both string URLs and Blob objects for the img src
+    const imgSrc = React.useMemo(() => {
+      return src instanceof Blob ? URL.createObjectURL(src) : src
+    }, [src])
+
     React.useLayoutEffect(() => {
       if (imageLoadingStatus !== "idle") {
         onLoadingStatusChange?.(imageLoadingStatus)
@@ -140,13 +156,22 @@ export const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
       }
     }, [imageLoadingStatus, onLoadingStatusChange, onImageLoadingStatusChange])
 
+    // Clean up object URL when component unmounts
+    React.useEffect(() => {
+      return () => {
+        if (src instanceof Blob && imgSrc) {
+          URL.revokeObjectURL(imgSrc)
+        }
+      }
+    }, [src, imgSrc])
+
     if (imageLoadingStatus !== "loaded") return null
 
     return (
       <img
         {...props}
         ref={ref}
-        src={src}
+        src={imgSrc}
         className={`tiptap-avatar-image ${className}`}
       />
     )
