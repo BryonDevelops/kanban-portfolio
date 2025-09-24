@@ -818,8 +818,8 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   if (!isOpen) return null
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-md flex items-center justify-center p-6">
-      <div ref={modalRef} className="w-full max-w-4xl max-h-[90vh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6">
+      <div ref={modalRef} className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden">
         {/* Enhanced Header with Title, Status, and Tags */}
         <div className="border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
           {/* Top Row: Close Button */}
@@ -833,10 +833,10 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
           </div>
 
           {/* Main Header Content */}
-          <div className="px-6 pb-6">
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6">
             {/* Title Section */}
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-2 group">
+            <div className="mb-3 sm:mb-4">
+              <div className="flex items-start gap-2 sm:gap-3 mb-2 group">
                 {isEditingTitle ? (
                   <input
                     type="text"
@@ -844,14 +844,14 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     onBlur={() => setIsEditingTitle(false)}
                     onKeyPress={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
-                    className="text-2xl font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1"
+                    className="text-xl sm:text-2xl font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1"
                     placeholder="Project title..."
                     autoFocus
                   />
                 ) : (
                   <div className="relative flex-1">
                     <h1
-                      className="text-2xl font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1 relative group"
+                      className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1 relative group"
                       onClick={() => setIsEditingTitle(true)}
                     >
                       {formData.title || 'Untitled Project'}
@@ -864,12 +864,12 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                     <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   <Edit3
                     className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors group-hover:text-blue-500 group-hover:scale-110 duration-200"
                     onClick={() => setIsEditingTitle(true)}
                   />
-                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium">
+                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium hidden sm:inline">
                     Edit
                   </span>
                 </div>
@@ -878,7 +878,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
               {/* URL Link */}
               {formData.url && (
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
                   <a
                     href={formData.url}
                     target="_blank"
@@ -892,16 +892,16 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
             </div>
 
             {/* Status and Tags Row */}
-            <div className="flex items-start gap-4 flex-wrap">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
               {/* Status Selector */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Status:</span>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
                     className={`
-                      px-3 py-1 text-xs font-medium rounded-full border-2 cursor-pointer
+                      px-2 sm:px-3 py-1 text-xs font-medium rounded-full border-2 cursor-pointer
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                       transition-all duration-200 flex items-center gap-1
                       ${getStatusConfig(formData.status).color}
@@ -954,8 +954,8 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
               </div>
 
               {/* Tags Display */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Tags:</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Tags:</span>
                 <div className="flex gap-1 flex-wrap">
                   {formData.tags.map((tag, index) => (
                     <span
@@ -980,7 +980,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addTag()}
                       placeholder="Add tag..."
-                      className="w-20 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="w-16 sm:w-20 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                     <button
                       onClick={addTag}
@@ -997,8 +997,8 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 300px)' }}>
-          <div className="space-y-10">
+        <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 300px)' }}>
+          <div className="space-y-6 sm:space-y-10">
             {/* Basic Information Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -1008,7 +1008,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                 <h3 className="text-sm font-medium text-slate-900 dark:text-white">Basic Information</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* URL */}
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -1059,12 +1059,12 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
                   {!isDescriptionPreview && (
                     <div className="mb-2 p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-t-lg border-b-0">
-                      <div className="flex flex-wrap gap-1 items-center">
+                      <div className="flex flex-wrap gap-1 items-center overflow-x-auto">
                         {/* Text formatting */}
                         <button
                           type="button"
                           onClick={() => formatText('bold')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Bold (Ctrl+B)"
                         >
                           <Bold className="h-3 w-3" />
@@ -1072,7 +1072,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('italic')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Italic (Ctrl+I)"
                         >
                           <Italic className="h-3 w-3" />
@@ -1080,20 +1080,20 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('code')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Inline Code (Ctrl+`)"
                         >
                           <Code2 className="h-3 w-3" />
                         </button>
 
                         {/* Divider */}
-                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
 
                         {/* Headers */}
                         <button
                           type="button"
                           onClick={() => formatText('h1')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Heading 1"
                         >
                           H1
@@ -1101,7 +1101,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('h2')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Heading 2"
                         >
                           H2
@@ -1109,20 +1109,20 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('h3')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Heading 3"
                         >
                           H3
                         </button>
 
                         {/* Divider */}
-                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1"></div>
+                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
 
                         {/* Lists and other elements */}
                         <button
                           type="button"
                           onClick={() => formatText('ul')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Bullet List"
                         >
                           <List className="h-3 w-3" />
@@ -1130,7 +1130,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('ol')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Numbered List"
                         >
                           <ListOrdered className="h-3 w-3" />
@@ -1138,7 +1138,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('quote')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Quote"
                         >
                           <Quote className="h-3 w-3" />
@@ -1146,7 +1146,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('link')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Link (Ctrl+K)"
                         >
                           <Link className="h-3 w-3" />
@@ -1154,14 +1154,14 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                         <button
                           type="button"
                           onClick={() => formatText('codeblock')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                           title="Code Block"
                         >
                           <Code className="h-3 w-3" />
                         </button>
 
                         {/* Info hint */}
-                        <div className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+                        <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 hidden sm:block flex-shrink-0">
                           Supports Markdown • Keyboard shortcuts available
                         </div>
                       </div>
@@ -1299,34 +1299,29 @@ React, TypeScript, Tailwind CSS
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50" style={{ minHeight: '60px', flexShrink: 0 }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50" style={{ minHeight: '60px', flexShrink: 0 }}>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onDelete(project.id)}
-              className="flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium text-sm"
+              className="flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium text-sm"
             >
               <Trash2 className="h-4 w-4" />
-              Delete Project
+              <span className="hidden sm:inline">Delete Project</span>
+              <span className="sm:hidden">Delete</span>
             </button>
-            {!isAdmin && (
-              <div className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                Non-admin: Changes saved locally only
-              </div>
-            )}
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium text-sm"
+              className="flex-1 sm:flex-initial px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !formData.title.trim()}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
                 !hasChanges || isSaving || !formData.title.trim()
                   ? 'bg-slate-400 cursor-not-allowed text-slate-200'
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
@@ -1334,17 +1329,17 @@ React, TypeScript, Tailwind CSS
             >
               {isSaving ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                   Saving...
                 </>
               ) : !hasChanges ? (
                 <>
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4 mr-2" />
                   No Changes
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4 mr-2" />
                   {isAdmin ? 'Save to Database' : 'Save Locally'}
                 </>
               )}

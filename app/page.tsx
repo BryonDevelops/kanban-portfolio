@@ -69,10 +69,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
-      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-2 sm:py-4 lg:py-6 xl:py-8">
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-1 sm:py-2 lg:py-4 xl:py-6">
         <div className="mx-auto max-w-7xl">
           {/* Hero Section */}
-          <div className="text-center mb-4 sm:mb-8 lg:mb-12 xl:mb-16">
+          <div className="text-center mb-2 sm:mb-4 lg:mb-8 xl:mb-12">
             {/* Sleek Brand Header */}
             <div className="relative mb-2 sm:mb-4">
               <div className="relative inline-block">

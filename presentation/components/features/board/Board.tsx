@@ -4,14 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Column from './Column';
 import Card from './Card';
 import { Plus, Settings, Filter, Search } from 'lucide-react';
-import { Trash2, MoreHorizontal } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 import EditProjectForm from './forms/EditProjectForm';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { useIsAdmin } from '../../shared/ProtectedRoute';
+import { useUser } from '@clerk/nextjs';
 
 const columnOrder = ['ideas', 'in-progress', 'completed'];
 
@@ -41,16 +39,16 @@ const loadBoardStateFromLocalStorage = (): Record<string, Project[]> | null => {
 
 export default function Board() {
   const isAdmin = useIsAdmin()
+  const { user, isLoaded } = useUser()
+  const isLoggedIn = isLoaded && !!user
+  const canSaveToDatabase = isLoggedIn && isAdmin
   const columns = useBoardStore((s) => s.columns);
   const isLoading = useBoardStore((s) => s.isLoading);
   const error = useBoardStore((s) => s.error);
   const setColumns = useBoardStore((s) => s.setColumns);
-  const addProject = useBoardStore((s) => s.addProject);
   const deleteProject = useBoardStore((s) => s.deleteProject);
   const updateProject = useBoardStore((s) => s.updateProject);
   const loadProjects = useBoardStore((s) => s.loadProjects);
-  const [quickAdd, setQuickAdd] = useState<{ colId: string | null; title: string; description: string }>({ colId: null, title: "", description: "" });
-  const [open, setOpen] = useState(false);
   const [editModal, setEditModal] = useState<{ isOpen: boolean; project: Project | null }>({ isOpen: false, project: null });
   const [columnFilters, setColumnFilters] = useState<Record<string, {
     searchTerm: string;
@@ -74,7 +72,9 @@ export default function Board() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // Reduce activation distance
+        distance: 5, // Reduced for more responsive activation
+        delay: 0, // Removed delay for instant response
+        tolerance: 3, // Reduced tolerance for more precise control
       },
     })
   );
@@ -141,11 +141,11 @@ export default function Board() {
       const newStatus = statusMap[targetColumn];
       if (!newStatus) return;
 
-      // Update project status - check admin permissions
-      if (isAdmin) {
+      // Update project status - check permissions
+      if (canSaveToDatabase) {
         updateProject(draggedProject.id, { status: newStatus });
       } else {
-        // For non-admin users, update locally and save to localStorage
+        // For users without database save permissions, update locally and save to localStorage
         const newColumns = { ...columns };
         // Remove from source column
         Object.keys(newColumns).forEach((colId: string) => {
@@ -199,11 +199,11 @@ export default function Board() {
         const newStatus = statusMap[targetColumn];
         if (!newStatus) return;
 
-        // Update project status - check admin permissions
-        if (isAdmin) {
+        // Update project status - check permissions
+        if (canSaveToDatabase) {
           updateProject(draggedProject.id, { status: newStatus });
         } else {
-          // For non-admin users, update locally and save to localStorage
+          // For users without database save permissions, update locally and save to localStorage
           const newColumns = { ...columns };
           // Remove from source column
           Object.keys(newColumns).forEach((colId: string) => {
@@ -223,16 +223,11 @@ export default function Board() {
       }
     }
   };
-  const handleAddProject = (columnId: string) => {
-    setQuickAdd({ colId: columnId, title: '', description: '' });
-    setOpen(true);
-  };
-
   const handleDeleteProject = (projectId: string) => {
-    if (isAdmin) {
+    if (canSaveToDatabase) {
       deleteProject(projectId);
     } else {
-      // For non-admin users, delete locally and save to localStorage
+      // For users without database save permissions, delete locally and save to localStorage
       const newColumns = { ...columns };
       Object.keys(newColumns).forEach((colId: string) => {
         newColumns[colId] = newColumns[colId].filter((p: Project) => p.id !== projectId);
@@ -243,6 +238,54 @@ export default function Board() {
       // Show toast for local save
       import("@/presentation/utils/toast").then(({ info }) => {
         info("Project deleted locally!", "Changes saved in your browser. Only admins can save to the database.");
+      });
+    }
+  };
+
+  const handleMoveToColumn = (projectId: string, targetColumn: string) => {
+    // Find the project and its current column
+    let sourceColumn = '';
+    let draggedProject: Project | undefined;
+
+    Object.entries(columns).forEach(([columnId, projects]) => {
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        sourceColumn = columnId;
+        draggedProject = project;
+      }
+    });
+
+    if (!draggedProject || sourceColumn === targetColumn) return;
+
+    // Map column to status
+    const statusMap: Record<string, 'planning' | 'in-progress' | 'completed'> = {
+      'ideas': 'planning',
+      'in-progress': 'in-progress',
+      'completed': 'completed'
+    };
+
+    const newStatus = statusMap[targetColumn];
+    if (!newStatus) return;
+
+    // Update project status - check permissions
+    if (canSaveToDatabase) {
+      updateProject(draggedProject.id, { status: newStatus });
+    } else {
+      // For users without database save permissions, update locally and save to localStorage
+      const newColumns = { ...columns };
+      // Remove from source column
+      Object.keys(newColumns).forEach((colId: string) => {
+        newColumns[colId] = newColumns[colId].filter((p: Project) => p.id !== draggedProject!.id);
+      });
+      // Add to target column
+      if (!newColumns[targetColumn]) newColumns[targetColumn] = [];
+      newColumns[targetColumn].push({ ...draggedProject!, status: newStatus, updated_at: new Date() });
+      // Save to localStorage and update state
+      saveBoardStateToLocalStorage(newColumns);
+      setColumns(newColumns);
+      // Show toast for local save
+      import("@/presentation/utils/toast").then(({ info }) => {
+        info("Project moved locally!", "Changes saved in your browser. Only admins can save to the database.");
       });
     }
   };
@@ -262,29 +305,39 @@ export default function Board() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Always load projects from database on component mount
-    loadProjects().catch((error) => {
-      console.error('Failed to load projects from service layer:', error);
-      // If there's an error loading from database, keep existing state
-    });
+    // Only load projects from database if user is logged in
+    if (isLoggedIn) {
+      loadProjects().catch((error) => {
+        console.error('Failed to load projects from service layer:', error);
+        // If there's an error loading from database, keep existing state
+      });
+    }
 
-    // For non-admin users, also load any local changes from localStorage
-    if (!isAdmin) {
+    // For users without database save permissions, load any local changes from localStorage
+    if (!canSaveToDatabase) {
       const localState = loadBoardStateFromLocalStorage();
       if (localState) {
         setColumns(localState);
       }
     }
-  }, [loadProjects, setColumns, isAdmin]);
+  }, [loadProjects, setColumns, isLoggedIn, canSaveToDatabase]);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={rectIntersection}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="h-full flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-x-hidden">
+    <div className="relative h-full">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={(event) => {
+          // Add visual feedback during drag
+          const { over } = event;
+          if (over && over.id !== 'dragged-item') {
+            // Could add additional visual feedback here if needed
+          }
+        }}
+      >
+      <div className="h-full flex flex-col lg:flex-row gap-4 md:gap-5 lg:gap-6 overflow-x-hidden">
       {isLoading && (
         <div className="fixed top-6 right-4 sm:right-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
           <div className="bg-card text-card-foreground px-4 sm:px-6 py-3 rounded-xl shadow-xl border border-border backdrop-blur-md">
@@ -316,26 +369,26 @@ export default function Board() {
 
           <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0">
             {/* Enhanced Column Header */}
-            <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-6 sm:px-8 py-4 sm:py-6 bg-card/95 backdrop-blur-xl border-b border-border flex-shrink-0">
+            <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 md:-mx-8 -mt-4 sm:-mt-6 md:-mt-8 px-6 sm:px-8 md:px-10 py-4 sm:py-6 md:py-8 bg-card/95 backdrop-blur-xl border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 pl-4 sm:pl-6">
-                  <div className={`h-3 w-3 rounded-full ${
+                <div className="flex items-center gap-2 md:gap-3 pl-4 sm:pl-6 md:pl-8">
+                  <div className={`h-3 w-3 md:h-4 md:w-4 rounded-full ${
                     colId === 'ideas' ? 'bg-blue-400 shadow-lg shadow-blue-400/50' :
                     colId === 'in-progress' ? 'bg-amber-400 shadow-lg shadow-amber-400/50' :
                     'bg-emerald-400 shadow-lg shadow-emerald-400/50'
                   }`} />
-                  <h3 className="font-bold text-base sm:text-lg capitalize text-card-foreground">{colId.replace('-', ' ')}</h3>
+                  <h3 className="font-bold text-base sm:text-lg md:text-xl capitalize text-card-foreground">{colId.replace('-', ' ')}</h3>
                   <button
                     type="button"
                     aria-label="Column settings"
                     title="Column settings"
-                    className="inline-flex size-7 sm:size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 hover:scale-110"
+                    className="inline-flex size-8 sm:size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 hover:scale-110"
                   >
                     <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 sm:gap-3">
                   {/* Filter Button */}
                   <div className="relative">
                     <button
@@ -343,7 +396,7 @@ export default function Board() {
                       aria-label="Filter projects"
                       title="Filter projects"
                       onClick={() => setFilterDropdowns(prev => ({ ...prev, [colId]: !prev[colId] }))}
-                      className={`inline-flex size-7 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 ${
+                      className={`inline-flex size-8 sm:size-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 ${
                         Object.values(columnFilters[colId]).some(Boolean)
                           ? 'text-primary bg-primary/20 hover:bg-primary/30'
                           : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -354,8 +407,8 @@ export default function Board() {
 
                     {/* Filter Dropdown */}
                     {filterDropdowns[colId] && (
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-popover backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 p-4">
-                        <div className="space-y-4">
+                      <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 md:w-72 bg-popover backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 p-3 sm:p-4 md:p-5">
+                        <div className="space-y-3 sm:space-y-4 md:space-y-5">
                           {/* Search */}
                           <div>
                             <label className="block text-sm font-medium text-popover-foreground mb-2">Search</label>
@@ -369,7 +422,7 @@ export default function Board() {
                                   ...prev,
                                   [colId]: { ...prev[colId], searchTerm: e.target.value }
                                 }))}
-                                className="w-full pl-10 pr-4 py-2 bg-input border border-border rounded-lg text-popover-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200"
+                                className="w-full pl-10 pr-4 py-2 bg-input border border-border rounded-lg text-popover-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 text-sm"
                               />
                             </div>
                           </div>
@@ -442,8 +495,8 @@ export default function Board() {
                     type="button"
                     aria-label="Add project"
                     title="Add project"
-                    onClick={() => { setQuickAdd({ colId, title: '', description: '' }); setOpen(true); }}
-                    className="inline-flex size-7 sm:size-8 items-center justify-center rounded-xl border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+                    onClick={() => {}}
+                    className="inline-flex size-8 sm:size-8 items-center justify-center rounded-xl border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   </button>
@@ -452,105 +505,19 @@ export default function Board() {
             </div>
 
             {/* Enhanced Column Content */}
-            <div className="pt-6 sm:pt-8 px-4 sm:px-6 pb-4 sm:pb-6 flex-1 space-y-4">
-              <SortableContext items={(columns[colId] ?? []).map(p => p.id)} strategy={verticalListSortingStrategy}>
-                <Column
-                  columnId={colId}
-                  projects={columns[colId] ?? []}
-                  filters={columnFilters[colId]}
-                  onAddProject={handleAddProject}
-                  onDeleteProject={handleDeleteProject}
-                  onOpenEditModal={handleOpenEditModal}
-                />
-              </SortableContext>
+            <div className="pt-6 sm:pt-8 md:pt-10 px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8 flex-1 space-y-4 md:space-y-6">
+              <Column
+                columnId={colId}
+                projects={columns[colId] ?? []}
+                filters={columnFilters[colId]}
+                onDeleteProject={handleDeleteProject}
+                onOpenEditModal={handleOpenEditModal}
+                onMoveToColumn={handleMoveToColumn}
+              />
             </div>
           </div>
         </div>
       ))}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-card backdrop-blur-xl border border-border shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-card-foreground">Add Project</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Create a new task in &quot;{quickAdd.colId?.replace('-', ' ')}&quot;.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const t = quickAdd.title.trim();
-              if (!t || !quickAdd.colId) return;
-
-              if (isAdmin) {
-                await addProject(quickAdd.colId, t, quickAdd.description.trim() || undefined);
-              } else {
-                // For non-admin users, add project locally and save to localStorage
-                const newProject: Project = {
-                  id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  title: t,
-                  description: quickAdd.description.trim() || undefined,
-                  status: quickAdd.colId === 'ideas' ? 'planning' : quickAdd.colId === 'in-progress' ? 'in-progress' : 'completed',
-                  technologies: [],
-                  tags: [],
-                  tasks: [],
-                  created_at: new Date(),
-                  updated_at: new Date()
-                };
-
-                const newColumns = { ...columns };
-                if (!newColumns[quickAdd.colId!]) newColumns[quickAdd.colId!] = [];
-                newColumns[quickAdd.colId!].push(newProject);
-                // Save to localStorage and update state
-                saveBoardStateToLocalStorage(newColumns);
-                setColumns(newColumns);
-
-                // Show toast for local save
-                import("@/presentation/utils/toast").then(({ info }) => {
-                  info("Project added locally!", "Changes saved in your browser. Only admins can save to the database.");
-                });
-              }
-
-              setOpen(false);
-              setQuickAdd({ colId: null, title: '', description: '' });
-            }}
-          >
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Project title"
-                value={quickAdd.title}
-                onChange={(e) => setQuickAdd((p) => ({ ...p, title: e.target.value }))}
-                autoFocus
-                className="w-full rounded-xl border border-border bg-input px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200"
-              />
-              <textarea
-                placeholder="Description (optional)"
-                value={quickAdd.description}
-                onChange={(e) => setQuickAdd((p) => ({ ...p, description: e.target.value }))}
-                rows={4}
-                className="w-full resize-none rounded-xl border border-border bg-input px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200"
-              />
-            </div>
-            <DialogFooter className="mt-6 gap-3">
-              <button
-                type="button"
-                onClick={() => { setOpen(false); setQuickAdd({ colId: null, title: '', description: '' }); }}
-                className="px-4 py-2 rounded-lg border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Save Project
-              </button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Full-screen Edit Project Modal */}
       {editModal.isOpen && editModal.project && (
@@ -566,16 +533,20 @@ export default function Board() {
 
       <DragOverlay>
         {activeId && activeProject ? (
-          <Card
-            project={activeProject}
-            fromCol=""
-            index={0}
-            onDelete={() => {}}
-            onOpenEditModal={() => {}}
-            isDragOverlay={true}
-          />
+          <div className="shadow-2xl ring-2 ring-primary/50 bg-card/95 backdrop-blur-sm transform-none">
+            <Card
+              project={activeProject}
+              fromCol=""
+              index={0}
+              onDelete={() => {}}
+              onOpenEditModal={() => {}}
+              onMoveToColumn={() => {}}
+              isDragOverlay={true}
+            />
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>
+    </div>
   );
 }

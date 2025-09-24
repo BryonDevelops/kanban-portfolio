@@ -19,9 +19,10 @@ interface ColumnProps {
   onAddProject?: (columnId: string) => void;
   onDeleteProject?: (projectId: string) => void;
   onOpenEditModal?: (project: Project) => void;
+  onMoveToColumn?: (projectId: string, targetColumn: string) => void;
 }
 
-const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProject, onDeleteProject, onOpenEditModal }) => {
+const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProject, onDeleteProject, onOpenEditModal, onMoveToColumn }) => {
 
   // Local state for optimistic updates during drag
   const [localProjects, setLocalProjects] = useState(projects);
@@ -75,10 +76,10 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
     <div
       ref={setNodeRef}
       className="
-        relative flex flex-col gap-4 rounded-xl border border-border
+        relative flex flex-col gap-4 md:gap-6 rounded-xl border border-border
         bg-card
         backdrop-blur-sm shadow-lg
-        p-3 sm:p-4 min-h-[200px]
+        p-3 sm:p-4 md:p-6 min-h-[200px]
         transition-all duration-300 ease-out
         ${isOver
           ? 'ring-2 ring-ring shadow-2xl bg-accent scale-[1.02]'
@@ -94,7 +95,7 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
       `} />
 
       {/* Content container */}
-      <div className="relative z-10 flex flex-col gap-4">
+      <div className="relative z-10 flex flex-col gap-4 md:gap-6">
         {filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="h-12 w-12 rounded-full bg-pink-100/50 dark:bg-white/5 flex items-center justify-center mb-3">
@@ -117,6 +118,7 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
                 index={i}
                 onDelete={onDeleteProject}
                 onOpenEditModal={onOpenEditModal}
+                onMoveToColumn={onMoveToColumn}
               />
             ))}
           </SortableContext>

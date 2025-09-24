@@ -4,8 +4,8 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
-import { SignedIn, UserButton, useUser } from "@clerk/nextjs"
-import { ChevronDown, ChevronRight, Settings } from "lucide-react"
+import { SignedIn, SignedOut, UserButton, SignInButton, SignUpButton, useUser, useClerk } from "@clerk/nextjs"
+import { ChevronDown, ChevronRight, Settings, LogOut, User } from "lucide-react"
 
 import {
   Sidebar,
@@ -21,6 +21,7 @@ import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, setOpen } = useSidebar()
   const { user } = useUser()
+  const { signOut, openUserProfile } = useClerk()
   const isAdmin = useIsAdmin()
   const [adminOpen, setAdminOpen] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
@@ -57,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div className="flex items-center justify-center py-3">
               {isHydrated && (
                 <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                  <UserButton />
                 </SignedIn>
               )}
             </div>
@@ -95,23 +96,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {/* Subtle animated background effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
 
-          <div className="relative flex items-center gap-3 px-4 py-4">
-            {/* User Button */}
+          <div className="relative flex flex-col gap-3 px-4 py-4">
+            {/* Signed In User */}
             {isHydrated && (
               <SignedIn>
-                <div className="flex items-center justify-center">
-                  <UserButton afterSignOutUrl="/" />
+                <div className="flex items-center justify-center w-full">
+                  <div className="flex items-center gap-2">
+                    <UserButton />
+                    <span className="text-lg font-bold text-pink-600 dark:text-pink-400 truncate">
+                      {user?.fullName}
+                    </span>
+                  </div>
                 </div>
               </SignedIn>
             )}
-            <div className="flex flex-col min-w-0 flex-1 ml-2">
-              <span className="text-sm font-bold bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
-                {user?.firstName}
-              </span>
-            </div>
 
-            {/* Decorative element */}
-            <div className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 animate-pulse" />
+            {/* Signed Out - Auth Buttons */}
+            {isHydrated && (
+              <SignedOut>
+                <div className="flex flex-col gap-2">
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium text-sidebar-foreground/80 mb-3">Welcome!</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <SignInButton>
+                      <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent/70 border border-sidebar-border/50 rounded-md transition-colors">
+                        Sign In
+                      </button>
+                    </SignInButton>
+                    <SignUpButton>
+                      <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-gradient-to-r from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border border-purple-400/30 rounded-md transition-all duration-200">
+                        Sign Up
+                      </button>
+                    </SignUpButton>
+                  </div>
+                </div>
+              </SignedOut>
+            )}
           </div>
         </SidebarHeader>
       )}
@@ -119,6 +140,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {state !== "collapsed" && (
         <SidebarContent className="px-2 pt-6">
           <NavMain items={sidebarConfig.navMain} />
+
+          {/* User Actions */}
+          {isHydrated && (
+            <SignedIn>
+              <div className="mt-4 space-y-1">
+                <SidebarSeparator className="mb-2" />
+                <button
+                  onClick={() => openUserProfile()}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span>View Profile</span>
+                </button>
+                <button
+                  onClick={() => signOut({ redirectUrl: "/" })}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Log Out</span>
+                </button>
+              </div>
+            </SignedIn>
+          )}
+
           {sidebarConfig.navSecondary.length > 0 && (
             <>
               <SidebarSeparator />
