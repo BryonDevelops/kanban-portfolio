@@ -3,12 +3,12 @@
 import React, { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Button } from '@/presentation/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog'
 import { Input } from '@/presentation/components/ui/input'
 import { Textarea } from '@/presentation/components/ui/textarea'
-import { TiptapEditor } from '@/presentation/components/ui/tiptap-editor'
-import { Edit, Trash2, Plus } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 import { BlogPost } from './BlogPostPortal'
+import { StreamlinedBlogEditor } from './forms/StreamlinedBlogEditor';
 
 interface AdminControlsProps {
   onCreatePost?: (post: Omit<BlogPost, 'id'>) => void
@@ -64,82 +64,17 @@ export function PostAdminButtons({
 // Component for the create post button
 export function CreatePostButton({ onCreatePost }: { onCreatePost?: (post: Omit<BlogPost, 'id'>) => void }) {
   const { user, isLoaded } = useUser()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [content, setContent] = useState('')
   const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
 
   if (!isAdmin) return null
 
-  const handleCreatePost = (formData: FormData) => {
-    const newPost: Omit<BlogPost, 'id'> = {
-      title: formData.get('title') as string,
-      excerpt: formData.get('excerpt') as string,
-      content: content, // Use the HTML content from Tiptap
-      author: user?.firstName + ' ' + user?.lastName || 'Admin',
-      publishedAt: new Date().toISOString(),
-      tags: (formData.get('tags') as string).split(',').map(tag => tag.trim()).filter(Boolean),
-      readTime: parseInt(formData.get('readTime') as string) || 5,
-      imageUrl: formData.get('imageUrl') as string || undefined
-    }
-
-    onCreatePost?.(newPost)
-    setIsDialogOpen(false)
-    setContent('') // Reset content
-  }
-
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg">
-          <Plus className="h-4 w-4 mr-2" />
-          New Post
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Post</DialogTitle>
-        </DialogHeader>
-        <form action={handleCreatePost} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <Input name="title" required placeholder="Post title" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Excerpt</label>
-            <Textarea name="excerpt" required placeholder="Brief description" rows={3} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Content</label>
-            <TiptapEditor
-              content={content}
-              onChange={setContent}
-              placeholder="Write your post content here..."
-              height="300px"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
-            <Input name="tags" placeholder="React, Next.js, TypeScript" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Read Time (minutes)</label>
-              <Input name="readTime" type="number" defaultValue="5" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
-              <Input name="imageUrl" placeholder="https://..." />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Create Post</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <StreamlinedBlogEditor
+      onBlogPostCreated={() => {
+        // The StreamlinedBlogEditor handles the creation internally
+        // We could add a callback here if needed
+      }}
+    />
   )
 }
 
@@ -156,24 +91,34 @@ export function EditPostDialog({
   onEditPost?: (postId: string, post: Partial<BlogPost>) => void
 }) {
   const [content, setContent] = useState('')
+  const [title, setTitle] = useState('')
+  const [excerpt, setExcerpt] = useState('')
+  const [tags, setTags] = useState('')
+  const [readTime, setReadTime] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
 
-  // Update content when post changes
+  // Update state when post changes
   React.useEffect(() => {
     if (post) {
       setContent(post.content)
+      setTitle(post.title)
+      setExcerpt(post.excerpt)
+      setTags(post.tags.join(', '))
+      setReadTime(post.readTime.toString())
+      setImageUrl(post.imageUrl || '')
     }
   }, [post])
 
   if (!post) return null
 
-  const handleEditPost = (formData: FormData) => {
+  const handleEditPost = () => {
     const updatedPost: Partial<BlogPost> = {
-      title: formData.get('title') as string,
-      excerpt: formData.get('excerpt') as string,
-      content: content, // Use the HTML content from Tiptap
-      tags: (formData.get('tags') as string).split(',').map(tag => tag.trim()).filter(Boolean),
-      readTime: parseInt(formData.get('readTime') as string) || 5,
-      imageUrl: formData.get('imageUrl') as string || undefined
+      title,
+      excerpt,
+      content,
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      readTime: parseInt(readTime) || 5,
+      imageUrl: imageUrl || undefined
     }
 
     onEditPost?.(post.id, updatedPost)
@@ -186,45 +131,47 @@ export function EditPostDialog({
         <DialogHeader>
           <DialogTitle>Edit Post</DialogTitle>
         </DialogHeader>
-        <form action={handleEditPost} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
-            <Input name="title" defaultValue={post.title} required />
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Excerpt</label>
-            <Textarea name="excerpt" defaultValue={post.excerpt} required rows={3} />
+            <Textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} required rows={3} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Content</label>
-            <TiptapEditor
-              content={content}
-              onChange={setContent}
-              placeholder="Write your post content here..."
-              height="300px"
-            />
+            <div className="border rounded-lg p-4 bg-background">
+              <textarea
+                value={content.replace(/<[^>]*>/g, '')} // Simple text extraction for editing
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full min-h-[200px] border-none outline-none resize-none"
+                placeholder="Edit your post content..."
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
-            <Input name="tags" defaultValue={post.tags.join(', ')} />
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Read Time (minutes)</label>
-              <Input name="readTime" type="number" defaultValue={post.readTime} />
+              <Input value={readTime} onChange={(e) => setReadTime(e.target.value)} type="number" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
-              <Input name="imageUrl" defaultValue={post.imageUrl || ''} />
+              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Update Post</Button>
+            <Button onClick={handleEditPost}>Update Post</Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

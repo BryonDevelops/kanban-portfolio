@@ -1,0 +1,285 @@
+/* Tiptap Editor Styles for Notion-like functionality */
+
+/* Drag Handle Styles */
+.custom-drag-handle {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.custom-drag-handle:hover {
+  opacity: 1 !important;
+  background: var(--accent);
+}
+
+.custom-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Show drag handle on hover */
+.ProseMirror:hover .custom-drag-handle {
+  opacity: 0.7;
+}
+
+/* Table Styles */
+.ProseMirror table {
+  border-collapse: collapse;
+  margin: 0;
+  overflow: hidden;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  min-width: 1em;
+  padding: 8px 12px;
+  position: relative;
+  vertical-align: top;
+}
+
+.ProseMirror table th {
+  background: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+
+.ProseMirror table .selectedCell {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.ProseMirror table .column-resize-handle {
+  background: var(--primary);
+  bottom: 0;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 4px;
+  z-index: 20;
+  cursor: col-resize;
+}
+
+.ProseMirror table .column-resize-handle:hover {
+  background: var(--primary);
+}
+
+/* Table controls */
+.table-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.table-controls button {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.table-controls button:hover {
+  background: var(--accent);
+}
+
+/* Block-level elements styling for Notion-like appearance */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  margin: 1.5em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.3em;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2em;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25em;
+}
+
+.ProseMirror p {
+  margin: 0.75em 0;
+  line-height: 1.6;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid var(--primary);
+  margin: 1.5em 0;
+  padding-left: 1em;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.ProseMirror code {
+  background: var(--muted);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.9em;
+}
+
+.ProseMirror pre {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1em;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Focus and selection styles */
+.ProseMirror-focused {
+  outline: none;
+}
+
+.ProseMirror-selectednode {
+  outline: 2px solid var(--primary);
+  border-radius: 4px;
+}
+
+/* Placeholder styling */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Link styling */
+.ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.ProseMirror a:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* Image styling */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1em 0;
+}
+
+/* Horizontal rule */
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+/* Task list styling */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ProseMirror ul[data-type="taskList"] li input {
+  margin: 0;
+  margin-top: 2px;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 1;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* Comments styling (for premium extension) */
+.comment-highlight {
+  background: rgba(255, 235, 59, 0.2);
+  border-left: 3px solid #ffeb3b;
+  padding-left: 8px;
+  margin: 4px 0;
+}
+
+/* Unique ID styling for block identification */
+[data-unique-id] {
+  position: relative;
+}
+
+/* Hover effects for blocks */
+.ProseMirror p:hover,
+.ProseMirror h1:hover,
+.ProseMirror h2:hover,
+.ProseMirror h3:hover,
+.ProseMirror h4:hover,
+.ProseMirror h5:hover,
+.ProseMirror h6:hover,
+.ProseMirror blockquote:hover,
+.ProseMirror ul:hover,
+.ProseMirror ol:hover,
+.ProseMirror pre:hover {
+  background: rgba(var(--accent), 0.05);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .custom-drag-handle {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  .ProseMirror table th {
+    background: var(--muted);
+  }
+}
