@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
-import { SupabaseBoardRepository } from '@/infrastructure/database/repositories/supaBaseBoardRepository';
-import { ProjectCreate } from '../../../domain/board/schemas/project.schema';
+import { ProjectCreate, Project } from '../../../domain/board/schemas/project.schema';
 import { Plus, X } from 'lucide-react';
+import { useBoardStore } from '../../stores/board/boardStore';
+import { useIsAdmin } from '../shared/ProtectedRoute';
+import { useUser } from '@clerk/nextjs';
 
 interface CreateProjectFormProps {
   onProjectCreated?: () => void;
@@ -15,6 +17,24 @@ export function CreateProjectForm({ onProjectCreated, trigger }: CreateProjectFo
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setColumns, columns } = useBoardStore();
+  const isAdmin = useIsAdmin();
+  const { user, isLoaded } = useUser();
+  const isLoggedIn = isLoaded && !!user;
+  const canSaveToDatabase = isLoggedIn && isAdmin;
+
+  const BOARD_LOCAL_STORAGE_KEY = 'kanban-board-local-state';
+
+  const saveBoardStateToLocalStorage = (columns: Record<string, Project[]>) => {
+    try {
+      localStorage.setItem(BOARD_LOCAL_STORAGE_KEY, JSON.stringify({
+        columns,
+        savedAt: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('Failed to save board state to localStorage:', error);
+    }
+  };
 
   // Form state
   const [formData, setFormData] = useState<ProjectCreate>({
@@ -44,17 +64,63 @@ export function CreateProjectForm({ onProjectCreated, trigger }: CreateProjectFo
         throw new Error('Project title is required');
       }
 
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      if (canSaveToDatabase) {
+        // Save to database via API
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create project');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create project');
+        }
+
+        // Show success toast
+        import("@/presentation/utils/toast").then(({ success }) => {
+          success("Project created!", `"${formData.title}" has been successfully created.`);
+        });
+      } else {
+        // Save locally to localStorage
+        const newProject: Project = {
+          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title: formData.title.trim(),
+          description: formData.description?.trim() || undefined,
+          url: formData.url?.trim() || undefined,
+          status: formData.status,
+          technologies: formData.technologies,
+          tags: formData.tags,
+          tasks: formData.tasks || [],
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+
+        // Determine which column to add the project to based on status
+        const columnId =
+          formData.status === 'planning' || formData.status === 'on-hold' ? 'ideas' :
+          formData.status === 'in-progress' ? 'in-progress' :
+          'completed';
+
+        // Add project to local state
+        const newColumns = { ...columns };
+        if (!newColumns[columnId]) {
+          newColumns[columnId] = [];
+        }
+        newColumns[columnId].push(newProject);
+        setColumns(newColumns);
+
+        // Save to localStorage
+        saveBoardStateToLocalStorage(newColumns);
+
+        // Show success toast
+        import("@/presentation/utils/toast").then(({ success }) => {
+          success("Project created locally!", `"${formData.title}" has been saved to your browser. Only admins can save to the database.`);
+        });
       }
 
       // Reset form
@@ -71,11 +137,6 @@ export function CreateProjectForm({ onProjectCreated, trigger }: CreateProjectFo
       });
       setTechInput('');
       setTagInput('');
-
-      // Show success toast
-      import("@/presentation/utils/toast").then(({ success }) => {
-        success("Project created!", `"${formData.title}" has been successfully created.`);
-      });
 
       // Close dialog and notify parent
       setOpen(false);
