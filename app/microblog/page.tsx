@@ -5,6 +5,7 @@ import { BlogPostPortal, BlogPost } from '../../presentation/components/features
 import { Badge } from '../../presentation/components/ui/badge'
 import { Clock, ArrowRight, BookOpen, Sparkles, TrendingUp } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
+import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { recentPosts } from './data/blog-posts'
 import { featuredPosts } from './data/blog-post-featured'
 import { categories } from './data/blog-post-categories'
@@ -57,6 +58,7 @@ export default function MicroblogPage() {
         <div className="mx-auto max-w-7xl">
           {/* Hero Section */}
           <div className="text-center mb-16 sm:mb-20 lg:mb-24">
+            <SectionBadge text="Microblog" className="mb-6" />
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-slate-800 via-pink-600 to-purple-600 dark:from-white dark:via-blue-100 dark:to-purple-200 bg-clip-text text-transparent">

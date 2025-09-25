@@ -5,7 +5,7 @@ import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
 import { SignedIn, SignedOut, UserButton, SignInButton, SignUpButton, useUser, useClerk } from "@clerk/nextjs"
-import { ChevronDown, ChevronRight, Settings, LogOut, User } from "lucide-react"
+import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, PinOff, Monitor, Minimize2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -19,37 +19,124 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/presentat
 import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { state, setOpen } = useSidebar()
+  const { state, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar()
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
   const isAdmin = useIsAdmin()
   const [adminOpen, setAdminOpen] = React.useState(false)
   const [isHovered, setIsHovered] = React.useState(false)
   const [isHydrated, setIsHydrated] = React.useState(false)
+  const [userPreference, setUserPreference] = React.useState<'auto' | 'pinned' | 'collapsed'>('auto')
 
   React.useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  // Handle hover to expand/collapse sidebar
+  // Load user preference from localStorage
   React.useEffect(() => {
-    if (isHovered && state === "collapsed") {
+    const saved = localStorage.getItem('sidebar_preference')
+    if (saved) {
+      setUserPreference(saved as 'auto' | 'pinned' | 'collapsed')
+    }
+  }, [])
+
+  // Save user preference to localStorage
+  const savePreference = React.useCallback((preference: 'auto' | 'pinned' | 'collapsed') => {
+    setUserPreference(preference)
+    localStorage.setItem('sidebar_preference', preference)
+  }, [])
+
+  // Enhanced hover behavior with user preference awareness
+  React.useEffect(() => {
+    if (userPreference === 'pinned') return // Don't auto-collapse if pinned
+    if (userPreference === 'collapsed') return // Don't auto-expand if collapsed
+
+    if (isHovered && state === "collapsed" && !isMobile) {
       setOpen(true)
-    } else if (!isHovered && state === "expanded") {
-      // Only auto-collapse if we're not on mobile and the sidebar was expanded due to hover
-      const isMobile = window.innerWidth < 768
-      if (!isMobile) {
-        // Add a longer delay before collapsing to allow time for user interactions like popups
-        const timeout = setTimeout(() => setOpen(false), 3000)
-        return () => clearTimeout(timeout)
+    } else if (!isHovered && state === "expanded" && !isMobile) {
+      // Shorter delay for better UX
+      const timeout = setTimeout(() => setOpen(false), 1500)
+      return () => clearTimeout(timeout)
+    }
+  }, [isHovered, state, setOpen, isMobile, userPreference])
+
+  // Enhanced keyboard shortcuts with preference cycling
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + B to toggle sidebar
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault()
+        if (isMobile) {
+          setOpenMobile(!openMobile)
+        } else {
+          setOpen(state === 'expanded' ? false : true)
+        }
+      }
+
+      // Ctrl/Cmd + Shift + B to cycle through sidebar preferences
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'b') {
+        event.preventDefault()
+        const preferences: ('auto' | 'pinned' | 'collapsed')[] = ['auto', 'pinned', 'collapsed']
+        const currentIndex = preferences.indexOf(userPreference)
+        const nextIndex = (currentIndex + 1) % preferences.length
+        const nextPreference = preferences[nextIndex]
+
+        savePreference(nextPreference)
+
+        // Apply the preference immediately
+        switch (nextPreference) {
+          case 'auto':
+            setOpen(false)
+            break
+          case 'pinned':
+            setOpen(true)
+            break
+          case 'collapsed':
+            setOpen(false)
+            break
+        }
+      }
+
+      // Escape to close sidebar (mobile)
+      if (event.key === 'Escape' && isMobile && openMobile) {
+        setOpenMobile(false)
       }
     }
-  }, [isHovered, state, setOpen])
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [state, setOpen, isMobile, openMobile, setOpenMobile, userPreference, savePreference])
+
+  // Touch/swipe handling for mobile
+  const touchStartRef = React.useRef<number | null>(null)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return
+
+    const touchEnd = e.changedTouches[0].clientX
+    const deltaX = touchEnd - touchStartRef.current
+
+    // Swipe right to open (from left edge)
+    if (deltaX > 50 && touchStartRef.current < 50 && !openMobile) {
+      setOpenMobile(true)
+    }
+    // Swipe left to close
+    else if (deltaX < -50 && openMobile) {
+      setOpenMobile(false)
+    }
+
+    touchStartRef.current = null
+  }
 
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <Sidebar collapsible="icon" {...props}>
       {state === "collapsed" && (
@@ -64,20 +151,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           </SidebarHeader>
 
-          {/* Navigation Icons */}
-          <div className="flex flex-col items-center py-2 space-y-2">
+          {/* Navigation Icons - Enhanced */}
+          <div className="flex flex-col items-center py-4 space-y-1">
             {sidebarConfig.navMain.map((item) => {
               const IconComponent = item.icon
               return (
                 <Link
                   key={item.title}
                   href={item.url}
-                  className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-sidebar-accent/50 transition-colors duration-200 group"
+                  className="group relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-purple-500/20 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-pink-500/25 dark:hover:shadow-blue-500/25"
                   title={item.title}
+                  aria-label={item.description || item.title}
                 >
                   {IconComponent && (
-                    <IconComponent className="h-4 w-4 text-sidebar-foreground/70 group-hover:text-sidebar-foreground transition-colors duration-200" />
+                    <IconComponent className="h-5 w-5 text-sidebar-foreground/60 group-hover:text-pink-500 dark:group-hover:text-blue-400 transition-all duration-300 group-hover:scale-110" />
                   )}
+                  {/* Active indicator */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-pink-500 to-purple-500 dark:from-blue-500 dark:to-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Tooltip on hover */}
+                  <div className="absolute left-full ml-3 px-2 py-1 bg-slate-800 dark:bg-slate-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 delay-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                    {item.title}
+                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-slate-800 dark:border-r-slate-700"></div>
+                  </div>
                 </Link>
               )
             })}
@@ -85,7 +180,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
           {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
             <div className="flex items-center justify-center py-3 border-t border-sidebar-border/30">
-              <Settings className="h-4 w-4 text-red-500" />
+              <div className="group relative">
+                <Settings className="h-5 w-5 text-red-500 hover:text-red-400 transition-colors duration-200 hover:scale-110 cursor-pointer" />
+                {/* Tooltip for admin indicator */}
+                <div className="absolute left-full ml-3 px-2 py-1 bg-red-800 dark:bg-red-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 delay-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                  Admin Panel
+                  <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-red-800 dark:border-r-red-700"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Emergency Settings - Only show when Always Closed */}
+          {userPreference === 'collapsed' && (
+            <div className="flex flex-col items-center py-3 border-t border-sidebar-border/30 space-y-2 mt-auto">
+              {/* Current mode indicator */}
+              <div className="flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+              </div>
+
+              {/* Settings button */}
+              <div className="group relative">
+                <button
+                  onClick={() => setOpen(true)}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-purple-500/20 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all duration-300 hover:scale-110"
+                  aria-label="Open sidebar settings"
+                >
+                  <Settings className="h-4 w-4 text-sidebar-foreground/60 group-hover:text-pink-500 dark:group-hover:text-blue-400 transition-colors duration-200" />
+                </button>
+                {/* Tooltip */}
+                <div className="absolute left-full ml-3 px-2 py-1 bg-slate-800 dark:bg-slate-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 delay-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                  Open sidebar settings
+                  <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-slate-800 dark:border-r-slate-700"></div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -138,59 +266,134 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       )}
 
       {state !== "collapsed" && (
-        <SidebarContent className="px-2 pt-6">
-          <NavMain items={sidebarConfig.navMain} />
+        <SidebarContent className="px-3 pt-6">
+          {/* Main Navigation with enhanced styling */}
+          <div className="space-y-2">
+            <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+              Navigation
+            </h3>
+            <NavMain items={sidebarConfig.navMain} />
+          </div>
 
           {/* User Actions */}
           {isHydrated && (
             <SignedIn>
-              <div className="mt-4 space-y-1">
-                <SidebarSeparator className="mb-2" />
+              <div className="mt-6 space-y-1">
+                <SidebarSeparator className="mb-3" />
+                <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                  Account
+                </h3>
                 <button
                   onClick={() => openUserProfile()}
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+                  className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400 rounded-lg transition-all duration-200 hover:shadow-sm"
                 >
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
                   <span>View Profile</span>
+                  <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </button>
                 <button
                   onClick={() => signOut({ redirectUrl: "/" })}
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+                  className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all duration-200 hover:shadow-sm"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
                   <span>Log Out</span>
+                  <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </button>
               </div>
             </SignedIn>
           )}
 
+          {/* Sidebar Preferences - Desktop Only */}
+          {!isMobile && (
+            <div className="mt-6 space-y-1">
+              <SidebarSeparator className="mb-3" />
+              <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                Sidebar
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    savePreference('auto')
+                    setOpen(false)
+                  }}
+                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                    userPreference === 'auto'
+                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                  }`}
+                >
+                  <Monitor className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                  <span>Auto (Hover)</span>
+                  {userPreference === 'auto' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                </button>
+                <button
+                  onClick={() => {
+                    savePreference('pinned')
+                    setOpen(true)
+                  }}
+                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                    userPreference === 'pinned'
+                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                  }`}
+                >
+                  <Pin className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                  <span>Always Open</span>
+                  {userPreference === 'pinned' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                </button>
+                <button
+                  onClick={() => {
+                    savePreference('collapsed')
+                    setOpen(false)
+                  }}
+                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                    userPreference === 'collapsed'
+                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                  }`}
+                >
+                  <Minimize2 className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                  <span>Always Closed</span>
+                  {userPreference === 'collapsed' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                </button>
+              </div>
+            </div>
+          )}
+
           {sidebarConfig.navSecondary.length > 0 && (
             <>
-              <SidebarSeparator />
-              <NavMain items={sidebarConfig.navSecondary} />
+              <SidebarSeparator className="mt-6" />
+              <div className="space-y-2">
+                <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                  Tools
+                </h3>
+                <NavMain items={sidebarConfig.navSecondary} />
+              </div>
             </>
           )}
           {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
             <>
-              <SidebarSeparator />
-              <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-                <CollapsibleTrigger className="flex items-center justify-between px-2 py-2 hover:bg-sidebar-accent/50 rounded-md transition-colors">
-                  <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-sidebar-foreground/70" />
-                    <h3 className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-                      Admin
-                    </h3>
-                  </div>
-                  {adminOpen ? (
-                    <ChevronDown className="h-3 w-3 text-sidebar-foreground/50" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3 text-sidebar-foreground/50" />
-                  )}
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1">
-                  <NavMain items={sidebarConfig.navAdmin} />
-                </CollapsibleContent>
-              </Collapsible>
+              <SidebarSeparator className="mt-6" />
+              <div className="space-y-2">
+                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                  <CollapsibleTrigger className="group flex items-center justify-between w-full px-3 py-2 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 rounded-lg transition-all duration-200">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform duration-200" />
+                      <h3 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                        Admin Panel
+                      </h3>
+                    </div>
+                    {adminOpen ? (
+                      <ChevronDown className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-1 mt-2 ml-4 border-l-2 border-red-500/20 pl-4">
+                    <NavMain items={sidebarConfig.navAdmin} />
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             </>
           )}
         </SidebarContent>

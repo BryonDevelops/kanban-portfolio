@@ -1,6 +1,7 @@
 "use client"
 
 import { Code2, Palette, Mail, Github, Linkedin, Database, Server, Cloud, GitBranch, Figma, TestTube } from "lucide-react"
+import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { Button } from "@/presentation/components/ui/button"
 import { ExperienceCard } from "@/presentation/components/features/about/experience-card"
 import { SkillCard } from "@/presentation/components/features/about/skill-card"
@@ -56,8 +57,8 @@ export default function AboutPage() {
 
     const fetchExperiences = async () => {
       try {
-        // Optimized: Single query instead of two
-        const data = await Client.fetch('*[_type == "experienceCard"] | order(startDate desc)')
+        // Optimized: Single query with featured experiences first, then by start date
+        const data = await Client.fetch('*[_type == "experienceCard"] | order(featured desc, startDate desc)')
         if (isMounted) {
           setExperiences(data)
         }
@@ -91,10 +92,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-6xl">
           {/* Hero Section */}
           <div className="text-center mb-16 sm:mb-20 lg:mb-24">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 mb-6">
-              <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
-              <span className="text-sm text-gray-700 dark:text-white/80 font-medium">About Me</span>
-            </div>
+            <SectionBadge text="About Me" className="mb-6" />
 
             {/* Profile Image */}
             <div className="mb-8 relative">
@@ -211,9 +209,13 @@ export default function AboutPage() {
           <div className="mb-16 sm:mb-20 lg:mb-24">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">Experience</h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-6">
                 My journey in web development and the projects that shaped my career
               </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border border-blue-200/60 dark:border-blue-800/60">
+                <div className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                <span className="text-sm italic text-blue-700 dark:text-blue-300 font-medium">References available upon request</span>
+              </div>
             </div>
 
             {isLoading ? (

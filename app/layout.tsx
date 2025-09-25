@@ -25,9 +25,9 @@ export const metadata: Metadata = {
   title: "Portfolio - Full Stack Developer",
   description: "Full-stack developer crafting modern web applications with Next.js, TypeScript, and cutting-edge technologies. Passionate about clean code, beautiful design, and exceptional user experiences.",
   keywords: ["full-stack developer", "Next.js", "TypeScript", "React", "portfolio", "web development"],
-  authors: [{ name: "Portfolio Owner" }],
-  creator: "Portfolio Owner",
-  publisher: "Portfolio Owner",
+  authors: [{ name: "Bryon Bauer" }],
+  creator: "Bryon Bauer",
+  publisher: "Bryon Bauer",
   formatDetection: {
     email: false,
     address: false,

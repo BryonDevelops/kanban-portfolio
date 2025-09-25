@@ -11,9 +11,10 @@ import { useUser } from '@clerk/nextjs';
 interface CreateProjectFormProps {
   onProjectCreated?: () => void;
   trigger?: React.ReactNode;
+  defaultStatus?: 'planning' | 'in-progress' | 'completed' | 'on-hold';
 }
 
-export function CreateProjectForm({ onProjectCreated, trigger }: CreateProjectFormProps) {
+export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = 'planning' }: CreateProjectFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export function CreateProjectForm({ onProjectCreated, trigger }: CreateProjectFo
     title: '',
     description: '',
     url: '',
-    status: 'planning',
+    status: defaultStatus,
     technologies: [],
     tags: [],
     tasks: [],

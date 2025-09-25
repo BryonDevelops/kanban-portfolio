@@ -86,8 +86,9 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
   return (
     <div
       ref={isDragOverlay ? undefined : setNodeRef}
-      style={style}
+      style={isDragOverlay ? {} : style}
       {...(isDragOverlay ? {} : attributes)}
+      data-card-id={project.id}
       className={`
         relative rounded-xl border border-border
         bg-card
@@ -96,9 +97,11 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
         dark:shadow-[0_8px_32px_rgba(255,255,255,0.08),0_4px_16px_rgba(255,255,255,0.04)]
         p-3 sm:p-4 md:p-5 select-none
         transition-all duration-300 ease-out
-        hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_6px_20px_rgba(0,0,0,0.1)]
-        dark:hover:shadow-[0_12px_40px_rgba(255,255,255,0.12),0_6px_20px_rgba(255,255,255,0.06)]
-        group
+        ${!isDragOverlay ? `
+          hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_6px_20px_rgba(0,0,0,0.1)]
+          dark:hover:shadow-[0_12px_40px_rgba(255,255,255,0.12),0_6px_20px_rgba(255,255,255,0.06)]
+          group
+        ` : ''}
         ${isDragging && !isDragOverlay
           ? 'opacity-30 pointer-events-none'
           : ''
