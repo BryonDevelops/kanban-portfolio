@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import "@/components/tiptap-ui-primitive/avatar/avatar.scss"
+import "../../tiptap-ui-primitive/avatar/avatar"
 
 type ImageLoadingStatus = "idle" | "loading" | "loaded" | "error"
 type Size = "default" | "sm" | "lg" | "xl"
