@@ -6,6 +6,7 @@ import { DndContext } from "@dnd-kit/core"
 import { Input } from "@/presentation/components/ui/input"
 import { Button } from "@/presentation/components/ui/button"
 import { Plus, SlidersHorizontal, RefreshCw } from 'lucide-react'
+import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { BoardService } from "@/services/board/boardService"
 import { TaskService } from "@/services/board/taskService"
 import { ProjectService } from "@/services/board/projectService"
@@ -14,6 +15,7 @@ import { IBoardRepository } from "@/domain/board/repositories/boardRepository.in
 import { Project } from "@/domain/board/schemas/project.schema"
 import { useBoardStore } from "@/presentation/stores/board/boardStore"
 import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
+import { CreateProjectForm } from "@/presentation/components/features/board/forms/CreateProjectForm"
 
 export default function ProjectsPage() {
   const { loadProjects } = useBoardStore()
@@ -23,31 +25,6 @@ export default function ProjectsPage() {
   const taskService = new TaskService(repository);
   const projectService = new ProjectService(repository);
   const boardService = new BoardService(repository, taskService, projectService);
-
-  const handleCreateProject = async () => {
-    try {
-      const newProject = await boardService.createProject('ideas', 'New Project');
-      // Ensure tasks status is strictly typed
-      const fixedProject: Project = {
-        ...newProject,
-        tasks: newProject.tasks
-      };
-
-      console.log('Created project:', fixedProject);
-
-      // Show success toast
-      import("@/presentation/utils/toast").then(({ success }) => {
-        success("Project created!", "Your new project has been added to the Ideas column.");
-      });
-    } catch (error) {
-      console.error('Failed to create project:', error);
-
-      // Show error toast
-      import("@/presentation/utils/toast").then(({ error: errorToast }) => {
-        errorToast("Failed to create project", error instanceof Error ? error.message : 'Please try again.');
-      });
-    }
-  };
 
   return (
     <div className="relative min-h-screen">
@@ -71,6 +48,7 @@ export default function ProjectsPage() {
         <div className="mx-auto max-w-7xl">
           {/* Modern Header Section - Mobile Optimized */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
+            <SectionBadge text="Projects" className="mb-4" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-1 sm:space-y-2 flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-tight">
@@ -85,8 +63,8 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          {/* Enhanced Toolbar - Mobile Optimized */}
-          <div className="mb-4 sm:mb-6 lg:mb-8">
+          {/* Enhanced Toolbar - Mobile Optimized - Sticky */}
+          <div className="sticky top-0 z-20 mb-4 sm:mb-6 lg:mb-8 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-pink-200/20 dark:border-white/10 shadow-sm">
             <div className="space-y-3 sm:space-y-4">
               {/* Demo Mode Notice - Compact on Mobile */}
               {!isAdmin && (
@@ -134,24 +112,31 @@ export default function ProjectsPage() {
                     onClick={() => loadProjects(true)}
                     variant="outline"
                     size="sm"
-                    className="group relative overflow-hidden border-pink-200/50 dark:border-white/20 bg-white/80 dark:bg-white/5 hover:bg-pink-50/50 dark:hover:bg-white/10 text-slate-700 dark:text-white/80 hover:text-slate-800 dark:hover:text-white backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3 flex-1 sm:flex-initial justify-center"
+                    className="group relative overflow-hidden border-pink-200/50 dark:border-white/20 bg-white/80 dark:bg-white/5 hover:bg-pink-50/50 dark:hover:bg-white/10 text-slate-700 dark:text-white/80 hover:text-slate-800 dark:hover:text-white backdrop-blur-md shadow-lg hover:shadow-xl hover:shadow-pink-200/20 dark:hover:shadow-white/10 transition-all duration-300 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3 flex-1 sm:flex-initial justify-center min-h-[44px] touch-manipulation focus:ring-2 focus:ring-pink-500/50 dark:focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 focus:outline-none"
                   >
                     <div className="relative flex items-center gap-2">
-                      <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <RefreshCw className="h-4 w-4 sm:h-4 sm:w-4 flex-shrink-0 transition-transform duration-200 group-hover:rotate-180" />
                       <span className="font-medium hidden xs:inline">Refresh</span>
                     </div>
+                    {/* Desktop hover effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5 dark:from-blue-500/5 dark:to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md" />
                   </Button>
-                  <Button
-                    onClick={handleCreateProject}
-                    size="sm"
-                    className="group relative overflow-hidden bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-600 dark:from-blue-600 dark:via-purple-600 dark:to-pink-600 hover:from-pink-400 hover:via-purple-500 hover:to-cyan-500 dark:hover:from-blue-500 dark:hover:via-purple-500 dark:hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3 flex-1 sm:flex-initial justify-center"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="relative flex items-center gap-2">
-                      <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="font-medium hidden xs:inline">New Project</span>
-                    </div>
-                  </Button>
+                  <CreateProjectForm
+                    trigger={
+                      <Button
+                        size="sm"
+                        className="group relative overflow-hidden bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-600 dark:from-blue-600 dark:via-purple-600 dark:to-pink-600 hover:from-pink-400 hover:via-purple-500 hover:to-cyan-500 dark:hover:from-blue-500 dark:hover:via-purple-500 dark:hover:to-pink-500 text-white border-0 shadow-lg hover:shadow-xl hover:shadow-pink-200/30 dark:hover:shadow-blue-200/20 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3 flex-1 sm:flex-initial justify-center min-h-[44px] touch-manipulation focus:ring-2 focus:ring-pink-500/50 dark:focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 focus:outline-none"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative flex items-center gap-2">
+                          <Plus className="h-4 w-4 sm:h-4 sm:w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-90" />
+                          <span className="font-medium hidden xs:inline">New Project</span>
+                        </div>
+                        {/* Enhanced glow effect on hover */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-cyan-500/20 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-pink-500/20 rounded-md blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </div>

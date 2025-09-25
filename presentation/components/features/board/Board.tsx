@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Column from './Column';
 import Card from './Card';
 import { Plus, Settings, Filter, Search } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 import EditProjectForm from './forms/EditProjectForm';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
+import { CreateProjectForm } from './forms/CreateProjectForm';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, DragOverEvent, PointerSensor, useSensor, useSensors, pointerWithin } from '@dnd-kit/core';
 import { useIsAdmin } from '../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 
@@ -68,20 +69,23 @@ export default function Board() {
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
+  const columnRefs = useRef<Record<string, HTMLElement | null>>({});
+  const columnBoundsCache = useRef<Record<string, DOMRect | null>>({});
+  const lastDragOverTime = useRef<number>(0);
+  const [insertionIndex, setInsertionIndex] = useState<{ columnId: string; index: number } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // Reduced for more responsive activation
-        delay: 0, // Removed delay for instant response
-        tolerance: 3, // Reduced tolerance for more precise control
-      },
     })
   );
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const activeId = active.id as string;
+
+    // Clear bounds cache at start of drag
+    columnBoundsCache.current = {};
 
     // Find the active project
     let draggedProject: Project | null = null;
@@ -96,131 +100,162 @@ export default function Board() {
     setActiveProject(draggedProject);
   };
 
+  const getColumnAtCursor = (clientX: number, clientY: number): string | null => {
+    // Find which column contains the cursor position
+    for (const colId of columnOrder) {
+      const columnElement = columnRefs.current[colId];
+      if (columnElement) {
+        // Use cached bounds if available and recent, otherwise calculate
+        let bounds = columnBoundsCache.current[colId];
+        if (!bounds) {
+          bounds = columnElement.getBoundingClientRect();
+          columnBoundsCache.current[colId] = bounds;
+        }
+
+        if (clientX >= bounds.left && clientX <= bounds.right && clientY >= bounds.top && clientY <= bounds.bottom) {
+          return colId;
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    if (!activeId) return;
+
+    const now = Date.now();
+    // Throttle to ~60fps (16ms intervals)
+    if (now - lastDragOverTime.current < 16) return;
+    lastDragOverTime.current = now;
+
+    const { delta, activatorEvent } = event;
+    if (delta && activatorEvent && (Math.abs(delta.x) > 1 || Math.abs(delta.y) > 1)) {
+      // Only calculate if cursor moved significantly
+      const cursorX = (activatorEvent as MouseEvent).clientX + delta.x;
+      const cursorY = (activatorEvent as MouseEvent).clientY + delta.y;
+
+      // Find which column the cursor is over
+      const hoveredCol = getColumnAtCursor(cursorX, cursorY);
+
+      // Only update state if the hovered column actually changed
+      setHoveredColumn(prev => prev !== hoveredCol ? hoveredCol : prev);
+
+      // Calculate insertion index for more precise reordering
+      if (hoveredCol && activeProject) {
+        const columnProjects = columns[hoveredCol] || [];
+        const columnElement = columnRefs.current[hoveredCol];
+
+        if (columnElement && columnProjects.length > 0) {
+          // Get all card elements in the column
+          const cardElements = columnElement.querySelectorAll('[data-card-id]');
+          let targetIndex = columnProjects.length; // Default to end
+
+          // Find the insertion point based on cursor position
+          for (let i = 0; i < cardElements.length; i++) {
+            const cardElement = cardElements[i] as HTMLElement;
+            const rect = cardElement.getBoundingClientRect();
+            const cardCenterY = rect.top + rect.height / 2;
+
+            if (cursorY < cardCenterY) {
+              targetIndex = i;
+              break;
+            }
+          }
+
+          setInsertionIndex({ columnId: hoveredCol, index: targetIndex });
+        } else if (columnElement) {
+          // Empty column
+          setInsertionIndex({ columnId: hoveredCol, index: 0 });
+        }
+      }
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active, delta, activatorEvent } = event;
+
+    // Calculate cursor position at drop
+    const cursorX = (activatorEvent as MouseEvent).clientX + delta.x;
+    const cursorY = (activatorEvent as MouseEvent).clientY + delta.y;
+
+    // Find target column based on cursor position
+    const targetColumn = getColumnAtCursor(cursorX, cursorY);
 
     setActiveId(null);
     setActiveProject(null);
+    setHoveredColumn(null);
+    setInsertionIndex(null);
 
-    if (!over) return;
+    if (!targetColumn) return;
 
     const activeId = active.id as string;
-    const overId = over.id as string;
 
     // Find the source column and project
     let sourceColumn = '';
-    let sourceIndex = -1;
     let draggedProject: Project | undefined;
 
     Object.entries(columns).forEach(([columnId, projects]) => {
       const index = projects.findIndex(p => p.id === activeId);
       if (index !== -1) {
         sourceColumn = columnId;
-        sourceIndex = index;
         draggedProject = projects[index];
       }
     });
 
     if (!draggedProject) return;
 
-    // Check if dropping on a column (not a card)
-    const isDroppingOnColumn = columnOrder.includes(overId);
+    // If dropping in the same column, handle precise reordering
+    if (sourceColumn === targetColumn) {
+      if (insertionIndex && insertionIndex.columnId === targetColumn) {
+        const currentProjects = columns[sourceColumn];
+        const currentIndex = currentProjects.findIndex(p => p.id === activeId);
 
-    if (isDroppingOnColumn) {
-      // Moving to a different column
-      const targetColumn = overId;
-      if (sourceColumn === targetColumn) return;
+        if (currentIndex === -1 || currentIndex === insertionIndex.index) return;
 
-      // Map column to status
-      const statusMap: Record<string, 'planning' | 'in-progress' | 'completed'> = {
-        'ideas': 'planning',
-        'in-progress': 'in-progress',
-        'completed': 'completed'
-      };
+        const newProjects = [...currentProjects];
+        const [removed] = newProjects.splice(currentIndex, 1);
 
-      const newStatus = statusMap[targetColumn];
-      if (!newStatus) return;
-
-      // Update project status - check permissions
-      if (canSaveToDatabase) {
-        updateProject(draggedProject.id, { status: newStatus });
-      } else {
-        // For users without database save permissions, update locally and save to localStorage
-        const newColumns = { ...columns };
-        // Remove from source column
-        Object.keys(newColumns).forEach((colId: string) => {
-          newColumns[colId] = newColumns[colId].filter((p: Project) => p.id !== draggedProject!.id);
-        });
-        // Add to target column
-        if (!newColumns[targetColumn]) newColumns[targetColumn] = [];
-        newColumns[targetColumn].push({ ...draggedProject!, status: newStatus, updated_at: new Date() });
-        // Save to localStorage and update state
-        saveBoardStateToLocalStorage(newColumns);
-        setColumns(newColumns);
-        // Show toast for local save
-        import("@/presentation/utils/toast").then(({ info }) => {
-          info("Project moved locally!", "Changes saved in your browser. Only admins can save to the database.");
-        });
-      }
-    } else {
-      // Reordering within the same column or moving between columns
-      let targetColumn = sourceColumn;
-      let targetIndex = sourceIndex;
-
-      // Find target column and index
-      Object.entries(columns).forEach(([columnId, projects]) => {
-        const index = projects.findIndex(p => p.id === overId);
-        if (index !== -1) {
-          targetColumn = columnId;
-          targetIndex = index;
-        }
-      });
-
-      if (sourceColumn === targetColumn) {
-        // Reordering within the same column
-        if (sourceIndex === targetIndex) return;
-
-        const newProjects = [...columns[sourceColumn]];
-        const [removed] = newProjects.splice(sourceIndex, 1);
-        newProjects.splice(targetIndex, 0, removed);
+        // Insert at the calculated position
+        newProjects.splice(insertionIndex.index, 0, removed);
 
         setColumns({
           ...columns,
           [sourceColumn]: newProjects
         });
-      } else {
-        // Moving between different columns
-        const statusMap: Record<string, 'planning' | 'in-progress' | 'completed'> = {
-          'ideas': 'planning',
-          'in-progress': 'in-progress',
-          'completed': 'completed'
-        };
-
-        const newStatus = statusMap[targetColumn];
-        if (!newStatus) return;
-
-        // Update project status - check permissions
-        if (canSaveToDatabase) {
-          updateProject(draggedProject.id, { status: newStatus });
-        } else {
-          // For users without database save permissions, update locally and save to localStorage
-          const newColumns = { ...columns };
-          // Remove from source column
-          Object.keys(newColumns).forEach((colId: string) => {
-            newColumns[colId] = newColumns[colId].filter((p: Project) => p.id !== draggedProject!.id);
-          });
-          // Add to target column
-          if (!newColumns[targetColumn]) newColumns[targetColumn] = [];
-          newColumns[targetColumn].push({ ...draggedProject!, status: newStatus, updated_at: new Date() });
-          // Save to localStorage and update state
-          saveBoardStateToLocalStorage(newColumns);
-          setColumns(newColumns);
-          // Show toast for local save
-          import("@/presentation/utils/toast").then(({ info }) => {
-            info("Project moved locally!", "Changes saved in your browser. Only admins can save to the database.");
-          });
-        }
       }
+      return;
+    }
+
+    // Map column to status
+    const statusMap: Record<string, 'planning' | 'in-progress' | 'completed'> = {
+      'ideas': 'planning',
+      'in-progress': 'in-progress',
+      'completed': 'completed'
+    };
+
+    const newStatus = statusMap[targetColumn];
+    if (!newStatus) return;
+
+    // Update project status - check permissions
+    if (canSaveToDatabase) {
+      updateProject(draggedProject.id, { status: newStatus });
+    } else {
+      // For users without database save permissions, update locally and save to localStorage
+      const newColumns = { ...columns };
+      // Remove from source column
+      Object.keys(newColumns).forEach((colId: string) => {
+        newColumns[colId] = newColumns[colId].filter((p: Project) => p.id !== draggedProject!.id);
+      });
+      // Add to target column
+      if (!newColumns[targetColumn]) newColumns[targetColumn] = [];
+      newColumns[targetColumn].push({ ...draggedProject!, status: newStatus, updated_at: new Date() });
+      // Save to localStorage and update state
+      saveBoardStateToLocalStorage(newColumns);
+      setColumns(newColumns);
+      // Show toast for local save
+      import("@/presentation/utils/toast").then(({ info }) => {
+        info("Project moved locally!", "Changes saved in your browser. Only admins can save to the database.");
+      });
     }
   };
   const handleDeleteProject = (projectId: string) => {
@@ -320,22 +355,24 @@ export default function Board() {
         setColumns(localState);
       }
     }
+
+    // Clear bounds cache on window resize
+    const handleResize = () => {
+      columnBoundsCache.current = {};
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [loadProjects, setColumns, isLoggedIn, canSaveToDatabase]);
 
   return (
     <div className="relative h-full">
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onDragOver={(event) => {
-          // Add visual feedback during drag
-          const { over } = event;
-          if (over && over.id !== 'dragged-item') {
-            // Could add additional visual feedback here if needed
-          }
-        }}
+        onDragOver={handleDragOver}
       >
       <div className="h-full flex flex-col lg:flex-row gap-4 md:gap-5 lg:gap-6 overflow-x-hidden">
       {isLoading && (
@@ -363,9 +400,23 @@ export default function Board() {
       )}
 
       {columnOrder.map((colId) => (
-        <div key={colId} className="flex-1 min-w-0 flex flex-col rounded-2xl border border-border bg-card backdrop-blur-xl shadow-2xl min-h-full overflow-hidden group hover:shadow-3xl transition-all duration-500">
+        <div
+          key={colId}
+          ref={(el) => {
+            columnRefs.current[colId] = el;
+          }}
+          className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border bg-card backdrop-blur-xl shadow-2xl min-h-full overflow-hidden group hover:shadow-3xl transition-all duration-500 ${
+            activeId && hoveredColumn === colId
+              ? 'ring-2 ring-primary shadow-primary/20 bg-primary/5'
+              : ''
+          }`}
+        >
           {/* Column glow effect */}
-          <div className="absolute -inset-0.5 bg-ring/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+          <div className={`absolute -inset-0.5 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 ${
+            activeId && hoveredColumn === colId
+              ? 'bg-primary/30 opacity-100'
+              : 'bg-ring/20'
+          }`} />
 
           <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0">
             {/* Enhanced Column Header */}
@@ -491,15 +542,23 @@ export default function Board() {
                   <span className={`rounded-full border px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold border-border text-card-foreground bg-card shadow-lg`}>
                     {(columns[colId] ?? []).length}
                   </span>
-                  <button
-                    type="button"
-                    aria-label="Add project"
-                    title="Add project"
-                    onClick={() => {}}
-                    className="inline-flex size-8 sm:size-8 items-center justify-center rounded-xl border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
-                  >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </button>
+                  <CreateProjectForm
+                    defaultStatus={
+                      colId === 'ideas' ? 'planning' :
+                      colId === 'in-progress' ? 'in-progress' :
+                      'completed'
+                    }
+                    trigger={
+                      <button
+                        type="button"
+                        aria-label="Add project"
+                        title="Add project"
+                        className="inline-flex size-8 sm:size-8 items-center justify-center rounded-xl border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+                      >
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -513,6 +572,8 @@ export default function Board() {
                 onDeleteProject={handleDeleteProject}
                 onOpenEditModal={handleOpenEditModal}
                 onMoveToColumn={handleMoveToColumn}
+                insertionIndex={insertionIndex?.columnId === colId ? insertionIndex.index : null}
+                isDragActive={!!activeId}
               />
             </div>
           </div>
@@ -531,9 +592,24 @@ export default function Board() {
       )}
       </div>
 
-      <DragOverlay>
+      <DragOverlay
+        style={{
+          transformOrigin: '0 0',
+        }}
+        dropAnimation={null}
+        modifiers={[
+          ({ transform, activeNodeRect }) => {
+            if (!activeNodeRect) return transform;
+            return {
+              ...transform,
+              x: transform.x - activeNodeRect.width / 2,
+              y: transform.y - activeNodeRect.height / 2,
+            };
+          },
+        ]}
+      >
         {activeId && activeProject ? (
-          <div className="shadow-2xl ring-2 ring-primary/50 bg-card/95 backdrop-blur-sm transform-none">
+          <div className="shadow-2xl ring-2 ring-primary/50 bg-card/95 backdrop-blur-sm rotate-2 scale-105 pointer-events-none animate-pulse">
             <Card
               project={activeProject}
               fromCol=""

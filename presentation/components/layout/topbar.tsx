@@ -6,7 +6,7 @@ import {
 } from "@clerk/nextjs"
 import { ModeToggle } from "@/presentation/components/shared/mode-toggle"
 import { Button } from "@/presentation/components/ui/button"
-import { SidebarTrigger } from "@/presentation/components/ui/sidebar"
+import { SidebarTrigger, useSidebar } from "@/presentation/components/ui/sidebar"
 import Link from "next/link"
 import { ArrowRight, Zap, Mail } from "lucide-react"
 import { usePathname } from "next/navigation"
@@ -14,12 +14,19 @@ import { usePathname } from "next/navigation"
 export function Topbar() {
   const pathname = usePathname()
   const isContactPage = pathname === "/contact"
+  const { isMobile } = useSidebar()
 
   return (
     <div className="flex w-full items-center justify-between px-2 py-1 md:px-4 md:py-3 bg-transparent backdrop-blur-0">
-      {/* Mobile Menu Button - Only visible on mobile */}
+      {/* Mobile Menu Button - Enhanced */}
       <div className="flex items-center md:hidden">
-        <SidebarTrigger className="mr-2" />
+        <SidebarTrigger className="mr-2 group relative" />
+        {!isMobile && (
+          <div className="hidden lg:block absolute left-full ml-2 px-2 py-1 bg-slate-800 dark:bg-slate-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 delay-500 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+            Ctrl+B to toggle • Ctrl+Shift+B to cycle preferences
+            <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-slate-800 dark:border-r-slate-700"></div>
+          </div>
+        )}
       </div>
 
       {/* Right side actions */}

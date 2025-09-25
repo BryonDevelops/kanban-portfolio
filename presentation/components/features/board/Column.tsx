@@ -20,9 +20,11 @@ interface ColumnProps {
   onDeleteProject?: (projectId: string) => void;
   onOpenEditModal?: (project: Project) => void;
   onMoveToColumn?: (projectId: string, targetColumn: string) => void;
+  insertionIndex?: number | null;
+  isDragActive?: boolean;
 }
 
-const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProject, onDeleteProject, onOpenEditModal, onMoveToColumn }) => {
+const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProject, onDeleteProject, onOpenEditModal, onMoveToColumn, insertionIndex, isDragActive }) => {
 
   // Local state for optimistic updates during drag
   const [localProjects, setLocalProjects] = useState(projects);
@@ -34,6 +36,10 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
 
   const { isOver, setNodeRef } = useDroppable({
     id: columnId,
+    data: {
+      type: 'column',
+      columnId,
+    },
   });
 
   // Filter projects based on current filters
@@ -76,7 +82,7 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
     <div
       ref={setNodeRef}
       className="
-        relative flex flex-col gap-4 md:gap-6 rounded-xl border border-border
+        relative flex flex-col gap-4 md:gap-6 rounded-xl
         bg-card
         backdrop-blur-sm shadow-lg
         p-3 sm:p-4 md:p-6 min-h-[200px]
@@ -111,16 +117,35 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
         ) : (
           <SortableContext items={filteredProjects.map(p => p.id)} strategy={verticalListSortingStrategy}>
             {filteredProjects.map((project, i) => (
-              <Card
-                key={project.id}
-                project={project}
-                fromCol={columnId}
-                index={i}
-                onDelete={onDeleteProject}
-                onOpenEditModal={onOpenEditModal}
-                onMoveToColumn={onMoveToColumn}
-              />
+              <React.Fragment key={project.id}>
+                {/* Insertion indicator */}
+                {isDragActive && insertionIndex === i && (
+                  <div className="relative -my-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2">
+                      <div className="h-1 bg-primary rounded-full shadow-lg animate-pulse" />
+                      <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 h-6 bg-primary/10 rounded-lg border-2 border-dashed border-primary animate-pulse" />
+                    </div>
+                  </div>
+                )}
+                <Card
+                  project={project}
+                  fromCol={columnId}
+                  index={i}
+                  onDelete={onDeleteProject}
+                  onOpenEditModal={onOpenEditModal}
+                  onMoveToColumn={onMoveToColumn}
+                />
+              </React.Fragment>
             ))}
+            {/* Insertion indicator at the end */}
+            {isDragActive && insertionIndex === filteredProjects.length && (
+              <div className="relative -my-2 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2">
+                  <div className="h-1 bg-primary rounded-full shadow-lg animate-pulse" />
+                  <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 h-6 bg-primary/10 rounded-lg border-2 border-dashed border-primary animate-pulse" />
+                </div>
+              </div>
+            )}
           </SortableContext>
         )}
       </div>
