@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/**/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -48,5 +49,6 @@ storybook-static
 /.clerk/
 
 
-# Authentication tokens
-.npmrc
+# Sanity
+.sanity/
+**/studio-bryondevelops/.sanity/
