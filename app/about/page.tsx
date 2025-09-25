@@ -1,56 +1,91 @@
 "use client"
 
-import { Code2, Palette, Zap, Mail, Github, Linkedin } from "lucide-react"
+import { Code2, Palette, Mail, Github, Linkedin, Database, Server, Cloud, GitBranch, Figma, TestTube } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
+import { ExperienceCard } from "@/presentation/components/features/about/experience-card"
+import { SkillCard } from "@/presentation/components/features/about/skill-card"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/presentation/components/ui/carousel"
+import { Client } from "../sanity/client"
+import React, { useEffect, useState, Suspense } from "react"
+import dynamic from 'next/dynamic'
+import Autoplay from "embla-carousel-autoplay"
+import Image from "next/image"
+
+// Lazy load heavy components
+const HeavyBackgroundEffects = dynamic(() => import('@/presentation/components/shared/heavy-background-effects'), {
+  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg h-96" />
+})
+
+type Experience = {
+  _id: string
+  title: string
+  company: string
+  startDate: string
+  endDate?: string
+  isCurrent?: boolean
+  description: string
+  location?: string
+  technologies?: string[]
+  companyUrl?: string
+  featured?: boolean
+}
 
 export default function AboutPage() {
-  const skills = [
+  const skills = React.useMemo(() => [
     { name: "React/Next.js", icon: Code2, color: "from-blue-500 to-cyan-500" },
     { name: "TypeScript", icon: Code2, color: "from-blue-600 to-blue-800" },
+    { name: "JavaScript", icon: Code2, color: "from-yellow-500 to-orange-500" },
     { name: "Tailwind CSS", icon: Palette, color: "from-teal-500 to-green-500" },
-    { name: "Node.js", icon: Zap, color: "from-green-500 to-emerald-600" },
-    { name: "Supabase", icon: Zap, color: "from-orange-500 to-red-500" },
+    { name: "Node.js", icon: Server, color: "from-green-500 to-emerald-600" },
+    { name: "Supabase", icon: Database, color: "from-orange-500 to-red-500" },
+    { name: "PostgreSQL", icon: Database, color: "from-blue-700 to-indigo-800" },
+    { name: "Git/GitHub", icon: GitBranch, color: "from-gray-600 to-gray-800" },
     { name: "UI/UX Design", icon: Palette, color: "from-purple-500 to-pink-500" },
-  ]
+    { name: "Figma", icon: Figma, color: "from-purple-600 to-pink-600" },
+    { name: "Vercel", icon: Cloud, color: "from-black to-gray-800" },
+    { name: "Jest/Testing", icon: TestTube, color: "from-red-500 to-pink-600" },
+    { name: "API Development", icon: Server, color: "from-indigo-500 to-purple-600" },
+    { name: "Responsive Design", icon: Palette, color: "from-cyan-500 to-blue-500" },
+  ], [])
 
-  const experiences = [
-    {
-      year: "2024",
-      title: "Full-Stack Developer",
-      company: "Freelance",
-      description: "Building modern web applications with cutting-edge technologies. Specializing in React, Next.js, and cloud solutions."
-    },
-    {
-      year: "2023",
-      title: "Frontend Developer",
-      company: "Tech Startup",
-      description: "Developed responsive user interfaces and improved user experience across multiple client projects."
-    },
-    {
-      year: "2022",
-      title: "Web Developer",
-      company: "Digital Agency",
-      description: "Created custom websites and web applications, focusing on performance and accessibility."
+  const [experiences, setExperiences] = useState<Experience[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchExperiences = async () => {
+      try {
+        // Optimized: Single query instead of two
+        const data = await Client.fetch('*[_type == "experienceCard"] | order(startDate desc)')
+        if (isMounted) {
+          setExperiences(data)
+        }
+      } catch (error) {
+        console.error('Error fetching experiences:', error)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
     }
-  ]
+
+    fetchExperiences()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <div className="relative min-h-screen">
       {/* Full screen background */}
       <div className="fixed inset-0 bg-gradient-to-br from-pink-50/80 via-blue-50/60 to-purple-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 -z-10" />
 
-      {/* Enhanced Background Effects */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Primary gradient orbs */}
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br from-pink-300/20 via-purple-300/20 to-blue-300/20 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10 blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-cyan-300/20 via-emerald-300/20 to-teal-300/20 dark:from-emerald-500/10 dark:via-cyan-500/10 dark:to-blue-500/10 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-
-        {/* Secondary accent orbs */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-violet-300/15 to-fuchsia-300/15 dark:from-violet-500/5 dark:to-fuchsia-500/5 blur-2xl animate-pulse" style={{ animationDelay: '4s' }} />
-
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.01)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
+      {/* Enhanced Background Effects - Lazy loaded */}
+      <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800" />}>
+        <HeavyBackgroundEffects />
+      </Suspense>
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-6xl">
@@ -59,6 +94,23 @@ export default function AboutPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 mb-6">
               <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
               <span className="text-sm text-gray-700 dark:text-white/80 font-medium">About Me</span>
+            </div>
+
+            {/* Profile Image */}
+            <div className="mb-8 relative">
+              <div className="relative mx-auto w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56">
+                {/* Glow effect behind image */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 dark:from-pink-400/10 dark:via-purple-400/10 dark:to-blue-400/10 blur-2xl scale-110 animate-pulse" />
+                <Image
+                  src="/heroimg_dark_optimized.webp"
+                  alt="Profile illustration"
+                  fill
+                  sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, (max-width: 1024px) 192px, (max-width: 1280px) 224px, 224px"
+                  className="object-contain drop-shadow-xl relative z-10 rounded-full"
+                  priority
+                  quality={85}
+                />
+              </div>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
@@ -103,22 +155,55 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-              {skills.map((skill) => (
-                <div
-                  key={skill.name}
-                  className="group relative p-6 rounded-2xl bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 hover:border-gray-300/80 dark:hover:border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-gray-200/20 dark:hover:shadow-white/5"
-                >
-                  <div className="flex flex-col items-center text-center gap-3">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${skill.color} shadow-lg`}>
-                      <skill.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white/90 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                      {skill.name}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="relative px-4 sm:px-8 lg:px-12">
+              {/* Enhanced background effects for skills section */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/3 dark:via-purple-500/3 dark:to-pink-500/3 rounded-3xl blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/3 via-transparent to-emerald-500/3 dark:from-cyan-500/2 dark:to-emerald-500/2 rounded-3xl blur-2xl" />
+
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: false,
+                  }),
+                ]}
+                className="w-full relative z-10"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {skills.map((skill, index) => (
+                    <CarouselItem key={skill.name} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
+                      <div className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+                        <SkillCard
+                          name={skill.name}
+                          icon={skill.icon}
+                          color={skill.color}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-0 bg-white/95 dark:bg-white/15 border-gray-200/80 dark:border-white/25 hover:bg-white dark:hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-125 hover:rotate-12 backdrop-blur-md" />
+                <CarouselNext className="right-0 bg-white/95 dark:bg-white/15 border-gray-200/80 dark:border-white/25 hover:bg-white dark:hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-125 hover:-rotate-12 backdrop-blur-md" />
+              </Carousel>
+
+              {/* Enhanced decorative elements */}
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-40 h-2 bg-gradient-to-r from-transparent via-blue-500/60 to-transparent rounded-full blur-sm animate-pulse" />
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-gradient-to-r from-transparent via-purple-500/60 to-transparent rounded-full blur-sm animate-pulse" style={{ animationDelay: '1s' }} />
+
+              {/* Corner accent elements */}
+              <div className="absolute -top-4 -left-4 w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-lg animate-bounce" style={{ animationDelay: '0.5s' }} />
+              <div className="absolute -top-4 -right-4 w-6 h-6 bg-gradient-to-bl from-pink-500/20 to-cyan-500/20 rounded-full blur-lg animate-bounce" style={{ animationDelay: '1.5s' }} />
+              <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 rounded-full blur-lg animate-bounce" style={{ animationDelay: '2s' }} />
+              <div className="absolute -bottom-4 -right-4 w-7 h-7 bg-gradient-to-tl from-purple-500/20 to-pink-500/20 rounded-full blur-lg animate-bounce" style={{ animationDelay: '2.5s' }} />
+
+              {/* Floating geometric shapes */}
+              <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-500/30 rounded-full animate-ping" style={{ animationDelay: '0.2s' }} />
+              <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-purple-500/30 rounded-full animate-ping" style={{ animationDelay: '1.2s' }} />
+              <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-pink-500/30 rounded-full animate-ping" style={{ animationDelay: '2.2s' }} />
             </div>
           </div>
 
@@ -131,36 +216,42 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="space-y-8">
-              {experiences.map((exp, index) => (
-                <div
-                  key={index}
-                  className="relative pl-8 sm:pl-12 border-l-2 border-gray-200/60 dark:border-white/20 last:border-l-0"
-                >
-                  {/* Timeline dot */}
-                  <div className="absolute -left-3 sm:-left-4 top-0 w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </div>
-
-                  <div className="bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 rounded-2xl p-6 sm:p-8 hover:border-gray-300/80 dark:hover:border-white/20 transition-all duration-300">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">{exp.title}</h3>
-                        <p className="text-blue-600 dark:text-blue-400 font-medium">{exp.company}</p>
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-white/60 bg-gray-100 dark:bg-white/10 px-3 py-1 rounded-full">
-                        {exp.year}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{exp.description}</p>
-                  </div>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 rounded-2xl p-8 max-w-md mx-auto">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Loading experiences...
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : experiences.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 rounded-2xl p-8 max-w-md mx-auto">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    No experiences found. Add some experience cards in Sanity Studio!
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Check the browser console for any errors.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {experiences.map((exp: Experience, index: number) => (
+                  <ExperienceCard
+                    key={exp._id || index}
+                    experience={exp}
+                    index={index}
+                    isLast={index === experiences.length - 1}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Mission Section */}
-          <div className="text-center">
+          {/* <div className="text-center">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">My Mission</h2>
               <div className="bg-gradient-to-r from-white/90 via-white/80 to-white/90 dark:from-white/10 dark:via-white/5 dark:to-white/10 backdrop-blur-sm border border-gray-200/60 dark:border-white/20 rounded-3xl p-8 sm:p-12">
@@ -176,7 +267,7 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
