@@ -1,0 +1,28 @@
+{
+  "name": "Portfolio - Full Stack Developer",
+  "short_name": "Portfolio",
+  "description": "Full-stack developer portfolio showcasing modern web applications and technologies",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["portfolio", "developer", "web"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
