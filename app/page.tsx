@@ -109,11 +109,13 @@ export default function Home() {
                 {/* Glow effect behind image */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 dark:from-blue-400/10 dark:via-purple-400/10 dark:to-pink-400/10 blur-2xl sm:blur-3xl scale-110 animate-pulse" />
                 <Image
-                  src="/heroimg_dark.png"
+                  src="/heroimg_dark_optimized.webp"
                   alt="Hero illustration"
                   fill
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, (max-width: 1536px) 320px, 384px"
                   className="object-contain drop-shadow-xl sm:drop-shadow-2xl relative z-10 transform hover:scale-105 transition-transform duration-500"
                   priority
+                  quality={85}
                 />
               </div>
             </div>
