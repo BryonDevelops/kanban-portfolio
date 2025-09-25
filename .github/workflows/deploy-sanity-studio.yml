@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'studio-bryondevelops/**'
+      - "studio-bryondevelops/**"
   workflow_dispatch:
 
 jobs:
