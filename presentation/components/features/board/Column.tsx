@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
-import Card from './Card';
+import ProjectCard from './ProjectCard';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 
 interface ColumnProps {
@@ -127,7 +127,8 @@ const Column: React.FC<ColumnProps> = ({ columnId, projects, filters, onAddProje
                     </div>
                   </div>
                 )}
-                <Card
+                <ProjectCard
+                  key={project.id}
                   project={project}
                   fromCol={columnId}
                   index={i}

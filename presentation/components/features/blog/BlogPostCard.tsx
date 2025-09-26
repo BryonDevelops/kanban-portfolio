@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { BlogPostPortal, BlogPost } from './BlogPostPortal'
-import { Card } from '../../ui/Card'
+import { Card } from '../../ui/card'
 import { Badge } from '../../ui/badge'
 import { Calendar, User, Clock } from 'lucide-react'
 
