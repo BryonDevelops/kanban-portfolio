@@ -82,7 +82,7 @@ async function RootLayout({
                       </div>
                     </div>
                   </div>
-                  <div className="pt-2 sm:pt-4 md:pt-6">
+                  <div className="pt-16 sm:pt-4 md:pt-6">
                     {children}
                   </div>
                 </div>

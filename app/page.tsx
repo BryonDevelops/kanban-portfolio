@@ -71,6 +71,9 @@ export default function Home() {
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-1 sm:py-2 lg:py-4 xl:py-6">
         <div className="mx-auto max-w-7xl">
+          {/* Mobile top spacing to prevent topbar overlap */}
+          <div className="h-12 sm:hidden"></div>
+          
           {/* Hero Section */}
           <div className="text-center mb-2 sm:mb-4 lg:mb-8 xl:mb-12">
             {/* Sleek Brand Header */}
