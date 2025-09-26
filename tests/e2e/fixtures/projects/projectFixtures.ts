@@ -9,6 +9,7 @@ const createBaseProject = (overrides: Partial<Project> = {}): Project => ({
   status: 'planning',
   technologies: ['React', 'TypeScript'],
   tags: overrides.tags ?? [],
+  attachments: [], // Required attachments array
   tasks: [], // Required tasks array
   ...overrides,
 });
