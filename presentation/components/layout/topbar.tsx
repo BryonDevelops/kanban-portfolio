@@ -1,4 +1,5 @@
 "use client"
+
 import {
   SignedOut,
   SignInButton,
@@ -10,14 +11,18 @@ import { SidebarTrigger, useSidebar } from "@/presentation/components/ui/sidebar
 import Link from "next/link"
 import { ArrowRight, Zap, Mail } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { useScrollState } from "@/presentation/hooks/use-scroll-state"
 
 export function Topbar() {
   const pathname = usePathname()
   const isContactPage = pathname === "/contact"
   const { isMobile } = useSidebar()
+  const { isTopbarHidden } = useScrollState()
 
   return (
-    <div className="flex w-full items-center justify-between">
+    <div className={`flex w-full items-center justify-between transition-transform duration-300 ease-in-out ${
+      isTopbarHidden ? '-translate-y-full' : 'translate-y-0'
+    }`}>
       {/* Mobile Menu Button - Enhanced */}
       <div className="flex items-center md:hidden">
         <SidebarTrigger className="mr-2 group relative" />

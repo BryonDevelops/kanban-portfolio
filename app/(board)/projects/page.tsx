@@ -39,7 +39,7 @@ export default function ProjectsPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.01)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
-      <div className="relative z-10 px-3 sm:px-4 md:px-6 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8 lg:py-8">
+      <div className="relative z-10 px-3 sm:px-4 md:px-6 lg:px-6 xl:px-8 py-10">
         <div className="mx-auto max-w-7xl">
           {/* Modern Header Section - Mobile Optimized */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
