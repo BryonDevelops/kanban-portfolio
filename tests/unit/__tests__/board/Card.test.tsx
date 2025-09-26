@@ -24,7 +24,7 @@ jest.mock('react-dom', () => ({
 // Mock Next.js Image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />,
+  default: (props: undefined) => <img {...props} />,
 }));
 
 
