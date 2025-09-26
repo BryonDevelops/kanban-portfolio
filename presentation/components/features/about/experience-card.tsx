@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { TechStackCompact } from '@/presentation/components/shared/TechStack'
 
 type Experience = {
   _id: string
@@ -100,19 +101,12 @@ export function ExperienceCard({ experience: exp, index, isLast = false }: Exper
           </ul>
         </div>
         {exp.technologies && exp.technologies.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {exp.technologies.map((tech, techIndex) => (
-              <span
-                key={techIndex}
-                className={`text-xs px-2 py-1 rounded-full ${
-                  exp.featured
-                    ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
-                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                }`}
-              >
-                {tech}
-              </span>
-            ))}
+          <div className="mt-4">
+            <TechStackCompact
+              technologies={exp.technologies}
+              size={16}
+              className="justify-start"
+            />
           </div>
         )}
       </div>
