@@ -68,21 +68,23 @@ async function RootLayout({
             disableTransitionOnChange
           >
             <SidebarProvider defaultOpen={defaultOpen}>
+              {/* Full viewport background - outside sidebar to ensure full coverage */}
+              <div className="fixed inset-0 -z-20 bg-transparent transition-colors duration-300" />
+              {/* Lattice pattern covering entire viewport */}
+              <div className="fixed inset-0 -z-10 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
+
               <AppSidebar />
               <SidebarInset>
                 <div className="relative min-h-svh">
-                  {/* Shared background wrapper for smooth transitions - transparent for homepage */}
-                  <div className="absolute inset-0 -z-20 bg-transparent transition-colors duration-300" />
-                  {/* Lattice pattern covering entire viewport */}
-                  <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-15">
-                    <div className="flex items-center pointer-events-auto">
+                  {/* Fixed topbar positioned at viewport top */}
+                  <div className="fixed inset-x-0 top-0 z-15 pointer-events-none">
+                    <div className="flex items-center pointer-events-auto px-2 md:px-4">
                       <div className="flex items-center gap-2 sm:gap-4 w-full justify-between">
                         <Topbar />
                       </div>
                     </div>
                   </div>
-                  <div className="pt-2 sm:pt-4 md:pt-6">
+                  <div className="">
                     {children}
                   </div>
                 </div>
