@@ -1,10 +1,10 @@
 "use client"
 
-import { Code2, Palette, Mail, Github, Linkedin, Database, Server, Cloud, GitBranch, Figma, TestTube } from "lucide-react"
+import { Mail, Github, Linkedin } from "lucide-react"
 import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { Button } from "@/presentation/components/ui/button"
 import { ExperienceCard } from "@/presentation/components/features/about/experience-card"
-import { SkillCard } from "@/presentation/components/features/about/skill-card"
+import { TechSkillCard } from "@/presentation/components/shared/TechSkillCard"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/presentation/components/ui/carousel"
 import { Client } from "../sanity/client"
 import React, { useEffect, useState, Suspense } from "react"
@@ -33,20 +33,18 @@ type Experience = {
 
 export default function AboutPage() {
   const skills = React.useMemo(() => [
-    { name: "React/Next.js", icon: Code2, color: "from-blue-500 to-cyan-500" },
-    { name: "TypeScript", icon: Code2, color: "from-blue-600 to-blue-800" },
-    { name: "JavaScript", icon: Code2, color: "from-yellow-500 to-orange-500" },
-    { name: "Tailwind CSS", icon: Palette, color: "from-teal-500 to-green-500" },
-    { name: "Node.js", icon: Server, color: "from-green-500 to-emerald-600" },
-    { name: "Supabase", icon: Database, color: "from-orange-500 to-red-500" },
-    { name: "PostgreSQL", icon: Database, color: "from-blue-700 to-indigo-800" },
-    { name: "Git/GitHub", icon: GitBranch, color: "from-gray-600 to-gray-800" },
-    { name: "UI/UX Design", icon: Palette, color: "from-purple-500 to-pink-500" },
-    { name: "Figma", icon: Figma, color: "from-purple-600 to-pink-600" },
-    { name: "Vercel", icon: Cloud, color: "from-black to-gray-800" },
-    { name: "Jest/Testing", icon: TestTube, color: "from-red-500 to-pink-600" },
-    { name: "API Development", icon: Server, color: "from-indigo-500 to-purple-600" },
-    { name: "Responsive Design", icon: Palette, color: "from-cyan-500 to-blue-500" },
+    { name: "React", iconName: "React", color: "from-blue-500 to-cyan-500", description: "Modern UI library" },
+    { name: "Next.js", iconName: "Next.js", color: "from-gray-900 to-gray-700", description: "React framework" },
+    { name: "TypeScript", iconName: "TypeScript", color: "from-blue-600 to-blue-800", description: "Typed JavaScript" },
+    { name: "JavaScript", iconName: "JavaScript", color: "from-yellow-500 to-orange-500", description: "Programming language" },
+    { name: "Tailwind CSS", iconName: "Tailwind CSS", color: "from-teal-500 to-green-500", description: "Utility-first CSS" },
+    { name: "Node.js", iconName: "Node.js", color: "from-green-500 to-emerald-600", description: "JavaScript runtime" },
+    { name: "Supabase", iconName: "Supabase", color: "from-orange-500 to-red-500", description: "Backend platform" },
+    { name: "PostgreSQL", iconName: "PostgreSQL", color: "from-blue-700 to-indigo-800", description: "Database" },
+    { name: "Git", iconName: "Git", color: "from-gray-600 to-gray-800", description: "Version control" },
+    { name: "Figma", iconName: "Figma", color: "from-purple-600 to-pink-600", description: "Design tool" },
+    { name: "Vercel", iconName: "Vercel", color: "from-black to-gray-800", description: "Deployment platform" },
+    { name: "Jest", iconName: "Jest", color: "from-red-500 to-pink-600", description: "Testing framework" },
   ], [])
 
   const [experiences, setExperiences] = useState<Experience[]>([])
@@ -175,10 +173,11 @@ export default function AboutPage() {
                   {skills.map((skill, index) => (
                     <CarouselItem key={skill.name} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
                       <div className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
-                        <SkillCard
+                        <TechSkillCard
                           name={skill.name}
-                          icon={skill.icon}
+                          iconName={skill.iconName}
                           color={skill.color}
+                          description={skill.description}
                         />
                       </div>
                     </CarouselItem>

@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react";
 import { FeatureHighlightCard } from "../presentation/components/shared/FeatureHighlightCard";
+import { TechStack } from "../presentation/components/shared/TechStack";
 
 // Typewriter component for cycling through words
 function Typewriter({ words, className }: { words: string[], className?: string }) {
@@ -191,6 +192,25 @@ export default function Home() {
               gradientFrom="from-purple-700"
               gradientTo="to-purple-900"
             />
+          </div>
+
+          {/* Tech Stack Section */}
+          <div className="mt-12 sm:mt-16 lg:mt-20">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                Tech Stack
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Technologies I use to build modern, scalable applications
+              </p>
+            </div>
+            <div className="bg-white/95 dark:bg-white/8 backdrop-blur-md border border-gray-200/80 dark:border-white/15 rounded-2xl p-6 sm:p-8 shadow-xl">
+              <TechStack
+                technologies={['Next.js', 'TypeScript', 'React', 'Tailwind CSS', 'Node.js', 'Supabase', 'PostgreSQL', 'Git']}
+                showLabels
+                size={40}
+              />
+            </div>
           </div>
 
           {/* Call to Action */}
