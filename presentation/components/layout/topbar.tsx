@@ -17,7 +17,7 @@ export function Topbar() {
   const { isMobile } = useSidebar()
 
   return (
-    <div className="flex w-full items-center justify-between px-2 py-1 md:px-4 md:py-3 bg-transparent backdrop-blur-0">
+    <div className="flex w-full items-center justify-between">
       {/* Mobile Menu Button - Enhanced */}
       <div className="flex items-center md:hidden">
         <SidebarTrigger className="mr-2 group relative" />
