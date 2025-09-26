@@ -1,26 +1,25 @@
 import withPWA from "next-pwa";
 
-module.exports = {
+const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'unsplash.com',
       },
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'source.unsplash.com',
       },
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'images.unsplash.com',
       },
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'placehold.co',
       },
     ],
-    formats: ['image/webp', 'image/avif'],
   },
   // Enable experimental features for better performance
   experimental: {
@@ -28,13 +27,15 @@ module.exports = {
   },
   // Enable compression
   compress: true,
-  // PWA options
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    disable: process.env.NODE_ENV === 'development',
-    buildExcludes: [/manifest\.json$/],
-    mode: 'production',
-  }
-}
+};
+
+const pwaConfig = {
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  buildExcludes: [/manifest\.json$/],
+  mode: 'production',
+};
+
+export default withPWA(pwaConfig)(nextConfig);
