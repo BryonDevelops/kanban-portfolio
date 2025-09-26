@@ -139,7 +139,189 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       onTouchEnd={handleTouchEnd}
     >
       <Sidebar collapsible="icon" {...props}>
-      {state === "collapsed" && (
+      {/* Show full content on mobile when sidebar is open, or on desktop when not collapsed */}
+      {(isMobile ? openMobile : state !== "collapsed") && (
+        <>
+          <SidebarHeader className="relative overflow-hidden border-b border-sidebar-border/30 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 dark:from-pink-500/20 dark:via-purple-500/20 dark:to-blue-500/20">
+            {/* Subtle animated background effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+
+            <div className="relative flex flex-col gap-3 px-4 py-4">
+              {/* Signed In User */}
+              {isHydrated && (
+                <SignedIn>
+                  <div className="flex items-center justify-center w-full">
+                    <div className="flex items-center gap-2">
+                      <UserButton />
+                      <span className="text-lg font-bold text-pink-600 dark:text-pink-400 truncate">
+                        {user?.fullName}
+                      </span>
+                    </div>
+                  </div>
+                </SignedIn>
+              )}
+
+              {/* Signed Out - Auth Buttons */}
+              {isHydrated && (
+                <SignedOut>
+                  <div className="flex flex-col gap-2">
+                    <div className="text-center">
+                      <h3 className="text-sm font-medium text-sidebar-foreground/80 mb-3">Welcome!</h3>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <SignInButton>
+                        <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent/70 border border-sidebar-border/50 rounded-md transition-colors">
+                          Sign In
+                        </button>
+                      </SignInButton>
+                      <SignUpButton>
+                        <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-gradient-to-r from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border border-purple-400/30 rounded-md transition-all duration-200">
+                          Sign Up
+                        </button>
+                      </SignUpButton>
+                    </div>
+                  </div>
+                </SignedOut>
+              )}
+            </div>
+          </SidebarHeader>
+
+          <SidebarContent className="px-3 pt-6">
+            {/* Main Navigation with enhanced styling */}
+            <div className="space-y-2">
+              <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                Navigation
+              </h3>
+              <NavMain items={sidebarConfig.navMain} />
+            </div>
+
+            {/* User Actions */}
+            {isHydrated && (
+              <SignedIn>
+                <div className="mt-6 space-y-1">
+                  <SidebarSeparator className="mb-3" />
+                  <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                    Account
+                  </h3>
+                  <button
+                    onClick={() => openUserProfile()}
+                    className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400 rounded-lg transition-all duration-200 hover:shadow-sm"
+                  >
+                    <User className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>View Profile</span>
+                    <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  </button>
+                  <button
+                    onClick={() => signOut({ redirectUrl: "/" })}
+                    className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all duration-200 hover:shadow-sm"
+                  >
+                    <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Log Out</span>
+                    <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  </button>
+                </div>
+              </SignedIn>
+            )}
+
+            {/* Sidebar Preferences - Desktop Only */}
+            {!isMobile && (
+              <div className="mt-6 space-y-1">
+                <SidebarSeparator className="mb-3" />
+                <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                  Sidebar
+                </h3>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      savePreference('auto')
+                      setOpen(false)
+                    }}
+                    className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                      userPreference === 'auto'
+                        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                        : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                    }`}
+                  >
+                    <Monitor className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Auto (Hover)</span>
+                    {userPreference === 'auto' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      savePreference('pinned')
+                      setOpen(true)
+                    }}
+                    className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                      userPreference === 'pinned'
+                        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                        : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                    }`}
+                  >
+                    <Pin className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Always Open</span>
+                    {userPreference === 'pinned' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      savePreference('collapsed')
+                      setOpen(false)
+                    }}
+                    className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
+                      userPreference === 'collapsed'
+                        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
+                        : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
+                    }`}
+                  >
+                    <Minimize2 className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Always Closed</span>
+                    {userPreference === 'collapsed' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {sidebarConfig.navSecondary.length > 0 && (
+              <>
+                <SidebarSeparator className="mt-6" />
+                <div className="space-y-2">
+                  <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
+                    Tools
+                  </h3>
+                  <NavMain items={sidebarConfig.navSecondary} />
+                </div>
+              </>
+            )}
+            {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
+              <>
+                <SidebarSeparator className="mt-6" />
+                <div className="space-y-2">
+                  <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                    <CollapsibleTrigger className="group flex items-center justify-between w-full px-3 py-2 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 rounded-lg transition-all duration-200">
+                      <div className="flex items-center gap-2">
+                        <Settings className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform duration-200" />
+                        <h3 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                          Admin Panel
+                        </h3>
+                      </div>
+                      {adminOpen ? (
+                        <ChevronDown className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-1 mt-2 ml-4 border-l-2 border-red-500/20 pl-4">
+                      <NavMain items={sidebarConfig.navAdmin} />
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              </>
+            )}
+          </SidebarContent>
+        </>
+      )}
+
+      {/* Show collapsed state only on desktop when not mobile */}
+      {!isMobile && state === "collapsed" && (
         <div>
           <SidebarHeader className="border-b border-sidebar-border/30">
             <div className="flex items-center justify-center py-3">
@@ -217,186 +399,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           )}
         </div>
-      )}
-
-      {state !== "collapsed" && (
-        <SidebarHeader className="relative overflow-hidden border-b border-sidebar-border/30 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 dark:from-pink-500/20 dark:via-purple-500/20 dark:to-blue-500/20">
-          {/* Subtle animated background effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-
-          <div className="relative flex flex-col gap-3 px-4 py-4">
-            {/* Signed In User */}
-            {isHydrated && (
-              <SignedIn>
-                <div className="flex items-center justify-center w-full">
-                  <div className="flex items-center gap-2">
-                    <UserButton />
-                    <span className="text-lg font-bold text-pink-600 dark:text-pink-400 truncate">
-                      {user?.fullName}
-                    </span>
-                  </div>
-                </div>
-              </SignedIn>
-            )}
-
-            {/* Signed Out - Auth Buttons */}
-            {isHydrated && (
-              <SignedOut>
-                <div className="flex flex-col gap-2">
-                  <div className="text-center">
-                    <h3 className="text-sm font-medium text-sidebar-foreground/80 mb-3">Welcome!</h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <SignInButton>
-                      <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent/70 border border-sidebar-border/50 rounded-md transition-colors">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                    <SignUpButton>
-                      <button className="w-full px-3 py-2 text-sm font-medium text-sidebar-foreground bg-gradient-to-r from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border border-purple-400/30 rounded-md transition-all duration-200">
-                        Sign Up
-                      </button>
-                    </SignUpButton>
-                  </div>
-                </div>
-              </SignedOut>
-            )}
-          </div>
-        </SidebarHeader>
-      )}
-
-      {state !== "collapsed" && (
-        <SidebarContent className="px-3 pt-6">
-          {/* Main Navigation with enhanced styling */}
-          <div className="space-y-2">
-            <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
-              Navigation
-            </h3>
-            <NavMain items={sidebarConfig.navMain} />
-          </div>
-
-          {/* User Actions */}
-          {isHydrated && (
-            <SignedIn>
-              <div className="mt-6 space-y-1">
-                <SidebarSeparator className="mb-3" />
-                <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
-                  Account
-                </h3>
-                <button
-                  onClick={() => openUserProfile()}
-                  className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400 rounded-lg transition-all duration-200 hover:shadow-sm"
-                >
-                  <User className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                  <span>View Profile</span>
-                  <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                </button>
-                <button
-                  onClick={() => signOut({ redirectUrl: "/" })}
-                  className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all duration-200 hover:shadow-sm"
-                >
-                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Log Out</span>
-                  <ChevronRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                </button>
-              </div>
-            </SignedIn>
-          )}
-
-          {/* Sidebar Preferences - Desktop Only */}
-          {!isMobile && (
-            <div className="mt-6 space-y-1">
-              <SidebarSeparator className="mb-3" />
-              <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
-                Sidebar
-              </h3>
-              <div className="space-y-1">
-                <button
-                  onClick={() => {
-                    savePreference('auto')
-                    setOpen(false)
-                  }}
-                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
-                    userPreference === 'auto'
-                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
-                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  <Monitor className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Auto (Hover)</span>
-                  {userPreference === 'auto' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
-                </button>
-                <button
-                  onClick={() => {
-                    savePreference('pinned')
-                    setOpen(true)
-                  }}
-                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
-                    userPreference === 'pinned'
-                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
-                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  <Pin className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Always Open</span>
-                  {userPreference === 'pinned' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
-                </button>
-                <button
-                  onClick={() => {
-                    savePreference('collapsed')
-                    setOpen(false)
-                  }}
-                  className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm ${
-                    userPreference === 'collapsed'
-                      ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 text-pink-600 dark:text-blue-400'
-                      : 'text-sidebar-foreground hover:bg-gradient-to-r hover:from-pink-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/10 dark:hover:to-purple-500/10 hover:text-pink-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  <Minimize2 className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Always Closed</span>
-                  {userPreference === 'collapsed' && <div className="ml-auto w-2 h-2 bg-pink-500 dark:bg-blue-500 rounded-full" />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {sidebarConfig.navSecondary.length > 0 && (
-            <>
-              <SidebarSeparator className="mt-6" />
-              <div className="space-y-2">
-                <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
-                  Tools
-                </h3>
-                <NavMain items={sidebarConfig.navSecondary} />
-              </div>
-            </>
-          )}
-          {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
-            <>
-              <SidebarSeparator className="mt-6" />
-              <div className="space-y-2">
-                <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
-                  <CollapsibleTrigger className="group flex items-center justify-between w-full px-3 py-2 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-pink-500/10 rounded-lg transition-all duration-200">
-                    <div className="flex items-center gap-2">
-                      <Settings className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform duration-200" />
-                      <h3 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                        Admin Panel
-                      </h3>
-                    </div>
-                    {adminOpen ? (
-                      <ChevronDown className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 text-sidebar-foreground/50 group-hover:text-red-500 transition-colors duration-200" />
-                    )}
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-1 mt-2 ml-4 border-l-2 border-red-500/20 pl-4">
-                    <NavMain items={sidebarConfig.navAdmin} />
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            </>
-          )}
-        </SidebarContent>
       )}
 
       <SidebarRail />
