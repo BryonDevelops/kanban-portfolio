@@ -1,5 +1,5 @@
 import { Project } from '../entities/project';
-import { ProjectCreate, ProjectUpdate } from '../schemas/project.schemas';
+import { ProjectCreate, ProjectUpdate } from '../schemas/project.schema';
 
 export interface ProjectRepository {
   create(project: ProjectCreate): Promise<Project>;

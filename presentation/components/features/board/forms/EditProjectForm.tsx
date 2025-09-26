@@ -6,7 +6,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2, ChevronDown, ChevronUp, Paperclip, FileText as FileIcon, CheckCircle, Users, BarChart3, AlertTriangle, Calendar, FileTextIcon, Settings, StickyNote, Building2 } from 'lucide-react'
+import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2, ChevronDown, ChevronUp, Paperclip, Settings, Info, Maximize, Minimize } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Project } from '../../../../../domain/board/schemas/project.schema'
@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom'
 import { useIsAdmin } from '../../../shared/ProtectedRoute'
 import Image from 'next/image'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs"
+import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown'
 
 type Props = {
   project: Project
@@ -36,26 +37,6 @@ const saveProjectToLocalStorage = (projectId: string, projectData: Partial<Proje
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData))
   } catch (error) {
     console.error('Failed to save project to localStorage:', error)
-  }
-}
-
-const loadProjectFromLocalStorage = (projectId: string): Partial<Project> | null => {
-  try {
-    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}')
-    return data[projectId] || null
-  } catch (error) {
-    console.error('Failed to load project from localStorage:', error)
-    return null
-  }
-}
-
-const clearProjectFromLocalStorage = (projectId: string) => {
-  try {
-    const existingData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}')
-    delete existingData[projectId]
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingData))
-  } catch (error) {
-    console.error('Failed to clear project from localStorage:', error)
   }
 }
 
@@ -86,6 +67,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   const [isDescriptionPreview, setIsDescriptionPreview] = useState(false)
   const [isImagePreviewExpanded, setIsImagePreviewExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const descriptionTextareaRef = React.useRef<HTMLTextAreaElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -253,7 +235,20 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   // Click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      const target = event.target as HTMLElement
+
+      // Don't close modal if clicking on dropdown menu content, dialog content, or Unsplash modal
+      if (target.closest('[data-radix-popper-content-wrapper]') ||
+          target.closest('[data-radix-dropdown-menu-content]') ||
+          target.closest('[data-radix-dropdown-menu-trigger]') ||
+          target.closest('[data-radix-dialog-overlay]') ||
+          target.closest('[data-radix-dialog-content]') ||
+          target.closest('[data-radix-dialog-trigger]') ||
+          target.closest('[data-unsplash-modal]')) {
+        return
+      }
+
+      if (modalRef.current && !modalRef.current.contains(target)) {
         onClose()
       }
     }
@@ -860,12 +855,34 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
   if (!isOpen) return null
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6">
-      <div ref={modalRef} className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden">
+    <div className={`fixed z-[9999] bg-black/50 backdrop-blur-md ${
+      isFullscreen
+        ? 'inset-0 p-0'
+        : 'inset-0 flex items-center justify-center p-2 sm:p-4 md:p-6'
+    }`}>
+      <div
+        ref={modalRef}
+        className={`w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden relative ${
+          isFullscreen
+            ? 'max-w-none max-h-screen h-screen rounded-none flex flex-col'
+            : 'max-w-4xl max-h-[95vh] sm:max-h-[90vh] rounded-2xl sm:rounded-3xl'
+        }`}
+      >
         {/* Enhanced Header with Title, Status, and Tags */}
         <div className="border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
-          {/* Top Row: Close Button */}
-          <div className="flex justify-end p-4 pb-0">
+          {/* Top Row: Fullscreen and Close Buttons */}
+          <div className="flex justify-between items-center p-4 pb-0">
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4" />
+              ) : (
+                <Maximize className="h-4 w-4" />
+              )}
+            </button>
             <button
               onClick={onClose}
               className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
@@ -1042,7 +1059,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 300px)' }}>
+        <div className={`p-4 sm:p-6 overflow-y-auto relative z-10 ${isFullscreen ? 'flex-1' : ''}`} style={isFullscreen ? {} : { maxHeight: 'calc(95vh - 300px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5 mb-6">
               <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -1095,15 +1112,30 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
                   {/* Image URL */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Project Image URL
-                    </label>
-                    <input
-                      type="url"
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Project Image
+                      </label>
+                      <div
+                        className="relative group cursor-help"
+                        title="Optional: Add a cover image for your project (JPG, PNG, WebP, etc.) - upload from device, paste from clipboard, or browse Unsplash"
+                      >
+                        <Info className="h-3 w-3 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" />
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 text-xs rounded shadow-lg max-w-xs text-center leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                          <div className="font-medium mb-1">Optional Image Upload</div>
+                          <div>Add a cover image for your project:</div>
+                          <div>• Upload from device (JPG, PNG, WebP)</div>
+                          <div>• Paste from clipboard</div>
+                          <div>• Browse Unsplash</div>
+                        </div>
+                      </div>
+                    </div>
+                    <ImageUploadDropdown
                       value={formData.image}
-                      onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
-                      placeholder="https://example.com/image.jpg"
+                      onChange={(value) => {
+                        setFormData(prev => ({ ...prev, image: value || '' }))
+                      }}
+                      placeholder="Select or upload project image..."
                     />
                   </div>
 
@@ -1138,17 +1170,19 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                       <div className="relative w-full max-w-md mx-auto">
                         <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 shadow-sm">
                           {formData.image ? (
-                            <Image
-                              src={formData.image}
-                              alt={`${formData.title} preview`}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                                // Hide image on error
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
-                            />
+                            <>
+                              <Image
+                                src={formData.image}
+                                alt={`${formData.title} preview`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                  // Hide image on error
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            </>
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
                               <div className="text-center">
@@ -1599,7 +1633,7 @@ React, TypeScript, Tailwind CSS
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50" style={{ minHeight: '60px', flexShrink: 0 }}>
+        <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: '60px', flexShrink: 0 }}>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onDelete(project.id)}

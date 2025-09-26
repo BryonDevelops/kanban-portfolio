@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/presentation/components/ui/button';
-import { SimpleEditor } from '@/presentation/components/ui/simple-editor';
+import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
 import { Save, X, Settings } from 'lucide-react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';

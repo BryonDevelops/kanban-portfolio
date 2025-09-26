@@ -5,7 +5,7 @@ import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
 import { Textarea } from '@/presentation/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
-import { SimpleEditor } from '@/presentation/components/ui/simple-editor';
+import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
 import { BlogPost } from '../BlogPostPortal';
 import { Edit, X, Trash2 } from 'lucide-react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';

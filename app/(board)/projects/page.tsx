@@ -1,18 +1,13 @@
 "use client"
 
 import Board from "@/presentation/components/features/board/Board"
+import { BoardSkeleton } from "@/presentation/components/features/board/BoardSkeleton"
 import { DndContext } from "@dnd-kit/core"
 // import { HTML5Backend } from "react-dnd-html5-backend"
 import { Input } from "@/presentation/components/ui/input"
 import { Button } from "@/presentation/components/ui/button"
 import { Plus, SlidersHorizontal, RefreshCw } from 'lucide-react'
 import { SectionBadge } from "@/presentation/components/shared/section-badge"
-import { BoardService } from "@/services/board/boardService"
-import { TaskService } from "@/services/board/taskService"
-import { ProjectService } from "@/services/board/projectService"
-import { SupabaseBoardRepository } from "@/infrastructure/database/repositories/supaBaseBoardRepository"
-import { IBoardRepository } from "@/domain/board/repositories/boardRepository.interface"
-import { Project } from "@/domain/board/schemas/project.schema"
 import { useBoardStore } from "@/presentation/stores/board/boardStore"
 import { useIsAdmin } from "@/presentation/components/shared/ProtectedRoute"
 import { CreateProjectForm } from "@/presentation/components/features/board/forms/CreateProjectForm"
@@ -20,11 +15,11 @@ import { CreateProjectForm } from "@/presentation/components/features/board/form
 export default function ProjectsPage() {
   const { loadProjects } = useBoardStore()
   const isAdmin = useIsAdmin()
+  const isLoading = useBoardStore((state) => state.isLoading)
+  const columns = useBoardStore((state) => state.columns)
 
-  const repository: IBoardRepository = new SupabaseBoardRepository();
-  const taskService = new TaskService(repository);
-  const projectService = new ProjectService(repository);
-  const boardService = new BoardService(repository, taskService, projectService);
+  // Check if we have any projects loaded
+  const hasProjects = Object.values(columns).some(projects => projects.length > 0)
 
   return (
     <div className="relative min-h-screen">
@@ -154,7 +149,7 @@ export default function ProjectsPage() {
               <div className="relative p-3 sm:p-4 lg:p-6 xl:p-8">
                 <div className="h-[70vh] sm:h-[75vh] md:h-[78vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
                   <DndContext>
-                    <Board />
+                    {isLoading && !hasProjects ? <BoardSkeleton /> : <Board />}
                   </DndContext>
                 </div>
               </div>

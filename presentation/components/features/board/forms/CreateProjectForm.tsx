@@ -7,6 +7,7 @@ import { Plus, X } from 'lucide-react';
 import { useBoardStore } from '../../../../stores/board/boardStore';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
+import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
 interface CreateProjectFormProps {
   onProjectCreated?: () => void;
@@ -273,15 +274,13 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
             <label htmlFor="image" className="text-sm font-medium">
               Project Image
             </label>
-            <Input
-              id="image"
-              type="url"
+            <ImageUploadDropdown
               value={formData.image}
-              onChange={(e) => handleInputChange('image', e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              onChange={(value) => handleInputChange('image', value)}
+              placeholder="Select or upload project image..."
             />
             <p className="text-xs text-muted-foreground">
-              Optional: Add a cover image for your project (JPG, PNG, WebP, etc.)
+              Optional: Add a cover image for your project (JPG, PNG, WebP, etc.) - upload from device, paste from clipboard, or browse Unsplash
             </p>
           </div>
 
