@@ -1,11 +1,11 @@
 "use client"
 
-import { ProtectedRoute } from "../../presentation/components/shared/ProtectedRoute"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../presentation/components/ui/card"
-import { Button } from "../../presentation/components/ui/button"
+import { ProtectedRoute } from "@/presentation/components/shared/ProtectedRoute"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import { Button } from "@/presentation/components/ui/button"
 import { Users, Settings, Database, Shield, Activity } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
-import { Badge } from "../../presentation/components/ui/badge"
+import { Badge } from "@/presentation/components/ui/badge"
 
 export default function AdminPage() {
   const { user } = useUser()

@@ -1,4 +1,5 @@
 import withPWA from "next-pwa";
+import path from "path";
 
 const nextConfig = {
   images: {
@@ -27,6 +28,15 @@ const nextConfig = {
   },
   // Enable compression
   compress: true,
+  // Configure webpack to handle path aliases properly
+  webpack: (config: import('webpack').Configuration) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname),
+    };
+    return config;
+  },
 };
 
 const pwaConfig = {
