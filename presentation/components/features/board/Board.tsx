@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Column from './Column';
-import Card from './Card';
+import ProjectCard from './ProjectCard';
 import { Plus, Settings, Filter, Search } from 'lucide-react';
 import { useBoardStore } from '../../../stores/board/boardStore';
 import { Project } from '../../../../domain/board/schemas/project.schema';
@@ -610,7 +610,7 @@ export default function Board() {
       >
         {activeId && activeProject ? (
           <div className="shadow-2xl ring-2 ring-primary/50 bg-card/95 backdrop-blur-sm rotate-2 scale-105 pointer-events-none animate-pulse">
-            <Card
+            <ProjectCard
               project={activeProject}
               fromCol=""
               index={0}

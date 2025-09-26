@@ -1,9 +1,11 @@
 "use client"
+
 import React, { useEffect, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MoreHorizontal, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { Project } from '../../../../domain/board/schemas/project.schema'
 
 type Props = {
@@ -342,6 +344,35 @@ export default function Card({ project, fromCol, index, onDelete, onOpenEditModa
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Project Image */}
+          <div className="relative mb-3 sm:mb-4 md:mb-5 -mx-1">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border/50 bg-muted/30">
+              <Image
+                src={project.image || `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=300&fit=crop&q=80&fm=webp&crop=entropy&cs=tinysrgb&query=${encodeURIComponent(project.technologies?.[0] || 'technology')}`}
+                alt={`${project.title} preview`}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                onError={(e) => {
+                  // Fallback to a generic tech image if Unsplash fails
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('fallback')) {
+                    target.src = `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=300&fit=crop&q=80&fm=webp&crop=entropy&cs=tinysrgb&query=technology`;
+                  } else {
+                    // Hide image on final error
+                    (target as HTMLElement).style.display = 'none';
+                  }
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {!project.image && (
+                <div className="absolute top-2 right-2 px-2 py-1 text-xs rounded-md bg-black/50 text-white backdrop-blur-sm">
+                  Auto-generated
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Technologies */}

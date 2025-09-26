@@ -6,12 +6,14 @@ import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2 } from 'lucide-react'
+import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2, ChevronDown, ChevronUp, Paperclip, FileText as FileIcon, CheckCircle, Users, BarChart3, AlertTriangle, Calendar, FileTextIcon, Settings, StickyNote, Building2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Project } from '../../../../../domain/board/schemas/project.schema'
 import { createPortal } from 'react-dom'
 import { useIsAdmin } from '../../../shared/ProtectedRoute'
+import Image from 'next/image'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs"
 
 type Props = {
   project: Project
@@ -66,17 +68,24 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     status: project.status,
     technologies: [...project.technologies],
     tags: [...project.tags],
-    tasks: [...(project.tasks || [])]
+    tasks: [...(project.tasks || [])],
+    image: project.image || '',
+    attachments: [...(project.attachments || [])],
+    notes: project.notes || '',
+    architecture: project.architecture || ''
   })
 
   const [newTech, setNewTech] = useState('')
   const [newTag, setNewTag] = useState('')
+  const [newAttachment, setNewAttachment] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false)
   const [isDescriptionPreview, setIsDescriptionPreview] = useState(false)
+  const [isImagePreviewExpanded, setIsImagePreviewExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
   const descriptionTextareaRef = React.useRef<HTMLTextAreaElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -265,6 +274,8 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
       formData.description !== (project.description || '') ||
       formData.url !== (project.url || '') ||
       formData.status !== project.status ||
+      formData.image !== (project.image || '') ||
+      JSON.stringify(formData.attachments) !== JSON.stringify(project.attachments || []) ||
       JSON.stringify(formData.technologies) !== JSON.stringify(project.technologies) ||
       JSON.stringify(formData.tags) !== JSON.stringify(project.tags) ||
       JSON.stringify(formData.tasks) !== JSON.stringify(project.tasks || [])
@@ -303,6 +314,10 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
         technologies: formData.technologies,
         tags: formData.tags,
         tasks: formData.tasks,
+        image: formData.image.trim() || undefined,
+        attachments: formData.attachments,
+        notes: formData.notes?.trim() || undefined,
+        architecture: formData.architecture?.trim() || undefined,
         updated_at: new Date()
       }
 
@@ -324,6 +339,10 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
           technologies: updatedProject.technologies,
           tags: updatedProject.tags,
           tasks: updatedProject.tasks,
+          image: updatedProject.image,
+          attachments: updatedProject.attachments,
+          notes: updatedProject.notes,
+          architecture: updatedProject.architecture,
           updated_at: updatedProject.updated_at
         })
         onClose()
@@ -386,6 +405,29 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(t => t !== tag)
+    }))
+  }
+
+  const addAttachment = () => {
+    if (newAttachment.trim()) {
+      const attachment = {
+        id: `attachment-${Date.now()}`,
+        name: newAttachment.trim(),
+        url: newAttachment.trim(),
+        type: 'link' // default type for URL attachments
+      }
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...prev.attachments, attachment]
+      }))
+      setNewAttachment('')
+    }
+  }
+
+  const removeAttachment = (attachmentId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter(att => att.id !== attachmentId)
     }))
   }
 
@@ -892,18 +934,18 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
             </div>
 
             {/* Status and Tags Row */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               {/* Status Selector */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Status:</span>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">Status:</span>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
                     className={`
-                      px-2 sm:px-3 py-1 text-xs font-medium rounded-full border-2 cursor-pointer
+                      px-3 py-1.5 text-xs font-medium rounded-full border-2 cursor-pointer
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                      transition-all duration-200 flex items-center gap-1
+                      transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center
                       ${getStatusConfig(formData.status).color}
                       ${getStatusConfig(formData.status).bg}
                       ${getStatusConfig(formData.status).border}
@@ -911,13 +953,13 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                     `}
                   >
                     {getStatusConfig(formData.status).label}
-                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
 
                   {isStatusDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                    <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
                       {[
                         { value: 'planning', label: 'Planning' },
                         { value: 'in-progress', label: 'In Progress' },
@@ -940,7 +982,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                             }
                           `}
                         >
-                          <div className={`w-2 h-2 rounded-full ${
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                             option.value === 'planning' ? 'bg-yellow-400' :
                             option.value === 'in-progress' ? 'bg-blue-400' :
                             option.value === 'completed' ? 'bg-green-400' : 'bg-red-400'
@@ -955,8 +997,11 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
               {/* Tags Display */}
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 block mb-1">Tags:</span>
-                <div className="flex gap-1 flex-wrap">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Tags:</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-500">({formData.tags.length})</span>
+                </div>
+                <div className="flex gap-1 flex-wrap items-center">
                   {formData.tags.map((tag, index) => (
                     <span
                       key={index}
@@ -965,7 +1010,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                       {tag}
                       <button
                         onClick={() => removeTag(tag)}
-                        className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors"
+                        className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors ml-1"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -973,14 +1018,14 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                   ))}
 
                   {/* Quick Add Tag */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 ml-2">
                     <input
                       type="text"
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addTag()}
                       placeholder="Add tag..."
-                      className="w-16 sm:w-20 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="w-20 sm:w-24 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                     <button
                       onClick={addTag}
@@ -998,185 +1043,285 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
 
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 300px)' }}>
-          <div className="space-y-6 sm:space-y-10">
-            {/* Basic Information Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
-                  <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Basic Information</h3>
-              </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="resources" className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                <span className="hidden sm:inline">Resources</span>
+              </TabsTrigger>
+              <TabsTrigger value="tasks" className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Tasks</span>
+              </TabsTrigger>
+              <TabsTrigger value="notes" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Notes</span>
+              </TabsTrigger>
+              <TabsTrigger value="architecture" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Architecture</span>
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* URL */}
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Project URL
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
-                    placeholder="https://example.com"
-                  />
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              {/* Basic Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                    <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Basic Information</h3>
                 </div>
 
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                      Description
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* URL */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Project URL
                     </label>
-                    <div className="flex items-center gap-1">
+                    <input
+                      type="url"
+                      value={formData.url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+
+                  {/* Image URL */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Project Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.image}
+                      onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+
+                  {/* Project Image Preview */}
+                  <div className="md:col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Image Preview
+                      </label>
                       <button
                         type="button"
-                        onClick={() => setIsDescriptionPreview(false)}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
-                          !isDescriptionPreview
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        }`}
+                        onClick={() => setIsImagePreviewExpanded(!isImagePreviewExpanded)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-all duration-200"
                       >
-                        <Edit className="h-3 w-3 mr-1 inline" />
-                        Edit
+                        {isImagePreviewExpanded ? (
+                          <>
+                            <span>Hide</span>
+                            <ChevronUp className="h-3 w-3" />
+                          </>
+                        ) : (
+                          <>
+                            <span>Show</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </>
+                        )}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsDescriptionPreview(true)}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
-                          isDescriptionPreview
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        }`}
-                      >
-                        <Eye className="h-3 w-3 mr-1 inline" />
-                        Preview
-                      </button>
+                    </div>
+
+                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isImagePreviewExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="relative w-full max-w-md mx-auto">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 shadow-sm">
+                          {formData.image ? (
+                            <Image
+                              src={formData.image}
+                              alt={`${formData.title} preview`}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                // Hide image on error
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="text-2xl mb-2">🖼️</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">No image URL provided</div>
+                                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">Enter a URL above to see preview</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {formData.image && (
+                          <div className="absolute top-2 right-2 px-2 py-1 text-xs rounded-md bg-black/60 text-white backdrop-blur-sm font-medium">
+                            Preview
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {!isDescriptionPreview && (
-                    <div className="mb-2 p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-t-lg border-b-0">
-                      <div className="flex flex-wrap gap-1 items-center overflow-x-auto">
-                        {/* Text formatting */}
+                  {/* Description */}
+                  <div className="md:col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Description
+                      </label>
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => formatText('bold')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Bold (Ctrl+B)"
+                          onClick={() => setIsDescriptionPreview(false)}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            !isDescriptionPreview
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                          }`}
                         >
-                          <Bold className="h-3 w-3" />
+                          <Edit className="h-3 w-3 mr-1 inline" />
+                          Edit
                         </button>
                         <button
                           type="button"
-                          onClick={() => formatText('italic')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Italic (Ctrl+I)"
+                          onClick={() => setIsDescriptionPreview(true)}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            isDescriptionPreview
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                          }`}
                         >
-                          <Italic className="h-3 w-3" />
+                          <Eye className="h-3 w-3 mr-1 inline" />
+                          Preview
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('code')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Inline Code (Ctrl+`)"
-                        >
-                          <Code2 className="h-3 w-3" />
-                        </button>
-
-                        {/* Divider */}
-                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
-
-                        {/* Headers */}
-                        <button
-                          type="button"
-                          onClick={() => formatText('h1')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Heading 1"
-                        >
-                          H1
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('h2')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Heading 2"
-                        >
-                          H2
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('h3')}
-                          className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Heading 3"
-                        >
-                          H3
-                        </button>
-
-                        {/* Divider */}
-                        <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
-
-                        {/* Lists and other elements */}
-                        <button
-                          type="button"
-                          onClick={() => formatText('ul')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Bullet List"
-                        >
-                          <List className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('ol')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Numbered List"
-                        >
-                          <ListOrdered className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('quote')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Quote"
-                        >
-                          <Quote className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('link')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Link (Ctrl+K)"
-                        >
-                          <Link className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => formatText('codeblock')}
-                          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                          title="Code Block"
-                        >
-                          <Code className="h-3 w-3" />
-                        </button>
-
-                        {/* Info hint */}
-                        <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 hidden sm:block flex-shrink-0">
-                          Supports Markdown • Keyboard shortcuts available
-                        </div>
                       </div>
                     </div>
-                  )}
 
-                  {!isDescriptionPreview ? (
-                    <textarea
-                      ref={descriptionTextareaRef}
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      onKeyDown={handleKeyDown}
-                      rows={6}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-t-none rounded-b-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-sm font-mono"
-                      placeholder="Describe your project using Markdown...
+                    {!isDescriptionPreview && (
+                      <div className="mb-2 p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-t-lg border-b-0">
+                        <div className="flex flex-wrap gap-1 items-center overflow-x-auto">
+                          {/* Text formatting */}
+                          <button
+                            type="button"
+                            onClick={() => formatText('bold')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Bold (Ctrl+B)"
+                          >
+                            <Bold className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('italic')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Italic (Ctrl+I)"
+                          >
+                            <Italic className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('code')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Inline Code (Ctrl+`)"
+                          >
+                            <Code2 className="h-3 w-3" />
+                          </button>
+
+                          {/* Divider */}
+                          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
+
+                          {/* Headers */}
+                          <button
+                            type="button"
+                            onClick={() => formatText('h1')}
+                            className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Heading 1"
+                          >
+                            H1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('h2')}
+                            className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Heading 2"
+                          >
+                            H2
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('h3')}
+                            className="px-2 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Heading 3"
+                          >
+                            H3
+                          </button>
+
+                          {/* Divider */}
+                          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1 flex-shrink-0"></div>
+
+                          {/* Lists and other elements */}
+                          <button
+                            type="button"
+                            onClick={() => formatText('ul')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Bullet List"
+                          >
+                            <List className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('ol')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Numbered List"
+                          >
+                            <ListOrdered className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('quote')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Quote"
+                          >
+                            <Quote className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('link')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Link (Ctrl+K)"
+                          >
+                            <Link className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => formatText('codeblock')}
+                            className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                            title="Code Block"
+                          >
+                            <Code className="h-3 w-3" />
+                          </button>
+
+                          {/* Info hint */}
+                          <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 hidden sm:block flex-shrink-0">
+                            Supports Markdown • Keyboard shortcuts available
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!isDescriptionPreview ? (
+                      <textarea
+                        ref={descriptionTextareaRef}
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        rows={6}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-t-none rounded-b-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-sm font-mono"
+                        placeholder="Describe your project using Markdown...
 
 **Example:**
 # Project Overview
@@ -1195,107 +1340,262 @@ React, TypeScript, Tailwind CSS
 > **Note:** This supports GitHub Flavored Markdown
 
 [Live Demo](https://demo.example.com) | [GitHub](https://github.com/user/repo)"
-                    />
-                  ) : (
-                    <div className="w-full min-h-[140px] px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm overflow-auto">
-                      {formData.description.trim() ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none prose-slate">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">{children}</h1>,
-                              h2: ({children}) => <h2 className="text-base font-semibold mb-2 text-slate-900 dark:text-white">{children}</h2>,
-                              h3: ({children}) => <h3 className="text-sm font-medium mb-1 text-slate-900 dark:text-white">{children}</h3>,
-                              p: ({children}) => <p className="mb-2 text-slate-700 dark:text-slate-300 leading-relaxed">{children}</p>,
-                              ul: ({children}) => <ul className="list-disc list-inside mb-2 text-slate-700 dark:text-slate-300">{children}</ul>,
-                              ol: ({children}) => <ol className="list-decimal list-inside mb-2 text-slate-700 dark:text-slate-300">{children}</ol>,
-                              li: ({children}) => <li className="mb-1">{children}</li>,
-                              a: ({href, children}) => <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
-                              code: ({children}) => <code className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs font-mono text-slate-800 dark:text-slate-200">{children}</code>,
-                              pre: ({children}) => <pre className="bg-slate-100 dark:bg-slate-700 p-2 rounded text-xs font-mono overflow-x-auto mb-2">{children}</pre>,
-                              strong: ({children}) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
-                              em: ({children}) => <em className="italic text-slate-700 dark:text-slate-300">{children}</em>,
-                              blockquote: ({children}) => <blockquote className="border-l-4 border-slate-300 dark:border-slate-600 pl-3 ml-2 italic text-slate-600 dark:text-slate-400">{children}</blockquote>,
-                            }}
+                      />
+                    ) : (
+                      <div className="w-full min-h-[140px] px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm overflow-auto">
+                        {formData.description.trim() ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-slate">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">{children}</h1>,
+                                h2: ({children}) => <h2 className="text-base font-semibold mb-2 text-slate-900 dark:text-white">{children}</h2>,
+                                h3: ({children}) => <h3 className="text-sm font-medium mb-1 text-slate-900 dark:text-white">{children}</h3>,
+                                p: ({children}) => <p className="mb-2 text-slate-700 dark:text-slate-300 leading-relaxed">{children}</p>,
+                                ul: ({children}) => <ul className="list-disc list-inside mb-2 text-slate-700 dark:text-slate-300">{children}</ul>,
+                                ol: ({children}) => <ol className="list-decimal list-inside mb-2 text-slate-700 dark:text-slate-300">{children}</ol>,
+                                li: ({children}) => <li className="mb-1">{children}</li>,
+                                a: ({href, children}) => <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+                                code: ({children}) => <code className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs font-mono text-slate-800 dark:text-slate-200">{children}</code>,
+                                pre: ({children}) => <pre className="bg-slate-100 dark:bg-slate-700 p-2 rounded text-xs font-mono overflow-x-auto mb-2">{children}</pre>,
+                                strong: ({children}) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
+                                em: ({children}) => <em className="italic text-slate-700 dark:text-slate-300">{children}</em>,
+                                blockquote: ({children}) => <blockquote className="border-l-4 border-slate-300 dark:border-slate-600 pl-3 ml-2 italic text-slate-600 dark:text-slate-400">{children}</blockquote>,
+                              }}
+                            >
+                              {formData.description}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-slate-400 dark:text-slate-500 italic">No description provided. Switch to Edit mode to add one.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Technologies Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
+                    <Code className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Technologies</h3>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTech}
+                    onChange={(e) => setNewTech(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addTechnology()}
+                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-sm"
+                    placeholder="Add technology (e.g., React, Node.js)"
+                  />
+                  <button
+                    onClick={addTechnology}
+                    disabled={!newTech.trim()}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {formData.technologies.map((tech, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-md text-xs font-medium"
+                    >
+                      {tech}
+                      <button
+                        onClick={() => removeTechnology(tech)}
+                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Resources Tab */}
+            <TabsContent value="resources" className="space-y-6">
+              {/* Attachments Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-md">
+                    <Paperclip className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Attachments</h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-500">({formData.attachments.length})</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={newAttachment}
+                    onChange={(e) => setNewAttachment(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addAttachment()}
+                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 text-sm"
+                    placeholder="Add attachment URL (e.g., https://example.com/file.pdf)"
+                  />
+                  <button
+                    onClick={addAttachment}
+                    disabled={!newAttachment.trim()}
+                    className="px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {formData.attachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    >
+                      <div className="flex-shrink-0">
+                        <Paperclip className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={attachment.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate"
                           >
-                            {formData.description}
-                          </ReactMarkdown>
+                            {attachment.name}
+                          </a>
+                          {attachment.type && (
+                            <span className="text-xs text-slate-500 dark:text-slate-500 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+                              {attachment.type}
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <p className="text-slate-400 dark:text-slate-500 italic">No description provided. Switch to Edit mode to add one.</p>
-                      )}
+                        <div className="text-xs text-slate-500 dark:text-slate-500 truncate mt-1">
+                          {attachment.url}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeAttachment(attachment.id)}
+                        className="flex-shrink-0 p-1 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {formData.attachments.length === 0 && (
+                    <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+                      <Paperclip className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No attachments yet</p>
+                      <p className="text-xs mt-1">Add links to documents, files, or resources</p>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Technologies Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
-                  <Code className="h-4 w-4 text-green-600 dark:text-green-400" />
+            {/* Tasks Tab */}
+            <TabsContent value="tasks" className="space-y-6">
+              {/* Tasks Section - Mini Kanban Board */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                    <CheckSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Task Management</h3>
                 </div>
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Technologies</h3>
-              </div>
 
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newTech}
-                  onChange={(e) => setNewTech(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addTechnology()}
-                  className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-sm"
-                  placeholder="Add technology (e.g., React, Node.js)"
+                {/* Mini Kanban Board */}
+                <TaskBoardClientOnly
+                  formData={{ tasks: formData.tasks }}
+                  onDropTask={onDropTask}
+                  onRemoveTaskById={onRemoveTaskById}
+                  setFormData={setFormData}
+                  editingTaskId={editingTaskId}
+                  setEditingTaskId={setEditingTaskId}
+                  updateTaskTitle={updateTaskTitle}
                 />
-                <button
-                  onClick={addTechnology}
-                  disabled={!newTech.trim()}
-                  className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 font-medium"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
               </div>
+            </TabsContent>
 
-              <div className="flex flex-wrap gap-2">
-                {formData.technologies.map((tech, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-md text-xs font-medium"
-                  >
-                    {tech}
-                    <button
-                      onClick={() => removeTechnology(tech)}
-                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Tasks Section - Mini Kanban Board */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
-                  <CheckSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            {/* Notes Tab */}
+            <TabsContent value="notes" className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-md">
+                    <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Internal Notes</h3>
                 </div>
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Task Management</h3>
-              </div>
 
-              {/* Mini Kanban Board */}
-              <TaskBoardClientOnly
-                formData={{ tasks: formData.tasks }}
-                onDropTask={onDropTask}
-                onRemoveTaskById={onRemoveTaskById}
-                setFormData={setFormData}
-                editingTaskId={editingTaskId}
-                setEditingTaskId={setEditingTaskId}
-                updateTaskTitle={updateTaskTitle}
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <textarea
+                    value={formData.notes || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={12}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none text-sm"
+                    placeholder="Add internal notes, observations, or reminders about this project...
+
+**Examples:**
+- Key decisions made during development
+- Important considerations for future updates
+- Lessons learned
+- TODO items for later
+- Meeting notes or discussions"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Architecture Tab */}
+            <TabsContent value="architecture" className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-md">
+                    <Settings className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">Technical Architecture</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <textarea
+                    value={formData.architecture || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, architecture: e.target.value }))}
+                    rows={12}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 resize-none text-sm font-mono"
+                    placeholder="Document the technical architecture, design patterns, and implementation details...
+
+**Examples:**
+# System Architecture
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Authentication: JWT tokens
+
+# Design Patterns
+- Component composition
+- Custom hooks for state management
+- Repository pattern for data access
+
+# Key Components
+- User authentication flow
+- Data validation layers
+- Error handling strategies
+
+# Infrastructure
+- Deployment pipeline
+- Monitoring and logging
+- Performance optimizations"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Footer */}

@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import Card from '../../../../presentation/components/features/board/Card';
+import Card from '../../../../presentation/components/features/board/ProjectCard';
 import { Project } from '../../../../domain/board/schemas/project.schema';
 
 const mockProject: Project = {

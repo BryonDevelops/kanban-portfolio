@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import Card from '../../../../presentation/components/features/board/Card';
+import Card from '../../../../presentation/components/features/board/ProjectCard';
 import { Project } from '../../../../domain/board/entities/project';
 import { DndProvider } from '../../__mocks__/react-dnd';
 import { HTML5Backend } from '../../__mocks__/react-dnd-html5-backend';

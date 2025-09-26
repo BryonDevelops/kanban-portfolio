@@ -42,9 +42,11 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
     title: '',
     description: '',
     url: '',
+    image: '',
     status: defaultStatus,
     technologies: [],
     tags: [],
+    attachments: [],
     tasks: [],
     start_date: undefined,
     end_date: undefined,
@@ -91,9 +93,11 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
           title: formData.title.trim(),
           description: formData.description?.trim() || undefined,
           url: formData.url?.trim() || undefined,
+          image: formData.image?.trim() || undefined,
           status: formData.status,
           technologies: formData.technologies,
           tags: formData.tags,
+          attachments: formData.attachments || [],
           tasks: formData.tasks || [],
           start_date: formData.start_date,
           end_date: formData.end_date,
@@ -129,9 +133,11 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
         title: '',
         description: '',
         url: '',
+        image: '',
         status: 'planning',
         technologies: [],
         tags: [],
+        attachments: [],
         tasks: [],
         start_date: undefined,
         end_date: undefined,
@@ -260,6 +266,23 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
               onChange={(e) => handleInputChange('url', e.target.value)}
               placeholder="https://example.com"
             />
+          </div>
+
+          {/* Image */}
+          <div className="space-y-2">
+            <label htmlFor="image" className="text-sm font-medium">
+              Project Image
+            </label>
+            <Input
+              id="image"
+              type="url"
+              value={formData.image}
+              onChange={(e) => handleInputChange('image', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional: Add a cover image for your project (JPG, PNG, WebP, etc.)
+            </p>
           </div>
 
           {/* Status */}

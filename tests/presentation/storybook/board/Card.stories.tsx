@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import Card from '../../../../presentation/components/features/board/Card'
+import Card from '../../../../presentation/components/features/board/ProjectCard'
 import { Project } from '../../../../domain/board/schemas/project.schema'
 
 
