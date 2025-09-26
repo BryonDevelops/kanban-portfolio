@@ -1,7 +1,7 @@
 "use client"
 
 import { ProtectedRoute } from "@/presentation/components/shared/ProtectedRoute"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../presentation/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
 import { Users, Settings, Database, Shield, Activity } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
