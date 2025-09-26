@@ -33,6 +33,7 @@ export function projectDataToProject(data: ProjectData): Project {
     status: data.status || 'planning',
     technologies: data.technologies || [],
     tags: data.tags || [],
+    attachments: [], // Required attachments array
     url: data.url,
     start_date: data.start_date,
     end_date: data.end_date,
@@ -53,6 +54,7 @@ export function projectDataToEntityProject(data: ProjectData): Project {
     status: data.status || 'planning',
     technologies: data.technologies || [],
     tags: data.tags || [],
+    attachments: [], // Required attachments array
     url: data.url,
     start_date: data.start_date,
     end_date: data.end_date,
@@ -70,6 +72,7 @@ export function projectDataToProjectCreate(data: ProjectData): ProjectCreate {
     status: data.status || 'planning',
     technologies: data.technologies || [],
     tags: data.tags || [],
+    attachments: [], // Required attachments array
     url: data.url,
     start_date: data.start_date,
     end_date: data.end_date,

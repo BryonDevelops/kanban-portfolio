@@ -20,6 +20,7 @@ export const Default: Story = {
       description: 'Optional description',
       status: 'idea',
       technologies: [],
+      attachments: [],
       tags: [],
       tasks: []
     },
