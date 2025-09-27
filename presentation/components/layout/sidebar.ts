@@ -41,6 +41,12 @@ export const sidebarConfig = {
       description: "View all projects"
     },
     {
+      title: "Board",
+      url: "/Board",
+      icon: Frame,
+      description: "View all projects"
+    },
+    {
       title: "Microblog",
       url: "/microblog",
       icon: BookOpen,
