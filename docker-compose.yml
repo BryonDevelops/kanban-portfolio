@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  kanban-portfolio:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    ports:
+      - "3000:3000"
+      - "6006:6006"
+    volumes:
+      - ..:/workspaces/kanban-portfolio:cached
+      - /workspaces/kanban-portfolio/node_modules
+    working_dir: /workspaces/kanban-portfolio
+    environment:
+      - NODE_ENV=development
+    command: sleep infinity
+    networks:
+      - kanban-network
+
+  # Optional: Supabase local development
+  # Uncomment and configure if you want to run Supabase locally
+  # supabase:
+  #   image: supabase/postgres:15.1.0.147
+  #   ports:
+  #     - "54322:5432"
+  #   environment:
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: postgres
+  #   volumes:
+  #     - supabase_data:/var/lib/postgresql/data
+  #   networks:
+  #     - kanban-network
+
+networks:
+  kanban-network:
+    driver: bridge
+
+# volumes:
+#   supabase_data:

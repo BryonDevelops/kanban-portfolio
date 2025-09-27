@@ -1,22 +1,90 @@
 {
   "name": "Kanban Portfolio Dev Container",
-  "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "18"
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
     }
   },
-  "forwardPorts": [3000],
+  "forwardPorts": [3000, 6006, 54321],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Dev Server",
+      "onAutoForward": "notify"
+    },
+    "6006": {
+      "label": "Storybook",
+      "onAutoForward": "silent"
+    },
+    "54321": {
+      "label": "Supabase Local",
+      "onAutoForward": "silent"
+    }
+  },
   "postCreateCommand": "npm install",
+  "postAttachCommand": "npm run prepare",
   "customizations": {
     "vscode": {
-      "settings": {},
+      "settings": {
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.suggest.autoImports": true,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "emmet.includeLanguages": {
+          "typescript": "html",
+          "typescriptreact": "html"
+        },
+        "tailwindCSS.includeLanguages": {
+          "typescript": "html",
+          "typescriptreact": "html"
+        },
+        "files.associations": {
+          "*.css": "tailwindcss"
+        },
+        "editor.quickSuggestions": {
+          "strings": true
+        },
+        "css.validate": false,
+        "less.validate": false,
+        "scss.validate": false
+      },
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "ms-vscode.vscode-typescript-next",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "christian-kohler.path-intellisense",
+        "ms-vscode.vscode-css-peek",
+        "formulahendry.auto-rename-tag",
+        "ms-vscode.vscode-css-intellisense",
+        "zignd.html-css-class-completion",
+        "ms-playwright.playwright",
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        "gruntfuggly.todo-tree",
+        "ms-vscode.vscode-git-graph",
+        "eamodio.gitlens",
+        "ms-vscode.vscode-pull-request-github",
+        "github.copilot",
+        "github.copilot-chat"
       ]
     }
-  }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/.git,target=/workspaces/${localWorkspaceFolderBasename}/.git,type=bind,consistency=cached"
+  ],
+  "containerEnv": {
+    "NODE_ENV": "development"
+  },
+  "remoteUser": "node"
 }
