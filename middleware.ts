@@ -1,12 +1,12 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getFeatureFlags } from "@/lib/feature-flags";
+import { getFeatureFlagsSync } from "@/lib/feature-flags";
 
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
 
   // Feature flag checks - redirect to 404 for disabled features
-  const flags = getFeatureFlags();
+  const flags = getFeatureFlagsSync();
 
   // Check board feature
   if (pathname.startsWith('/Board') && !flags.board) {

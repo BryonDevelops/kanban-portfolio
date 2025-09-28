@@ -1,6 +1,8 @@
 // Feature flags configuration
 // Control which features are enabled/disabled in the application
 
+import { getFeatureFlagService } from '@/lib/dependencyContainer'
+
 export interface FeatureFlags {
   // Core features
   board: boolean;
@@ -48,89 +50,123 @@ export const defaultFeatureFlags: FeatureFlags = {
   advancedSearch: false,
 };
 
-// Load feature flags from environment variables
-export function loadFeatureFlags(): FeatureFlags {
+// Load feature flags from service, with environment variables as fallback
+export async function loadFeatureFlags(): Promise<FeatureFlags> {
   const flags = { ...defaultFeatureFlags };
 
+  try {
+    const featureFlagService = getFeatureFlagService();
+
+    const dbFlags = await featureFlagService.getFeatureFlags();
+
+    if (dbFlags && dbFlags.length > 0) {
+      // Map database flags to our interface
+      dbFlags.forEach((flag: { id: string; enabled: boolean }) => {
+        if (flag.id in flags) {
+          flags[flag.id as keyof FeatureFlags] = flag.enabled;
+        }
+      });
+      return flags;
+    }
+  } catch (error) {
+    console.warn('Failed to load feature flags from service:', error);
+  }
+
+  // Fallback to environment variables
+  return loadFeatureFlagsFromEnv();
+}
+
+// Load feature flags from environment variables (legacy method)
+export function loadFeatureFlagsFromEnv(): FeatureFlags {
+  const flags = { ...defaultFeatureFlags };
+
+  // Helper function to safely parse boolean env vars
+  const parseBooleanEnv = (envValue: string | undefined, defaultValue: boolean): boolean => {
+    if (envValue === undefined) return defaultValue;
+    if (envValue === 'true') return true;
+    if (envValue === 'false') return false;
+    // Invalid values fall back to default
+    return defaultValue;
+  };
+
   // Core features
-  if (process.env.NEXT_PUBLIC_FEATURE_BOARD !== undefined) {
-    flags.board = process.env.NEXT_PUBLIC_FEATURE_BOARD === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_MICROBLOG !== undefined) {
-    flags.microblog = process.env.NEXT_PUBLIC_FEATURE_MICROBLOG === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_PROJECTS !== undefined) {
-    flags.projects = process.env.NEXT_PUBLIC_FEATURE_PROJECTS === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_ABOUT !== undefined) {
-    flags.about = process.env.NEXT_PUBLIC_FEATURE_ABOUT === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_CONTACT !== undefined) {
-    flags.contact = process.env.NEXT_PUBLIC_FEATURE_CONTACT === 'true';
-  }
+  flags.board = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_BOARD, flags.board);
+  flags.microblog = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_MICROBLOG, flags.microblog);
+  flags.projects = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_PROJECTS, flags.projects);
+  flags.about = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_ABOUT, flags.about);
+  flags.contact = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_CONTACT, flags.contact);
 
   // Admin features
-  if (process.env.NEXT_PUBLIC_FEATURE_ADMIN !== undefined) {
-    flags.admin = process.env.NEXT_PUBLIC_FEATURE_ADMIN === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_USER_MANAGEMENT !== undefined) {
-    flags.userManagement = process.env.NEXT_PUBLIC_FEATURE_USER_MANAGEMENT === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_SYSTEM_SETTINGS !== undefined) {
-    flags.systemSettings = process.env.NEXT_PUBLIC_FEATURE_SYSTEM_SETTINGS === 'true';
-  }
+  flags.admin = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_ADMIN, flags.admin);
+  flags.userManagement = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_USER_MANAGEMENT, flags.userManagement);
+  flags.systemSettings = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_SYSTEM_SETTINGS, flags.systemSettings);
 
   // Advanced features
-  if (process.env.NEXT_PUBLIC_FEATURE_ANALYTICS !== undefined) {
-    flags.analytics = process.env.NEXT_PUBLIC_FEATURE_ANALYTICS === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_PWA !== undefined) {
-    flags.pwa = process.env.NEXT_PUBLIC_FEATURE_PWA === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_OFFLINE !== undefined) {
-    flags.offline = process.env.NEXT_PUBLIC_FEATURE_OFFLINE === 'true';
-  }
+  flags.analytics = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_ANALYTICS, flags.analytics);
+  flags.pwa = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_PWA, flags.pwa);
+  flags.offline = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_OFFLINE, flags.offline);
 
   // Experimental features
-  if (process.env.NEXT_PUBLIC_FEATURE_AI_ASSISTANT !== undefined) {
-    flags.aiAssistant = process.env.NEXT_PUBLIC_FEATURE_AI_ASSISTANT === 'true';
-  }
-  if (process.env.NEXT_PUBLIC_FEATURE_ADVANCED_SEARCH !== undefined) {
-    flags.advancedSearch = process.env.NEXT_PUBLIC_FEATURE_ADVANCED_SEARCH === 'true';
-  }
+  flags.aiAssistant = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_AI_ASSISTANT, flags.aiAssistant);
+  flags.advancedSearch = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_ADVANCED_SEARCH, flags.advancedSearch);
 
   return flags;
 }
 
 // Singleton instance
 let featureFlagsInstance: FeatureFlags | null = null;
+let featureFlagsLoaded = false;
 
 // Get the current feature flags (lazy loaded)
-export function getFeatureFlags(): FeatureFlags {
+export async function getFeatureFlags(): Promise<FeatureFlags> {
+  if (!featureFlagsLoaded) {
+    featureFlagsInstance = await loadFeatureFlags();
+    featureFlagsLoaded = true;
+  }
+  return featureFlagsInstance!;
+}
+
+// Synchronous version for client-side use (returns cached version)
+export function getFeatureFlagsSync(): FeatureFlags {
   if (!featureFlagsInstance) {
-    featureFlagsInstance = loadFeatureFlags();
+    // If not loaded yet, return defaults + env vars
+    featureFlagsInstance = loadFeatureFlagsFromEnv();
   }
   return featureFlagsInstance;
 }
 
+// Refresh feature flags (useful after admin updates)
+export async function refreshFeatureFlags(): Promise<FeatureFlags> {
+  featureFlagsLoaded = false;
+  featureFlagsInstance = null;
+  return await getFeatureFlags();
+}
+
 // Check if a specific feature is enabled
-export function isFeatureEnabled(feature: keyof FeatureFlags): boolean {
-  return getFeatureFlags()[feature];
+export async function isFeatureEnabled(feature: keyof FeatureFlags): Promise<boolean> {
+  const flags = await getFeatureFlags();
+  return flags[feature];
+}
+
+// Synchronous version for client-side use
+export function isFeatureEnabledSync(feature: keyof FeatureFlags): boolean {
+  const flags = getFeatureFlagsSync();
+  return flags[feature];
 }
 
 // Helper functions for common feature checks
 export const features = {
-  isBoardEnabled: () => isFeatureEnabled('board'),
-  isMicroblogEnabled: () => isFeatureEnabled('microblog'),
-  isProjectsEnabled: () => isFeatureEnabled('projects'),
-  isAboutEnabled: () => isFeatureEnabled('about'),
-  isContactEnabled: () => isFeatureEnabled('contact'),
-  isAdminEnabled: () => isFeatureEnabled('admin'),
-  isUserManagementEnabled: () => isFeatureEnabled('userManagement'),
-  isSystemSettingsEnabled: () => isFeatureEnabled('systemSettings'),
-  isAnalyticsEnabled: () => isFeatureEnabled('analytics'),
-  isPWAEnabled: () => isFeatureEnabled('pwa'),
-  isOfflineEnabled: () => isFeatureEnabled('offline'),
-  isAIAssistantEnabled: () => isFeatureEnabled('aiAssistant'),
-  isAdvancedSearchEnabled: () => isFeatureEnabled('advancedSearch'),
+  isBoardEnabled: () => isFeatureEnabledSync('board'),
+  isMicroblogEnabled: () => isFeatureEnabledSync('microblog'),
+  isProjectsEnabled: () => isFeatureEnabledSync('projects'),
+  isAboutEnabled: () => isFeatureEnabledSync('about'),
+  isContactEnabled: () => isFeatureEnabledSync('contact'),
+  isAdminEnabled: () => isFeatureEnabledSync('admin'),
+  isUserManagementEnabled: () => isFeatureEnabledSync('userManagement'),
+  isSystemSettingsEnabled: () => isFeatureEnabledSync('systemSettings'),
+  isAnalyticsEnabled: () => isFeatureEnabledSync('analytics'),
+  isPWAEnabled: () => isFeatureEnabledSync('pwa'),
+  isOfflineEnabled: () => isFeatureEnabledSync('offline'),
+  isAIAssistantEnabled: () => isFeatureEnabledSync('aiAssistant'),
+  isAdvancedSearchEnabled: () => isFeatureEnabledSync('advancedSearch'),
 };

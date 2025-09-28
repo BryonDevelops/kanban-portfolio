@@ -4,11 +4,11 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
-import { getFeatureFlags } from "@/lib/feature-flags"
+import { getFeatureFlagsSync } from "@/lib/feature-flags"
 
 // Helper function to filter navigation items based on feature flags
 function getFilteredNavItems(items: typeof sidebarConfig.navMain) {
-  const flags = getFeatureFlags();
+  const flags = getFeatureFlagsSync();
   return items.filter(item => {
     if (!item.featureFlag) return true; // No feature flag means always show
     return flags[item.featureFlag as keyof typeof flags] === true;

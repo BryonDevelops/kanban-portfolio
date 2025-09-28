@@ -36,4 +36,5 @@ module.exports = {
   testTimeout: 10000,
   // Clear mocks between tests
   clearMocks: true,
+  // Remove deprecated globals section - using transform config above
 };
