@@ -4,8 +4,18 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
+import { getFeatureFlagsSync, type FeatureFlags } from "@/lib/feature-flags"
+import { useAdminFeatureFlagStore } from "@/presentation/stores/admin/adminFeatureFlagStore"
+
+// Helper function to filter navigation items based on feature flags
+export function getFilteredNavItems(items: typeof sidebarConfig.navMain, flags: FeatureFlags) {
+  return items.filter(item => {
+    if (!item.featureFlag) return true; // No feature flag means always show
+    return flags[item.featureFlag as keyof FeatureFlags] === true;
+  });
+}
 import { SignedIn, SignedOut, UserButton, SignInButton, SignUpButton, useUser, useClerk } from "@clerk/nextjs"
-import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, PinOff, Monitor, Minimize2 } from "lucide-react"
+import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, Monitor, Minimize2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -27,6 +37,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isHovered, setIsHovered] = React.useState(false)
   const [isHydrated, setIsHydrated] = React.useState(false)
   const [userPreference, setUserPreference] = React.useState<'auto' | 'pinned' | 'collapsed'>('auto')
+
+  // Get feature flags from store (for admins) or sync method (for regular users)
+  const adminFlags = useAdminFeatureFlagStore((state) => state.flags)
+  const syncFlags = getFeatureFlagsSync()
+
+  // Convert feature flags to the format expected by filtering function
+  const featureFlags: FeatureFlags = React.useMemo(() => {
+    if (isAdmin && adminFlags.length > 0) {
+      // Use admin store flags for admin users, merge with defaults
+      const flags = { ...syncFlags }
+      adminFlags.forEach(flag => {
+        if (flag.id in flags) {
+          flags[flag.id as keyof FeatureFlags] = flag.enabled
+        }
+      })
+      return flags
+    } else {
+      // Use sync flags for regular users
+      return syncFlags
+    }
+  }, [isAdmin, adminFlags, syncFlags])
+
+  // Filter navigation items based on feature flags
+  const filteredNavItems = React.useMemo(() =>
+    getFilteredNavItems(sidebarConfig.navMain, featureFlags),
+    [featureFlags]
+  )
+
+  const filteredAdminItems = React.useMemo(() =>
+    getFilteredNavItems(sidebarConfig.navAdmin, featureFlags),
+    [featureFlags]
+  )
 
   React.useEffect(() => {
     setIsHydrated(true)
@@ -192,7 +234,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
                 Navigation
               </h3>
-              <NavMain items={sidebarConfig.navMain} />
+              <NavMain items={filteredNavItems} />
             </div>
 
             {/* User Actions */}
@@ -291,7 +333,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </>
             )}
-            {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
+            {isHydrated && isAdmin && filteredAdminItems.length > 0 && (
               <>
                 <SidebarSeparator className="mt-6" />
                 <div className="space-y-2">
@@ -310,7 +352,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       )}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-1 mt-2 ml-4 border-l-2 border-red-500/20 pl-4">
-                      <NavMain items={sidebarConfig.navAdmin} />
+                      <NavMain items={filteredAdminItems} />
                     </CollapsibleContent>
                   </Collapsible>
                 </div>
@@ -335,7 +377,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
           {/* Navigation Icons - Enhanced */}
           <div className="flex flex-col items-center py-4 space-y-1">
-            {sidebarConfig.navMain.map((item) => {
+            {filteredNavItems.map((item) => {
               const IconComponent = item.icon
               return (
                 <Link
@@ -360,7 +402,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             })}
           </div>
 
-          {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
+          {isHydrated && isAdmin && filteredAdminItems.length > 0 && (
             <div className="flex items-center justify-center py-3 border-t border-sidebar-border/30">
               <div className="group relative">
                 <Settings className="h-5 w-5 text-red-500 hover:text-red-400 transition-colors duration-200 hover:scale-110 cursor-pointer" />

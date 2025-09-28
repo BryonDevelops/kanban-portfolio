@@ -19,8 +19,6 @@ describe('BoardService', () => {
   });
 
   test('should move a project between columns', async () => {
-    const fromCol = 'column1';
-    const toCol = 'column2';
     const project: Project = {
         id: 'project1',
         title: 'Project 1',
@@ -28,23 +26,23 @@ describe('BoardService', () => {
         tasks: [],
         created_at: new Date(),
         updated_at: new Date(),
-        status: 'in-progress',
+        status: 'idea',
         technologies: [],
         tags: []
     };
 
-    mockRepository.addProject.mockResolvedValue(project);
-    mockRepository.fetchProjects.mockResolvedValue([project]);
+    const updatedProject = { ...project, status: 'in-progress' as const };
 
-    // Set up initial state
-    mockRepository.saveProject(project);
+    mockRepository.fetchProjectById.mockResolvedValue(project);
+    mockRepository.updateProject.mockResolvedValue(updatedProject);
 
-    await taskService.moveTask(fromCol, toCol, 0, 0);
+    const result = await boardService.moveProject(project.id, 'in-progress');
 
-    const projectsByColumn = await mockRepository.fetchProjects();
-
-    expect(projectsByColumn[fromCol]).not.toEqual(expect.arrayContaining([project]));
-    expect(projectsByColumn[toCol]).toEqual(expect.arrayContaining([{ ...project, columnId: toCol }]));
+    expect(result.status).toBe('in-progress');
+    expect(mockRepository.fetchProjectById).toHaveBeenCalledWith(project.id);
+    expect(mockRepository.updateProject).toHaveBeenCalledWith(project.id, expect.objectContaining({
+      status: 'in-progress'
+    }));
   });
 
   test('should create a new project', async () => {

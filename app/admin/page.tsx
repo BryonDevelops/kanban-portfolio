@@ -6,6 +6,7 @@ import { Button } from "@/presentation/components/ui/button"
 import { Users, Settings, Database, Shield, Activity } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { Badge } from "@/presentation/components/ui/badge"
+import { FeatureFlagsManager } from "@/presentation/components/features/admin/feature-flags-manager"
 
 export default function AdminPage() {
   const { user } = useUser()
@@ -134,6 +135,9 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Feature Flags Management */}
+        <FeatureFlagsManager className="mt-6" />
 
         {/* Admin Info */}
         <Card className="mt-6 border-cyan-100/50 dark:border-emerald-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">

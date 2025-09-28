@@ -1,5 +1,11 @@
-// Integration tests setup
+// Service layer tests setup
 import '@testing-library/jest-dom';
+
+// Import Jest to ensure it's available globally
+import { jest } from '@jest/globals';
+
+// Make Jest available globally
+global.jest = jest;
 
 // Mock environment variables for tests
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
