@@ -4,20 +4,16 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
-import { getFeatureFlagsSync } from "@/lib/feature-flags"
+import { getFeatureFlagsSync, type FeatureFlags } from "@/lib/feature-flags"
+import { useAdminFeatureFlagStore } from "@/presentation/stores/admin/adminFeatureFlagStore"
 
 // Helper function to filter navigation items based on feature flags
-function getFilteredNavItems(items: typeof sidebarConfig.navMain) {
-  const flags = getFeatureFlagsSync();
+export function getFilteredNavItems(items: typeof sidebarConfig.navMain, flags: FeatureFlags) {
   return items.filter(item => {
     if (!item.featureFlag) return true; // No feature flag means always show
-    return flags[item.featureFlag as keyof typeof flags] === true;
+    return flags[item.featureFlag as keyof FeatureFlags] === true;
   });
 }
-
-// Get filtered navigation items
-const filteredNavItems = getFilteredNavItems(sidebarConfig.navMain);
-const filteredAdminItems = getFilteredNavItems(sidebarConfig.navAdmin);
 import { SignedIn, SignedOut, UserButton, SignInButton, SignUpButton, useUser, useClerk } from "@clerk/nextjs"
 import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, Monitor, Minimize2 } from "lucide-react"
 
@@ -41,6 +37,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isHovered, setIsHovered] = React.useState(false)
   const [isHydrated, setIsHydrated] = React.useState(false)
   const [userPreference, setUserPreference] = React.useState<'auto' | 'pinned' | 'collapsed'>('auto')
+
+  // Get feature flags from store (for admins) or sync method (for regular users)
+  const adminFlags = useAdminFeatureFlagStore((state) => state.flags)
+  const syncFlags = getFeatureFlagsSync()
+
+  // Convert feature flags to the format expected by filtering function
+  const featureFlags: FeatureFlags = React.useMemo(() => {
+    if (isAdmin && adminFlags.length > 0) {
+      // Use admin store flags for admin users, merge with defaults
+      const flags = { ...syncFlags }
+      adminFlags.forEach(flag => {
+        if (flag.id in flags) {
+          flags[flag.id as keyof FeatureFlags] = flag.enabled
+        }
+      })
+      return flags
+    } else {
+      // Use sync flags for regular users
+      return syncFlags
+    }
+  }, [isAdmin, adminFlags, syncFlags])
+
+  // Filter navigation items based on feature flags
+  const filteredNavItems = React.useMemo(() =>
+    getFilteredNavItems(sidebarConfig.navMain, featureFlags),
+    [featureFlags]
+  )
+
+  const filteredAdminItems = React.useMemo(() =>
+    getFilteredNavItems(sidebarConfig.navAdmin, featureFlags),
+    [featureFlags]
+  )
 
   React.useEffect(() => {
     setIsHydrated(true)

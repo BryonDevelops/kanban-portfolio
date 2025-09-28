@@ -54,7 +54,7 @@ const sidebarConfig = {
     },
     {
       title: "Board",
-      url: "/Board",
+      url: "/board",
       icon: Frame,
       description: "Kanban board",
       featureFlag: "board"
