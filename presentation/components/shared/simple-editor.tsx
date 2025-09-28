@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { SlashCommandTriggerButton } from '@/components/tiptap-ui/slash-command-trigger-button';
@@ -24,6 +25,7 @@ import {
   Undo,
   Redo
 } from 'lucide-react';
+import { defaultMarkdownSerializer, defaultMarkdownParser } from 'prosemirror-markdown';
 
 interface SimpleEditorProps {
   content: string;
@@ -32,6 +34,18 @@ interface SimpleEditorProps {
 }
 
 export function SimpleEditor({ content, onChange, placeholder = "Start writing your blog post..." }: SimpleEditorProps) {
+  // Convert markdown content to ProseMirror document for initialization
+  const getInitialContent = () => {
+    if (!content) return '';
+    try {
+      const doc = defaultMarkdownParser.parse(content);
+      return doc.toJSON();
+    } catch {
+      // Fallback to plain text if markdown parsing fails
+      return content;
+    }
+  };
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -42,10 +56,12 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
         placeholder,
       }),
     ],
-    content,
+    content: getInitialContent(),
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // Convert ProseMirror document to markdown
+      const markdown = defaultMarkdownSerializer.serialize(editor.state.doc);
+      onChange(markdown);
     },
     editorProps: {
       attributes: {
@@ -53,6 +69,22 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       },
     },
   });
+
+  // Update editor content when content prop changes
+  useEffect(() => {
+    if (editor && content !== undefined) {
+      const currentMarkdown = defaultMarkdownSerializer.serialize(editor.state.doc);
+      if (currentMarkdown !== content) {
+        try {
+          const doc = defaultMarkdownParser.parse(content);
+          editor.commands.setContent(doc.toJSON());
+        } catch {
+          // Fallback to plain text if parsing fails
+          editor.commands.setContent(content);
+        }
+      }
+    }
+  }, [editor, content]);
 
   if (!editor) {
     return null;

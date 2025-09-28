@@ -4,10 +4,10 @@ import React, { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Button } from '@/presentation/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog'
-import { Input } from '@/presentation/components/ui/input'
-import { Textarea } from '@/presentation/components/ui/textarea'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, Plus } from 'lucide-react'
 import { BlogPost } from './BlogPostPortal'
+import { EditBlogPostForm } from './forms/EditBlogPostForm'
+import { CreateBlogPostForm } from './forms/CreateBlogPostForm'
 import { StreamlinedBlogEditor } from './forms/StreamlinedBlogEditor';
 
 interface AdminControlsProps {
@@ -32,149 +32,96 @@ export function PostAdminButtons({
   if (!isAdmin) return null
 
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-        onClick={(e) => {
-          e.stopPropagation()
-          onEdit(post)
-        }}
-      >
-        <Edit className="h-3 w-3" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (confirm('Are you sure you want to delete this post?')) {
-            onDelete(post.id)
-          }
-        }}
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
+    <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-1 flex items-center gap-1">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(post)
+          }}
+          title="Edit post"
+        >
+          <Edit className="h-3.5 w-3.5" />
+        </Button>
+        <div className="w-px h-4 bg-border" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+              onDelete(post.id)
+            }
+          }}
+          title="Delete post"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </div>
   )
 }
 
 // Component for the create post button
-export function CreatePostButton({ onCreatePost }: { onCreatePost?: (post: Omit<BlogPost, 'id'>) => void }) {
+export function CreatePostButton() {
   const { user, isLoaded } = useUser()
   const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
 
   if (!isAdmin) return null
 
   return (
-    <StreamlinedBlogEditor
-      onBlogPostCreated={() => {
-        // The StreamlinedBlogEditor handles the creation internally
-        // We could add a callback here if needed
-      }}
-    />
+    <div className="relative">
+      <CreateBlogPostForm
+        onBlogPostCreated={() => {
+          // The CreateBlogPostForm handles the creation internally
+          // We could add a callback here if needed
+        }}
+        trigger={
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Blog Post
+          </Button>
+        }
+      />
+    </div>
   )
 }
 
 // Component for edit post dialog
 export function EditPostDialog({
   post,
-  isOpen,
   onClose,
   onEditPost
 }: {
   post: BlogPost | null
-  isOpen: boolean
   onClose: () => void
   onEditPost?: (postId: string, post: Partial<BlogPost>) => void
 }) {
-  const [content, setContent] = useState('')
-  const [title, setTitle] = useState('')
-  const [excerpt, setExcerpt] = useState('')
-  const [tags, setTags] = useState('')
-  const [readTime, setReadTime] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-
-  // Update state when post changes
-  React.useEffect(() => {
-    if (post) {
-      setContent(post.content)
-      setTitle(post.title)
-      setExcerpt(post.excerpt)
-      setTags(post.tags.join(', '))
-      setReadTime(post.readTime.toString())
-      setImageUrl(post.imageUrl || '')
-    }
-  }, [post])
-
-  if (!post) return null
-
-  const handleEditPost = () => {
-    const updatedPost: Partial<BlogPost> = {
-      title,
-      excerpt,
-      content,
-      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      readTime: parseInt(readTime) || 5,
-      imageUrl: imageUrl || undefined
-    }
-
-    onEditPost?.(post.id, updatedPost)
-    onClose()
-  }
+  if (!post) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Post</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Excerpt</label>
-            <Textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} required rows={3} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Content</label>
-            <div className="border rounded-lg p-4 bg-background">
-              <textarea
-                value={content.replace(/<[^>]*>/g, '')} // Simple text extraction for editing
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full min-h-[200px] border-none outline-none resize-none"
-                placeholder="Edit your post content..."
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Tags (comma-separated)</label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Read Time (minutes)</label>
-              <Input value={readTime} onChange={(e) => setReadTime(e.target.value)} type="number" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
-              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleEditPost}>Update Post</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+    <EditBlogPostForm
+      blogPost={post}
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      onBlogPostUpdated={() => {
+        onEditPost?.(post.id, post);
+        onClose();
+      }}
+    />
+  );
 }
 
 // Main AdminControls component - now just manages state and provides the components
@@ -204,7 +151,7 @@ export function AdminControls({ onCreatePost, onEditPost, onDeletePost }: AdminC
   return {
     isAdmin: true,
     CreatePostButton: () => (
-      <CreatePostButton onCreatePost={onCreatePost} />
+      <CreatePostButton />
     ),
     PostAdminButtons: ({ post }: { post: BlogPost }) => (
       <PostAdminButtons
@@ -216,7 +163,6 @@ export function AdminControls({ onCreatePost, onEditPost, onDeletePost }: AdminC
     EditPostDialog: () => (
       <EditPostDialog
         post={editingPost}
-        isOpen={!!editingPost}
         onClose={() => setEditingPost(null)}
         onEditPost={onEditPost}
       />

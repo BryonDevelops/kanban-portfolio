@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/presentation/components/ui/dropdown-menu'
 import { Upload, Image as ImageIcon, Clipboard, X, Search } from 'lucide-react'
 import { success, error } from '@/presentation/utils/toast'
 import { UnsplashImagePicker } from '@/presentation/components/shared/unsplash-image-picker'
@@ -19,8 +18,10 @@ export const ImageUploadDropdown: React.FC<ImageUploadDropdownProps> = ({
   onChange,
   placeholder = "Select or upload image..."
 }) => {
+  const [isOpen, setIsOpen] = useState(false)
   const [isUnsplashOpen, setIsUnsplashOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -93,42 +94,93 @@ export const ImageUploadDropdown: React.FC<ImageUploadDropdownProps> = ({
     success('Image cleared')
   }
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
   return (
     <>
-      <div className="flex gap-2">
-        <Input
-          value={value || ''}
-          placeholder={placeholder}
-          readOnly
-          className="flex-1 h-8 text-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="shrink-0 h-8 w-8 p-0">
-              <ImageIcon className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 z-[10000]" side="bottom">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-              <Upload className="mr-2 h-4 w-4" />
+      <div className="relative">
+        <div className="flex gap-2">
+          <Input
+            value={value || ''}
+            placeholder={placeholder}
+            readOnly
+            className="flex-1 h-8 text-sm"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 h-8 w-8 p-0 hover:bg-primary/10 focus:ring-2 focus:ring-primary/50"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <ImageIcon className="h-3 w-3" />
+          </Button>
+        </div>
+
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[99999] py-1"
+          >
+            <button
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                fileInputRef.current?.click();
+              }}
+            >
+              <Upload className="h-4 w-4" />
               Upload from device
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleClipboardPaste(); }}>
-              <Clipboard className="mr-2 h-4 w-4" />
+            </button>
+            <button
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                handleClipboardPaste();
+              }}
+            >
+              <Clipboard className="h-4 w-4" />
               Paste from clipboard
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setIsUnsplashOpen(true); }}>
-              <Search className="mr-2 h-4 w-4" />
+            </button>
+            <button
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                setIsUnsplashOpen(true);
+              }}
+            >
+              <Search className="h-4 w-4" />
               Browse Unsplash
-            </DropdownMenuItem>
+            </button>
             {value && (
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleClear(); }}>
-                <X className="mr-2 h-4 w-4" />
+              <button
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                  handleClear();
+                }}
+              >
+                <X className="h-4 w-4" />
                 Clear image
-              </DropdownMenuItem>
+              </button>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {/* Hidden file input */}
