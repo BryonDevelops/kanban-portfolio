@@ -61,7 +61,11 @@ export default function AboutPage() {
           setExperiences(data)
         }
       } catch (error) {
-        console.error('Error fetching experiences:', error)
+        console.error('Error fetching experiences from Sanity:', error)
+        // If Sanity is not configured, show empty state instead of crashing
+        if (error instanceof Error && error.message.includes('NEXT_PUBLIC_SANITY_PROJECT_ID')) {
+          console.warn('Sanity CMS not configured. Experience section will show empty state.')
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false)
