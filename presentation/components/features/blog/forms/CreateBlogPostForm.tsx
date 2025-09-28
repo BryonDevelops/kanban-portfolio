@@ -1,28 +1,27 @@
 "use client";
 
-import { useState } from 'react';
-import { Button } from '@/presentation/components/ui/button';
-import { Input } from '@/presentation/components/ui/input';
-import { Textarea } from '@/presentation/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
-import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
-import { Plus, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
+import { useIsMobile } from '../../../../hooks/use-mobile';
+import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
+import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
 interface CreateBlogPostFormProps {
   onBlogPostCreated?: () => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateBlogPostForm({ onBlogPostCreated, trigger }: CreateBlogPostFormProps) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenChange }: CreateBlogPostFormProps) {
   const isAdmin = useIsAdmin();
   const { user, isLoaded } = useUser();
   const isLoggedIn = isLoaded && !!user;
   const canSaveToDatabase = isLoggedIn && isAdmin;
+  const isMobile = useIsMobile();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -35,39 +34,78 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger }: CreateBlogPos
   });
 
   // UI state
-  const [tagInput, setTagInput] = useState('');
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = open !== undefined ? open : internalIsOpen;
+  const setIsOpen = useCallback((value: boolean) => {
+    if (open === undefined) {
+      setInternalIsOpen(value);
+    }
+    onOpenChange?.(value);
+  }, [open, onOpenChange]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [newTag, setNewTag] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  // Update author when user data loads
+  useEffect(() => {
+    if (user && !formData.author) {
+      setFormData(prev => ({
+        ...prev,
+        author: user.fullName || user.username || '',
+      }));
+    }
+  }, [user, formData.author]);
 
+  // Click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Don't close modal if clicking on dropdown menu content or dialog content
+      if (target.closest('[data-radix-popper-content-wrapper]') ||
+          target.closest('[data-radix-dropdown-menu-content]') ||
+          target.closest('[data-radix-dropdown-menu-trigger]') ||
+          target.closest('[data-radix-dialog-overlay]') ||
+          target.closest('[data-radix-dialog-content]') ||
+          target.closest('[data-radix-dialog-trigger]')) {
+        return;
+      }
+
+      if (modalRef.current && !modalRef.current.contains(target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, setIsOpen]);
+
+  const handleBlogPostCreate = async (updatedData: {
+    title: string;
+    content: string;
+    excerpt: string;
+    imageUrl: string;
+  }) => {
     try {
-      // Validate required fields
-      if (!formData.title.trim()) {
-        throw new Error('Blog post title is required');
-      }
-      if (!formData.excerpt.trim()) {
-        throw new Error('Blog post excerpt is required');
-      }
-      if (!formData.content.trim()) {
-        throw new Error('Blog post content is required');
-      }
-      if (!formData.author.trim()) {
-        throw new Error('Author name is required');
-      }
-
       if (canSaveToDatabase) {
-        // Save to database via API
+        // Create in database via API
         const response = await fetch('/api/blog-posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            ...formData,
+            ...updatedData,
+            author: formData.author,
+            tags: formData.tags,
+            readTime: Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200),
             publishedAt: new Date().toISOString(),
-            readTime: Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').length / 200), // Rough estimate
           }),
         });
 
@@ -78,48 +116,32 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger }: CreateBlogPos
 
         // Show success toast
         import("@/presentation/utils/toast").then(({ success }) => {
-          success("Blog post created!", `"${formData.title}" has been successfully published.`);
+          success("Blog post created!", `"${updatedData.title}" has been successfully published.`);
         });
+
+        setIsOpen(false);
+        // Notify parent
+        onBlogPostCreated?.();
       } else {
-        // For users without database save permissions, show error
         throw new Error('You must be logged in as an admin to create blog posts');
       }
-
-      // Reset form
-      setFormData({
-        title: '',
-        excerpt: '',
-        content: '',
-        author: user?.fullName || user?.username || '',
-        tags: [],
-        imageUrl: '',
-      });
-      setTagInput('');
-
-      // Close dialog and notify parent
-      setOpen(false);
-      onBlogPostCreated?.();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create blog post';
-      setError(errorMessage);
 
       // Show error toast
       import("@/presentation/utils/toast").then(({ error: errorToast }) => {
         errorToast("Failed to create blog post", errorMessage);
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const addTag = () => {
-    const tag = tagInput.trim();
-    if (tag && !formData.tags.includes(tag)) {
+    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, tag]
+        tags: [...prev.tags, newTag.trim()]
       }));
-      setTagInput('');
+      setNewTag('');
     }
   };
 
@@ -134,172 +156,279 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger }: CreateBlogPos
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="default" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
+  if (!canSaveToDatabase) {
+    return null;
+  }
+
+  if (!isOpen) {
+    return (
+      <>
+        {trigger ? (
+          <div onClick={() => setIsOpen(true)} className="cursor-pointer">
+            {trigger}
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200"
+          >
+            <Plus className="h-4 w-4" />
             New Blog Post
-          </Button>
+          </button>
         )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Blog Post</DialogTitle>
-        </DialogHeader>
+      </>
+    );
+  }
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-600">{error}</p>
+  const modalContent = (
+    <div className={`fixed z-[9999] bg-black/50 backdrop-blur-md ${
+      isFullscreen
+        ? 'inset-0 p-0'
+        : isMobile
+        ? 'inset-0 p-2'
+        : 'inset-0 flex items-center justify-center p-2 sm:p-4 md:p-6'
+    }`}>
+      <div
+        ref={modalRef}
+        className={`w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden relative ${
+          isFullscreen
+            ? 'max-w-none max-h-screen h-screen rounded-none flex flex-col'
+            : isMobile
+            ? 'max-w-none max-h-screen h-screen rounded-none'
+            : 'max-w-4xl max-h-[95vh] sm:max-h-[90vh] rounded-2xl sm:rounded-3xl'
+        }`}
+      >
+        {/* Enhanced Header with Title */}
+        <div className="border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
+          {/* Top Row: Fullscreen toggle and Close Buttons */}
+          <div className="flex justify-between items-center p-4 pb-0">
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          )}
-
-          {/* Title */}
-          <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              Title *
-            </label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Enter blog post title"
-              required
-              maxLength={200}
-            />
           </div>
 
-          {/* Excerpt */}
-          <div className="space-y-2">
-            <label htmlFor="excerpt" className="text-sm font-medium">
-              Excerpt *
-            </label>
-            <Textarea
-              id="excerpt"
-              value={formData.excerpt}
-              onChange={(e) => handleInputChange('excerpt', e.target.value)}
-              placeholder="Brief description of the blog post..."
-              maxLength={500}
-              rows={3}
-              required
-            />
-          </div>
+          {/* Main Header Content */}
+          <div className={`${isMobile ? 'px-3 pb-3' : 'px-4 sm:px-6 pb-4 sm:pb-6'}`}>
+            {/* Title Section */}
+            <div className={`${isMobile ? 'mb-2' : 'mb-3 sm:mb-4'}`}>
+              <div className={`flex items-start gap-2 ${isMobile ? 'gap-2' : 'sm:gap-3'} mb-2 group`}>
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    onBlur={() => setIsEditingTitle(false)}
+                    onKeyPress={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
+                    className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1`}
+                    placeholder="Blog post title..."
+                    autoFocus
+                  />
+                ) : (
+                  <div className="relative flex-1">
+                    <h1
+                      className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1 relative group`}
+                      onClick={() => setIsEditingTitle(true)}
+                    >
+                      {formData.title || 'Untitled Blog Post'}
+                      {/* Subtle edit indicator */}
+                      <span className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-slate-400 font-normal">
+                        click to edit
+                      </span>
+                    </h1>
+                    {/* Underline hint */}
+                    <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>
+                  </div>
+                )}
+                <div className={`flex items-center gap-1 ${isMobile ? 'gap-1' : 'sm:gap-2'} flex-shrink-0`}>
+                  <Edit3
+                    className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors group-hover:text-blue-500 group-hover:scale-110 duration-200"
+                    onClick={() => setIsEditingTitle(true)}
+                  />
+                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium hidden sm:inline">
+                    Edit
+                  </span>
+                </div>
+              </div>
 
-          {/* Author */}
-          <div className="space-y-2">
-            <label htmlFor="author" className="text-sm font-medium">
-              Author *
-            </label>
-            <Input
-              id="author"
-              value={formData.author}
-              onChange={(e) => handleInputChange('author', e.target.value)}
-              placeholder="Author name"
-              required
-              maxLength={100}
-            />
-          </div>
+              {/* Author and Read Time Row */}
+              <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'} mb-4`}>
+                {/* Author */}
+                <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
+                  <User className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
+                  <span>Author:</span>
+                  <input
+                    type="text"
+                    value={formData.author}
+                    onChange={(e) => handleInputChange('author', e.target.value)}
+                    className="bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1 min-w-0"
+                    placeholder="Author name..."
+                  />
+                </div>
 
-          {/* Image URL */}
-          <div className="space-y-2">
-            <label htmlFor="imageUrl" className="text-sm font-medium">
-              Featured Image URL
-            </label>
-            <Input
-              id="imageUrl"
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Tags
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                placeholder="Add tag (e.g., React, TypeScript)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-              />
-              <Button type="button" onClick={addTag} variant="outline" size="sm">
-                Add
-              </Button>
-            </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.tags.map((tag) => (
+                {/* Read Time */}
+                <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
+                  <Clock className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
+                  <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
+                </div>
+              </div>
+              <div className="flex gap-1 flex-wrap items-center">
+                <div className="flex items-center gap-2 mb-2 mr-2">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Tags:</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-500">({formData.tags.length})</span>
+                </div>
+                {formData.tags.map((tag, index) => (
                   <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm"
+                    key={index}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-xs font-medium"
                   >
                     {tag}
                     <button
-                      type="button"
                       onClick={() => removeTag(tag)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors ml-1"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 ))}
+
+                {/* Quick Add Tag */}
+                <div className="flex items-center gap-1 ml-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                    placeholder="Add tag..."
+                    className={`${isMobile ? 'w-24' : 'w-20 sm:w-24'} px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                  />
+                  <button
+                    onClick={addTag}
+                    disabled={!newTag.trim()}
+                    className="p-1 text-purple-600 hover:text-purple-700 disabled:text-slate-400 transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
+        </div>
 
-          {/* Content */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Content *
-            </label>
-            <SimpleEditor
-              content={formData.content}
-              onChange={(content) => handleInputChange('content', content)}
-              placeholder="Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
-            />
+        {/* Content */}
+        <div className={`${isMobile ? 'p-3' : 'p-4 sm:p-6'} overflow-y-auto relative z-10 ${isFullscreen ? 'flex-1' : ''}`} style={isFullscreen ? {} : { maxHeight: isMobile ? 'calc(100vh - 280px)' : 'calc(95vh - 300px)' }}>
+          <div className="space-y-6">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                  <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-slate-900 dark:text-white`}>Basic Information</h3>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Image URL */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Featured Image
+                    </label>
+                  </div>
+                  <ImageUploadDropdown
+                    value={formData.imageUrl}
+                    onChange={(value) => handleInputChange('imageUrl', value || '')}
+                    placeholder="Select or upload featured image..."
+                  />
+                </div>
+
+                {/* Excerpt */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Excerpt
+                  </label>
+                  <textarea
+                    value={formData.excerpt}
+                    onChange={(e) => handleInputChange('excerpt', e.target.value)}
+                    rows={isMobile ? 2 : 3}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-sm"
+                    placeholder="Brief description of the blog post..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
+                  <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-slate-900 dark:text-white`}>Content</h3>
+              </div>
+
+              <div className="space-y-2">
+                <StreamlinedBlogEditor
+                  content={formData.content}
+                  onChange={(content) => handleInputChange('content', content)}
+                  placeholder="Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
+                />
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={loading}
+        {/* Footer */}
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3'} ${isMobile ? 'p-3' : 'p-4'} border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: isMobile ? '70px' : '60px', flexShrink: 0 }}>
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
+            <button
+              onClick={() => setIsOpen(false)}
+              className={`flex-1 ${isMobile ? 'px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
             >
               Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+            </button>
+            <button
+              onClick={() => handleBlogPostCreate({
+                title: formData.title,
+                content: formData.content,
+                excerpt: formData.excerpt,
+                imageUrl: formData.imageUrl,
+              })}
+              disabled={!formData.title.trim() || !formData.content.trim()}
+              className={`flex-1 ${isMobile ? 'px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${isMobile ? 'text-sm' : 'text-sm'} ${
+                !formData.title.trim() || !formData.content.trim()
+                  ? 'bg-slate-400 cursor-not-allowed text-slate-200'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+              }`}
             >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Publishing...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Publish Post
-                </>
-              )}
-            </Button>
+              <Save className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
+              Create Post
+            </button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
+
+  // Render using portal to escape container bounds
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }

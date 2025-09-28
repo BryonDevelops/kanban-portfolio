@@ -6,7 +6,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2, ChevronDown, ChevronUp, Paperclip, Settings, Info, Maximize, Minimize } from 'lucide-react'
+import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle2, GripVertical, Edit3, ExternalLink, Eye, Edit, Bold, Italic, Link, List, ListOrdered, Quote, Code2, ChevronDown, ChevronUp, Paperclip, Settings, Info, Maximize2, Minimize2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Project } from '../../../../../domain/board/schemas/project.schema'
@@ -878,9 +878,9 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
               {isFullscreen ? (
-                <Minimize className="h-4 w-4" />
+                <Minimize2 className="h-4 w-4" />
               ) : (
-                <Maximize className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" />
               )}
             </button>
             <button
@@ -914,24 +914,11 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
                       onClick={() => setIsEditingTitle(true)}
                     >
                       {formData.title || 'Untitled Project'}
-                      {/* Subtle edit indicator */}
-                      <span className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-slate-400 font-normal">
-                        click to edit
-                      </span>
                     </h1>
                     {/* Underline hint */}
                     <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>
                   </div>
                 )}
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <Edit3
-                    className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors group-hover:text-blue-500 group-hover:scale-110 duration-200"
-                    onClick={() => setIsEditingTitle(true)}
-                  />
-                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium hidden sm:inline">
-                    Edit
-                  </span>
-                </div>
               </div>
 
               {/* URL Link */}
