@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/presentation/components/shared/theme-provider";
 import { PWAInstallPrompt } from "@/presentation/components/shared/pwa-install-prompt";
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { features } from "@/lib/feature-flags";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -91,9 +92,9 @@ async function RootLayout({
               </SidebarInset>
               <FloatingActionContainer />
               <Toaster />
-              <PWAInstallPrompt />
-              <Analytics />
-              <SpeedInsights />
+              {features.isPWAEnabled() && <PWAInstallPrompt />}
+              {features.isAnalyticsEnabled() && <Analytics />}
+              {features.isAnalyticsEnabled() && <SpeedInsights />}
             </SidebarProvider>
           </ThemeProvider>
         </ClerkProvider>

@@ -4,8 +4,22 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
+import { getFeatureFlags } from "@/lib/feature-flags"
+
+// Helper function to filter navigation items based on feature flags
+function getFilteredNavItems(items: typeof sidebarConfig.navMain) {
+  const flags = getFeatureFlags();
+  return items.filter(item => {
+    if (!item.featureFlag) return true; // No feature flag means always show
+    return flags[item.featureFlag as keyof typeof flags] === true;
+  });
+}
+
+// Get filtered navigation items
+const filteredNavItems = getFilteredNavItems(sidebarConfig.navMain);
+const filteredAdminItems = getFilteredNavItems(sidebarConfig.navAdmin);
 import { SignedIn, SignedOut, UserButton, SignInButton, SignUpButton, useUser, useClerk } from "@clerk/nextjs"
-import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, PinOff, Monitor, Minimize2 } from "lucide-react"
+import { ChevronDown, ChevronRight, Settings, LogOut, User, Pin, Monitor, Minimize2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -192,7 +206,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-3">
                 Navigation
               </h3>
-              <NavMain items={sidebarConfig.navMain} />
+              <NavMain items={filteredNavItems} />
             </div>
 
             {/* User Actions */}
@@ -291,7 +305,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </>
             )}
-            {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
+            {isHydrated && isAdmin && filteredAdminItems.length > 0 && (
               <>
                 <SidebarSeparator className="mt-6" />
                 <div className="space-y-2">
@@ -310,7 +324,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       )}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-1 mt-2 ml-4 border-l-2 border-red-500/20 pl-4">
-                      <NavMain items={sidebarConfig.navAdmin} />
+                      <NavMain items={filteredAdminItems} />
                     </CollapsibleContent>
                   </Collapsible>
                 </div>
@@ -335,7 +349,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
           {/* Navigation Icons - Enhanced */}
           <div className="flex flex-col items-center py-4 space-y-1">
-            {sidebarConfig.navMain.map((item) => {
+            {filteredNavItems.map((item) => {
               const IconComponent = item.icon
               return (
                 <Link
@@ -360,7 +374,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             })}
           </div>
 
-          {isHydrated && isAdmin && sidebarConfig.navAdmin.length > 0 && (
+          {isHydrated && isAdmin && filteredAdminItems.length > 0 && (
             <div className="flex items-center justify-center py-3 border-t border-sidebar-border/30">
               <div className="group relative">
                 <Settings className="h-5 w-5 text-red-500 hover:text-red-400 transition-colors duration-200 hover:scale-110 cursor-pointer" />
