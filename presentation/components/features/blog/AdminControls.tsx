@@ -9,6 +9,7 @@ import { BlogPost } from './BlogPostPortal'
 import { EditBlogPostForm } from './forms/EditBlogPostForm'
 import { CreateBlogPostForm } from './forms/CreateBlogPostForm'
 import { StreamlinedBlogEditor } from './forms/StreamlinedBlogEditor';
+import { useIsMobile } from '@/presentation/hooks/use-mobile';
 
 interface AdminControlsProps {
   onCreatePost?: (post: Omit<BlogPost, 'id'>) => void
@@ -28,29 +29,30 @@ export function PostAdminButtons({
 }) {
   const { user, isLoaded } = useUser()
   const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
+  const isMobile = useIsMobile()
 
   if (!isAdmin) return null
 
   return (
-    <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-1 flex items-center gap-1">
+    <div className={`flex items-center gap-1`}>
+      <div className={`bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg ${isMobile ? 'p-1.5' : 'p-1'} flex items-center gap-1`}>
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          className={`p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
           onClick={(e) => {
             e.stopPropagation()
             onEdit(post)
           }}
           title="Edit post"
         >
-          <Edit className="h-3.5 w-3.5" />
+          <Edit className={`${isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />
         </Button>
-        <div className="w-px h-4 bg-border" />
+        <div className={`w-px ${isMobile ? 'h-5' : 'h-4'} bg-border`} />
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+          className={`p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
           onClick={(e) => {
             e.stopPropagation()
             if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
@@ -59,7 +61,7 @@ export function PostAdminButtons({
           }}
           title="Delete post"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className={`${isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />
         </Button>
       </div>
     </div>
@@ -70,6 +72,7 @@ export function PostAdminButtons({
 export function CreatePostButton() {
   const { user, isLoaded } = useUser()
   const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
+  const isMobile = useIsMobile()
 
   if (!isAdmin) return null
 
@@ -83,11 +86,11 @@ export function CreatePostButton() {
         trigger={
           <Button
             variant="default"
-            size="sm"
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+            size={isMobile ? "sm" : "sm"}
+            className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2 ${isMobile ? 'px-3 py-2 text-sm' : ''}`}
           >
-            <Plus className="h-4 w-4" />
-            New Blog Post
+            <Plus className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'}`} />
+            {isMobile ? 'New Post' : 'New Blog Post'}
           </Button>
         }
       />

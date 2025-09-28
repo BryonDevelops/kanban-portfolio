@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { BlogPost } from '../BlogPostPortal';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
+import { useIsMobile } from '../../../../hooks/use-mobile';
 import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
 import { X, Save, Trash2, Edit3, Maximize2, Minimize2, Plus, FileText, User, Clock } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -22,6 +23,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
   const { user, isLoaded } = useUser();
   const isLoggedIn = isLoaded && !!user;
   const canSaveToDatabase = isLoggedIn && isAdmin;
+  const isMobile = useIsMobile();
 
   // Form state - simplified since StreamlinedBlogEditor handles the modal
   const [formData, setFormData] = useState({
@@ -187,6 +189,8 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
     <div className={`fixed z-[9999] bg-black/50 backdrop-blur-md ${
       isFullscreen
         ? 'inset-0 p-0'
+        : isMobile
+        ? 'inset-0 p-2'
         : 'inset-0 flex items-center justify-center p-2 sm:p-4 md:p-6'
     }`}>
       <div
@@ -194,6 +198,8 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
         className={`w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden relative ${
           isFullscreen
             ? 'max-w-none max-h-screen h-screen rounded-none flex flex-col'
+            : isMobile
+            ? 'max-w-none max-h-screen h-screen rounded-none'
             : 'max-w-4xl max-h-[95vh] sm:max-h-[90vh] rounded-2xl sm:rounded-3xl'
         }`}
       >
@@ -223,10 +229,10 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
           </div>
 
           {/* Main Header Content */}
-          <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className={`${isMobile ? 'px-3 pb-3' : 'px-4 sm:px-6 pb-4 sm:pb-6'}`}>
             {/* Title Section */}
-            <div className="mb-3 sm:mb-4">
-              <div className="flex items-start gap-2 sm:gap-3 mb-2 group">
+            <div className={`${isMobile ? 'mb-2' : 'mb-3 sm:mb-4'}`}>
+              <div className={`flex items-start gap-2 ${isMobile ? 'gap-2' : 'sm:gap-3'} mb-2 group`}>
                 {isEditingTitle ? (
                   <input
                     type="text"
@@ -234,14 +240,14 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     onBlur={() => setIsEditingTitle(false)}
                     onKeyPress={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
-                    className="text-xl sm:text-2xl font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1"
+                    className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1`}
                     placeholder="Blog post title..."
                     autoFocus
                   />
                 ) : (
                   <div className="relative flex-1">
                     <h1
-                      className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1 relative group"
+                      className={`${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1 relative group`}
                       onClick={() => setIsEditingTitle(true)}
                     >
                       {formData.title || 'Untitled Blog Post'}
@@ -253,10 +259,10 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
               </div>
 
               {/* Author and Read Time Row */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row sm:items-center sm:justify-between gap-4'} mb-4`}>
                 {/* Author */}
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <User className="h-3 w-3 flex-shrink-0" />
+                <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
+                  <User className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
                   <span>Author:</span>
                   <input
                     type="text"
@@ -268,8 +274,8 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                 </div>
 
                 {/* Read Time */}
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <Clock className="h-3 w-3 flex-shrink-0" />
+                <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
+                  <Clock className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
                   <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
                 </div>
               </div>
@@ -301,7 +307,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addTag()}
                     placeholder="Add tag..."
-                    className="w-20 sm:w-24 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className={`${isMobile ? 'w-24' : 'w-20 sm:w-24'} px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500`}
                   />
                   <button
                     onClick={addTag}
@@ -317,7 +323,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
         </div>
 
         {/* Content */}
-        <div className={`p-4 sm:p-6 overflow-y-auto relative z-10 ${isFullscreen ? 'flex-1' : ''}`} style={isFullscreen ? {} : { maxHeight: 'calc(95vh - 300px)' }}>
+        <div className={`${isMobile ? 'p-3' : 'p-4 sm:p-6'} overflow-y-auto relative z-10 ${isFullscreen ? 'flex-1' : ''}`} style={isFullscreen ? {} : { maxHeight: isMobile ? 'calc(100vh - 280px)' : 'calc(95vh - 300px)' }}>
           <div className="space-y-6">
             {/* Basic Information Section */}
             <div className="space-y-4">
@@ -325,7 +331,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                 <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
                   <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Basic Information</h3>
+                <h3 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-slate-900 dark:text-white`}>Basic Information</h3>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -351,7 +357,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                   <textarea
                     value={formData.excerpt}
                     onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                    rows={3}
+                    rows={isMobile ? 2 : 3}
                     className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-sm"
                     placeholder="Brief description of the blog post..."
                   />
@@ -365,7 +371,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                 <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
                   <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Content</h3>
+                <h3 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-slate-900 dark:text-white`}>Content</h3>
               </div>
 
               <div className="space-y-2">
@@ -380,7 +386,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
         </div>
 
         {/* Footer */}
-        <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: '60px', flexShrink: 0 }}>
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'} ${isMobile ? 'p-3' : 'p-4'} border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: isMobile ? '70px' : '60px', flexShrink: 0 }}>
           <div className="flex items-center gap-2">
             <button
               onClick={async () => {
@@ -415,18 +421,18 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                   });
                 }
               }}
-              className="flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium text-sm"
+              className={`flex items-center justify-center gap-2 ${isMobile ? 'px-3 py-2.5' : 'px-3 py-2'} text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
               <span className="hidden sm:inline">Delete Post</span>
               <span className="sm:hidden">Delete</span>
             </button>
           </div>
 
-          <div className="flex gap-2">
+          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
             <button
               onClick={() => setIsOpen(false)}
-              className="flex-1 sm:flex-initial px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium text-sm"
+              className={`flex-1 ${isMobile ? 'sm:flex-initial px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
             >
               Cancel
             </button>
@@ -438,13 +444,13 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                 imageUrl: formData.imageUrl,
               })}
               disabled={!formData.title.trim() || !formData.content.trim()}
-              className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 text-sm ${
+              className={`flex-1 ${isMobile ? 'sm:flex-initial px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${isMobile ? 'text-sm' : 'text-sm'} ${
                 !formData.title.trim() || !formData.content.trim()
                   ? 'bg-slate-400 cursor-not-allowed text-slate-200'
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
               }`}
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Save className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
               Update Post
             </button>
           </div>
