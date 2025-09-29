@@ -1,39 +1,81 @@
 "use client"
 
-import { BlogPostPortal, BlogPost } from '../../presentation/components/features/blog/BlogPostPortal'
-
+import { useCallback, useEffect } from 'react'
+import { BlogPostPortal } from '../../presentation/components/features/microblog/BlogPostPortal'
+import type { BlogPost } from '../../presentation/components/features/microblog/BlogPostPortal'
 import { Badge } from '../../presentation/components/ui/badge'
 import { Clock, ArrowRight, BookOpen, Sparkles, TrendingUp } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import { SectionBadge } from "@/presentation/components/shared/section-badge"
-import { recentPosts } from './data/blog-posts'
-import { featuredPosts } from './data/blog-post-featured'
-import { categories } from './data/blog-post-categories'
-import { AdminControls } from '../../presentation/components/features/blog/AdminControls'
+import { AdminControls } from '../../presentation/components/features/microblog/AdminControls'
+import { useMicroblogStore } from '@/presentation/stores'
 
 export default function MicroblogPage() {
-  // Admin handlers (these would typically update state or make API calls)
-  const handleCreatePost = (post: Omit<BlogPost, 'id'>) => {
-    console.log('Creating post:', post)
-    // TODO: Implement post creation logic
-    // This could update local state, make API calls, etc.
-  }
+  const {
+    isLoading,
+    loadPosts,
+    createPost,
+    updatePost,
+    deletePost,
+    getPublishedPosts,
+    getFeaturedPosts,
+    categories,
+    loadCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory
+  } = useMicroblogStore()
 
-  const handleEditPost = (postId: string, updates: Partial<BlogPost>) => {
-    console.log('Editing post:', postId, updates)
-    // TODO: Implement post editing logic
-  }
+  // Load posts and categories on component mount
+  useEffect(() => {
+    loadPosts()
+    loadCategories()
+  }, [loadPosts, loadCategories])
 
-  const handleDeletePost = (postId: string) => {
-    console.log('Deleting post:', postId)
-    // TODO: Implement post deletion logic
-  }
+  // Get published posts for display
+  const publishedPosts = getPublishedPosts()
+  const featuredPosts = getFeaturedPosts()
+  const recentPosts = publishedPosts
+    .filter(post => !post.featured) // Exclude featured posts from recent
+    .slice(0, 8) // Take first 8 non-featured posts
 
   // Get admin components
+  const handleCreatePost = useCallback(async (postData: Omit<BlogPost, 'id'>) => {
+    await createPost({
+      title: postData.title,
+      excerpt: postData.excerpt,
+      content: postData.content,
+      author: postData.author,
+      publishedAt: postData.publishedAt,
+      tags: postData.tags || [],
+      status: 'draft',
+      featured: postData.featured || false,
+      // readTime: postData.readTime, // Removed because not in PostCreate
+      imageUrl: postData.imageUrl,
+      categories: postData.categories || []
+    })
+  }, [createPost])
+
   const adminControls = AdminControls({
     onCreatePost: handleCreatePost,
-    onEditPost: handleEditPost,
-    onDeletePost: handleDeletePost
+    onEditPost: async (postId, updates) => {
+      await updatePost(postId, updates)
+    },
+    onDeletePost: async (postId) => {
+      await deletePost(postId)
+    },
+    onToggleFeatured: async (postId) => {
+      await useMicroblogStore.getState().toggleFeatured(postId)
+    },
+    onCreateCategory: async (categoryData) => {
+      await createCategory(categoryData)
+    },
+    onEditCategory: async (categoryId, updates) => {
+      await updateCategory(categoryId, updates)
+    },
+    onDeleteCategory: async (categoryId) => {
+      await deleteCategory(categoryId)
+    }
   })
 
   return (
@@ -100,70 +142,99 @@ export default function MicroblogPage() {
               <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Featured Posts</h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              {featuredPosts.map((post) => (
-                <BlogPostPortal
-                  key={post.id}
-                  post={post}
-                  trigger={
-                    <div className="group relative overflow-hidden bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 rounded-2xl hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-200/20 dark:hover:shadow-white/5 cursor-pointer">
-                      {/* Featured badge */}
-                      <div className="absolute top-4 right-4 z-10">
-                        <div className="bg-gradient-to-r from-pink-500 to-purple-600 dark:from-yellow-500 dark:to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                          Featured
-                        </div>
-                      </div>
-
-                      {/* Admin buttons */}
-                      {adminControls.isAdmin && (
-                        <div className="absolute top-4 left-4 z-10">
-                          <adminControls.PostAdminButtons post={post} />
-                        </div>
-                      )}
-
-                      <div className="p-6 sm:p-8">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-xs text-slate-500 dark:text-gray-400">
-                            {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
-                          <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime} min read</span>
-                        </div>
-
-                        <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
-                          {post.title}
-                        </h3>
-
-                        <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-4 line-clamp-3">
-                          {post.excerpt}
-                        </p>
-
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {post.tags.slice(0, 3).map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-500 dark:text-gray-400">
-                            By {post.author}
-                          </span>
-                          <span className="text-pink-600 dark:text-blue-400 text-sm font-medium group-hover:underline">
-                            Read More →
-                          </span>
-                        </div>
-                      </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                {[1, 2].map((i) => (
+                  <div key={i} className="bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 rounded-2xl p-6 sm:p-8 animate-pulse">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4"></div>
+                    <div className="flex gap-2 mb-4">
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
                     </div>
-                  }
-                />
-              ))}
-            </div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : featuredPosts.length > 0 ? (
+              <div className={`grid gap-6 sm:gap-8 ${featuredPosts.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                {featuredPosts.slice(0, 4).map((post) => (
+                  <BlogPostPortal
+                    key={post.id}
+                    post={post}
+                    trigger={
+                      <div className="group relative overflow-hidden bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 rounded-2xl hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-200/20 dark:hover:shadow-white/5 cursor-pointer">
+                        {/* Featured badge */}
+                        <div className="absolute top-4 right-4 z-10">
+                          <div className="bg-gradient-to-r from-pink-500 to-purple-600 dark:from-yellow-500 dark:to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            Featured
+                          </div>
+                        </div>
+
+                        {/* Admin buttons */}
+                        {adminControls.isAdmin && (
+                          <div className="absolute top-4 left-4 z-10">
+                            <adminControls.PostAdminButtons post={post} />
+                          </div>
+                        )}
+
+                        <div className="p-6 sm:p-8">
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="text-xs text-slate-500 dark:text-gray-400">
+                              {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
+                            <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime || 5} min read</span>
+                          </div>
+
+                          <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
+                            {post.title}
+                          </h3>
+
+                          <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-4 line-clamp-3">
+                            {post.excerpt}
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {post.tags.slice(0, 3).map((tag) => (
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-500 dark:text-gray-400">
+                              By {post.author}
+                            </span>
+                            <span className="text-pink-600 dark:text-blue-400 text-sm font-medium group-hover:underline">
+                              Read More →
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-slate-500 dark:text-gray-400 mb-4">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">No featured posts yet</p>
+                  <p className="text-sm">Check back soon for highlighted content!</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Categories & Recent Posts Grid */}
@@ -171,21 +242,39 @@ export default function MicroblogPage() {
             {/* Categories Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-8">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">Categories</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white">Categories</h3>
+                  {adminControls.isAdmin && (
+                    <adminControls.CreateCategoryButton />
+                  )}
+                </div>
                 <div className="space-y-3">
                   {categories.map((category) => (
                     <div
-                      key={category.name}
-                      className="group flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer"
+                      key={category.id}
+                      className="group relative flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
+                      {adminControls.isAdmin && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <adminControls.CategoryAdminButtons category={category} />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-3 flex-1">
                         <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${category.color}`} />
-                        <span className="text-slate-700 dark:text-white/90 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">
-                          {category.name}
-                        </span>
+                        <div className="flex-1">
+                          <span className="text-slate-700 dark:text-white/90 group-hover:text-slate-800 dark:group-hover:text-white transition-colors block">
+                            {category.name}
+                          </span>
+                          {category.description && (
+                            <span className="text-xs text-slate-500 dark:text-gray-400 block">
+                              {category.description}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-xs text-slate-600 dark:text-white/60 bg-pink-100/50 dark:bg-white/10 px-2 py-1 rounded-full">
-                        {category.count}
+                        {category.postCount}
                       </span>
                     </div>
                   ))}
@@ -221,7 +310,7 @@ export default function MicroblogPage() {
                                 {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               </span>
                               <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
-                              <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime} min read</span>
+                              <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime || 5} min read</span>
                             </div>
 
                             <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
@@ -270,6 +359,9 @@ export default function MicroblogPage() {
 
       {/* Admin Edit Dialog */}
       {adminControls.isAdmin && <adminControls.EditPostDialog />}
+
+      {/* Category Admin Edit Dialog */}
+      {adminControls.isAdmin && <adminControls.EditCategoryDialog />}
     </div>
   )
 }

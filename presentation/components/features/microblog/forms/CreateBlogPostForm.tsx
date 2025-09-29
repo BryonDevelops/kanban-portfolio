@@ -1,38 +1,39 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { BlogPost } from '../BlogPostPortal';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
-import { useIsMobile } from '@/presentation/hooks/use-mobile';
+import { useIsMobile } from '../../../../hooks/use-mobile';
 import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
-import { X, Save, Trash2, Edit3, Maximize2, Minimize2, Plus, FileText, User, Clock } from 'lucide-react';
+import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
+import { CategorySelector } from './CategorySelector';
+import type { BlogPost } from '../BlogPostPortal';
 
-interface EditBlogPostFormProps {
-  blogPost: BlogPost;
-  onBlogPostUpdated?: () => void;
-  trigger?: ReactNode;
+interface CreateBlogPostFormProps {
+  onBlogPostCreated?: (post: Omit<BlogPost, 'id'>) => void | Promise<void>;
+  trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, onOpenChange }: EditBlogPostFormProps) {
+export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenChange }: CreateBlogPostFormProps) {
   const isAdmin = useIsAdmin();
   const { user, isLoaded } = useUser();
   const isLoggedIn = isLoaded && !!user;
   const canSaveToDatabase = isLoggedIn && isAdmin;
   const isMobile = useIsMobile();
 
-  // Form state - simplified since StreamlinedBlogEditor handles the modal
+  // Form state
   const [formData, setFormData] = useState({
-    title: blogPost.title,
-    excerpt: blogPost.excerpt,
-    content: blogPost.content,
-    author: blogPost.author,
-    tags: [...blogPost.tags],
-    imageUrl: blogPost.imageUrl || '',
+    title: '',
+    excerpt: '',
+    content: '',
+    author: user?.fullName || user?.username || '',
+    tags: [] as string[],
+    categories: [] as string[], // Array of category IDs
+    imageUrl: '',
   });
 
   // UI state
@@ -49,17 +50,15 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
   const [newTag, setNewTag] = useState('');
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Update form data when blogPost prop changes
+  // Update author when user data loads
   useEffect(() => {
-    setFormData({
-      title: blogPost.title,
-      excerpt: blogPost.excerpt,
-      content: blogPost.content,
-      author: blogPost.author,
-      tags: [...blogPost.tags],
-      imageUrl: blogPost.imageUrl || '',
-    });
-  }, [blogPost]);
+    if (user && !formData.author) {
+      setFormData(prev => ({
+        ...prev,
+        author: user.fullName || user.username || '',
+      }));
+    }
+  }, [user, formData.author]);
 
   // Click outside to close modal
   useEffect(() => {
@@ -90,7 +89,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
     };
   }, [isOpen, setIsOpen]);
 
-  const handleBlogPostUpdate = async (updatedData: {
+  const handleBlogPostCreate = async (updatedData: {
     title: string;
     content: string;
     excerpt: string;
@@ -98,48 +97,56 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
   }) => {
     try {
       if (canSaveToDatabase) {
-        // Update in database via API
-        const response = await fetch(`/api/blog-posts/${blogPost.id}`, {
-          method: 'PUT',
+        const publishedAt = new Date().toISOString();
+        const readTime = Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200);
+        const createdPost: Omit<BlogPost, 'id'> = {
+          title: updatedData.title,
+          excerpt: updatedData.excerpt,
+          content: updatedData.content,
+          author: formData.author,
+          publishedAt,
+          tags: formData.tags,
+          readTime,
+          imageUrl: formData.imageUrl || undefined,
+          featured: false,
+          categories: formData.categories,
+        };
+        // Create in database via API
+        const response = await fetch('/api/blog-posts', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            ...updatedData,
-            author: formData.author, // Keep the original author
-            tags: formData.tags, // Keep the original tags
-            readTime: Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200),
+            ...createdPost,
+            imageUrl: createdPost.imageUrl || '',
           }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update blog post');
+          throw new Error(errorData.error || 'Failed to create blog post');
         }
-
-        // Update local form data
-        setFormData(prev => ({
-          ...prev,
-          ...updatedData,
-        }));
 
         // Show success toast
         import("@/presentation/utils/toast").then(({ success }) => {
-          success("Blog post updated!", `"${updatedData.title}" has been successfully updated.`);
+          success("Blog post created!", `"${updatedData.title}" has been successfully published.`);
         });
 
         setIsOpen(false);
         // Notify parent
-        onBlogPostUpdated?.();
+        if (onBlogPostCreated) {
+          await onBlogPostCreated(createdPost);
+        }
       } else {
-        throw new Error('You must be logged in as an admin to edit blog posts');
+        throw new Error('You must be logged in as an admin to create blog posts');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update blog post';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create blog post';
 
       // Show error toast
       import("@/presentation/utils/toast").then(({ error: errorToast }) => {
-        errorToast("Failed to update blog post", errorMessage);
+        errorToast("Failed to create blog post", errorMessage);
       });
     }
   };
@@ -161,9 +168,13 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
     }));
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  if (!canSaveToDatabase) {
+    return null;
+  }
 
   if (!isOpen) {
     return (
@@ -177,8 +188,8 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
             onClick={() => setIsOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200"
           >
-            <Edit3 className="h-4 w-4" />
-            Edit
+            <Plus className="h-4 w-4" />
+            New Blog Post
           </button>
         )}
       </>
@@ -251,11 +262,24 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                       onClick={() => setIsEditingTitle(true)}
                     >
                       {formData.title || 'Untitled Blog Post'}
+                      {/* Subtle edit indicator */}
+                      <span className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-slate-400 font-normal">
+                        click to edit
+                      </span>
                     </h1>
                     {/* Underline hint */}
                     <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>
                   </div>
                 )}
+                <div className={`flex items-center gap-1 ${isMobile ? 'gap-1' : 'sm:gap-2'} flex-shrink-0`}>
+                  <Edit3
+                    className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors group-hover:text-blue-500 group-hover:scale-110 duration-200"
+                    onClick={() => setIsEditingTitle(true)}
+                  />
+                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium hidden sm:inline">
+                    Edit
+                  </span>
+                </div>
               </div>
 
               {/* Author and Read Time Row */}
@@ -349,6 +373,19 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
                   />
                 </div>
 
+                {/* Categories */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Categories
+                    </label>
+                  </div>
+                  <CategorySelector
+                    selectedCategories={formData.categories}
+                    onCategoriesChange={(categories) => handleInputChange('categories', categories)}
+                  />
+                </div>
+
                 {/* Excerpt */}
                 <div className="md:col-span-2">
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -377,8 +414,8 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
               <div className="space-y-2">
                 <StreamlinedBlogEditor
                   content={formData.content}
-                  onChange={(content) => handleInputChange('content', content)}
-                  placeholder="Continue editing your blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
+                  onChange={(content: string) => handleInputChange('content', content)}
+                  placeholder="Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
                 />
               </div>
             </div>
@@ -386,72 +423,30 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, trigger, open, o
         </div>
 
         {/* Footer */}
-        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'} ${isMobile ? 'p-3' : 'p-4'} border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: isMobile ? '70px' : '60px', flexShrink: 0 }}>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={async () => {
-                if (!confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) {
-                  return;
-                }
-
-                try {
-                  if (canSaveToDatabase) {
-                    const response = await fetch(`/api/blog-posts/${blogPost.id}`, {
-                      method: 'DELETE',
-                    });
-
-                    if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.error || 'Failed to delete blog post');
-                    }
-
-                    import("@/presentation/utils/toast").then(({ success }) => {
-                      success("Blog post deleted!", `"${blogPost.title}" has been successfully deleted.`);
-                    });
-
-                    setIsOpen(false);
-                    onBlogPostUpdated?.();
-                  } else {
-                    throw new Error('You must be logged in as an admin to delete blog posts');
-                  }
-                } catch (err) {
-                  const errorMessage = err instanceof Error ? err.message : 'Failed to delete blog post';
-                  import("@/presentation/utils/toast").then(({ error: errorToast }) => {
-                    errorToast("Failed to delete blog post", errorMessage);
-                  });
-                }
-              }}
-              className={`flex items-center justify-center gap-2 ${isMobile ? 'px-3 py-2.5' : 'px-3 py-2'} text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
-            >
-              <Trash2 className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              <span className="hidden sm:inline">Delete Post</span>
-              <span className="sm:hidden">Delete</span>
-            </button>
-          </div>
-
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3'} ${isMobile ? 'p-3' : 'p-4'} border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 ${isFullscreen ? 'mt-auto' : ''}`} style={isFullscreen ? {} : { minHeight: isMobile ? '70px' : '60px', flexShrink: 0 }}>
           <div className={`flex ${isMobile ? 'flex-col gap-2' : 'gap-2'}`}>
             <button
               onClick={() => setIsOpen(false)}
-              className={`flex-1 ${isMobile ? 'sm:flex-initial px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
+              className={`flex-1 ${isMobile ? 'px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}
             >
               Cancel
             </button>
             <button
-              onClick={() => handleBlogPostUpdate({
+              onClick={() => handleBlogPostCreate({
                 title: formData.title,
                 content: formData.content,
                 excerpt: formData.excerpt,
                 imageUrl: formData.imageUrl,
               })}
               disabled={!formData.title.trim() || !formData.content.trim()}
-              className={`flex-1 ${isMobile ? 'sm:flex-initial px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${isMobile ? 'text-sm' : 'text-sm'} ${
+              className={`flex-1 ${isMobile ? 'px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${isMobile ? 'text-sm' : 'text-sm'} ${
                 !formData.title.trim() || !formData.content.trim()
                   ? 'bg-slate-400 cursor-not-allowed text-slate-200'
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
               }`}
             >
               <Save className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
-              Update Post
+              Create Post
             </button>
           </div>
         </div>
