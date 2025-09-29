@@ -12,6 +12,7 @@ out/
 
 # Environment files
 .env*.local
+devcontainer.env
 
 # IDE files
 .vscode/settings.json
@@ -25,3 +26,4 @@ out/
 .Trashes
 ehthumbs.db
 Thumbs.db
+

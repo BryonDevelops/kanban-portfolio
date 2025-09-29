@@ -1,4 +1,4 @@
-import { BlogPost } from '../../../presentation/components/features/blog/BlogPostPortal'
+import { BlogPost } from '../../../presentation/components/features/microblog/BlogPostPortal'
 
 export const recentPosts: BlogPost[] = [
   {

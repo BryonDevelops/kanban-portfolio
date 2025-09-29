@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
-import { useIsMobile } from '../../../../hooks/use-mobile';
+import { useIsMobile } from '@/presentation/hooks/use-mobile';
 import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
 import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -11,7 +11,7 @@ import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
 interface CreateBlogPostFormProps {
   onBlogPostCreated?: () => void;
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }

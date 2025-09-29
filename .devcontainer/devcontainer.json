@@ -1,5 +1,5 @@
 {
-  "name": "Kanban Portfolio Dev Container",
+  "name": "Kanban Portfolio DevContainer",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -27,8 +27,7 @@
       "onAutoForward": "silent"
     }
   },
-  "postCreateCommand": "npm install",
-  "postAttachCommand": "npm run prepare",
+  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "customizations": {
     "vscode": {
       "settings": {
