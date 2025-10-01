@@ -34,7 +34,9 @@ The future of web development is here with Next.js 14!`,
     publishedAt: '2024-09-20',
     tags: ["Next.js", "React", "Web Development"],
     readTime: 5,
-    imageUrl: '/heroimg_dark.png'
+    imageUrl: '/heroimg_dark.png',
+    featured: true,
+    categories: []
   },
   {
     id: '2',
@@ -66,6 +68,8 @@ TypeScript 2025 promises to be an exciting year with significant improvements to
     author: 'Bryon Bauer',
     publishedAt: '2024-09-18',
     tags: ["TypeScript", "JavaScript", "Programming"],
-    readTime: 7
+    readTime: 7,
+    featured: true,
+    categories: []
   }
 ]
