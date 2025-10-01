@@ -1,10 +1,13 @@
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { TechStack } from './TechStack'
+import { useIsAdmin } from './ProtectedRoute'
+import { Edit, Trash2, MoreVertical } from 'lucide-react'
 
-interface ProjectCardProps {
+export interface ShowcasedProject {
+  id?: string
   title: string
   description: string
   technologies: string[]
@@ -12,29 +15,118 @@ interface ProjectCardProps {
   link?: string
   github?: string
   featured?: boolean
+  isCompletedKanbanProject?: boolean
+}
+
+interface ProjectCardProps extends ShowcasedProject {
+  onEdit?: (project: ShowcasedProject) => void
+  onDelete?: (project: ShowcasedProject) => void
 }
 
 export function ProjectCard({
+  id,
   title,
   description,
   technologies,
   image,
   link,
   github,
-  featured = false
+  featured = false,
+  isCompletedKanbanProject = false,
+  onEdit,
+  onDelete
 }: ProjectCardProps) {
+  const isAdmin = useIsAdmin()
+  const [showAdminMenu, setShowAdminMenu] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAdminMenu(false)
+      }
+    }
+
+    if (showAdminMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAdminMenu])
+
+  const project: ShowcasedProject = {
+    id,
+    title,
+    description,
+    technologies,
+    image,
+    link,
+    github,
+    featured,
+    isCompletedKanbanProject
+  }
+
   return (
     <div className={`group relative overflow-hidden rounded-2xl bg-white/95 dark:bg-white/8 backdrop-blur-md border border-gray-200/80 dark:border-white/15 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-gray-300/30 dark:hover:shadow-white/10 ${
       featured ? 'ring-2 ring-blue-500/50 dark:ring-blue-400/50' : ''
     }`}>
-      {/* Featured badge */}
-      {featured && (
-        <div className="absolute top-4 right-4 z-10">
+      {/* Admin Controls */}
+      {isAdmin && (
+        <div className="absolute top-4 left-4 z-20">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowAdminMenu(!showAdminMenu)}
+              className="p-2 bg-black/20 hover:bg-black/30 dark:bg-white/20 dark:hover:bg-white/30 backdrop-blur-sm rounded-full text-white transition-all duration-200"
+              title="Admin controls"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {showAdminMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 overflow-hidden min-w-[120px]">
+                <button
+                  onClick={() => {
+                    onEdit?.(project)
+                    setShowAdminMenu(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this project?')) {
+                      onDelete?.(project)
+                    }
+                    setShowAdminMenu(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Status badges */}
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+        {featured && (
           <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-semibold rounded-full shadow-lg">
             Featured
           </span>
-        </div>
-      )}
+        )}
+        {isCompletedKanbanProject && (
+          <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-full shadow-lg">
+            Completed
+          </span>
+        )}
+      </div>
 
       {/* Project image */}
       {image && (

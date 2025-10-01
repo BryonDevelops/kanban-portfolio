@@ -1,4 +1,4 @@
-import { type LucideIcon } from "lucide-react"
+import { Star, type LucideIcon } from "lucide-react"
 import {
   Bot,
   BookOpen,
@@ -48,7 +48,7 @@ const sidebarConfig = {
     {
       title: "Projects",
       url: "/projects",
-      icon: Frame,
+      icon: Star,
       description: "View all projects",
       featureFlag: "projects"
     },
