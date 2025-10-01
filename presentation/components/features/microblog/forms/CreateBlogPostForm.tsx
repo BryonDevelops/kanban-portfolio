@@ -5,7 +5,7 @@ import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 import { useIsMobile } from '../../../../hooks/use-mobile';
 import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
-import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock } from 'lucide-react';
+import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock, Edit } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 import { CategorySelector } from './CategorySelector';
@@ -64,6 +64,12 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      const modalElement = modalRef.current;
+      const composedPath = typeof event.composedPath === 'function' ? event.composedPath() : undefined;
+
+      const isWithinModal = modalElement
+        ? composedPath?.includes(modalElement) ?? modalElement.contains(target)
+        : false;
 
       // Don't close modal if clicking on dropdown menu content or dialog content
       if (target.closest('[data-radix-popper-content-wrapper]') ||
@@ -71,11 +77,12 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
           target.closest('[data-radix-dropdown-menu-trigger]') ||
           target.closest('[data-radix-dialog-overlay]') ||
           target.closest('[data-radix-dialog-content]') ||
-          target.closest('[data-radix-dialog-trigger]')) {
+          target.closest('[data-radix-dialog-trigger]') ||
+          target.closest('[data-modal-safe="true"]')) {
         return;
       }
 
-      if (modalRef.current && !modalRef.current.contains(target)) {
+      if (!isWithinModal) {
         setIsOpen(false);
       }
     };
@@ -112,20 +119,36 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
           categories: formData.categories,
         };
         // Create in database via API
-        const response = await fetch('/api/blog-posts', {
+        const { imageUrl, ...rest } = createdPost;
+        const normalizedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : '';
+        const payload = {
+          ...rest,
+          ...(normalizedImageUrl
+            ? { imageUrl: normalizedImageUrl }
+            : {}),
+        };
+
+        const response = await fetch('/api/posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...createdPost,
-            imageUrl: createdPost.imageUrl || '',
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create blog post');
+          const contentType = response.headers.get('content-type') || '';
+          let errorMessage = 'Failed to create blog post';
+
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            const responseText = await response.text();
+            errorMessage = responseText || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
 
         // Show success toast
@@ -406,15 +429,21 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
-                  <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <Edit className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium text-slate-900 dark:text-white`}>Content</h3>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-modal-safe="true">
                 <StreamlinedBlogEditor
+                  title={formData.title}
+                  onTitleChange={(value: string) => handleInputChange('title', value)}
                   content={formData.content}
                   onChange={(content: string) => handleInputChange('content', content)}
+                  excerpt={formData.excerpt}
+                  onExcerptChange={(value: string) => handleInputChange('excerpt', value)}
+                  imageUrl={formData.imageUrl}
+                  onImageUrlChange={(value: string) => handleInputChange('imageUrl', value)}
                   placeholder="Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
                 />
               </div>

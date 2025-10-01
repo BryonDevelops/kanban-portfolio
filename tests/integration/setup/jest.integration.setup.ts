@@ -1,5 +1,6 @@
 // Integration tests setup
 import '@testing-library/jest-dom';
+import { jest } from '@jest/globals';
 
 // Mock environment variables for tests
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';

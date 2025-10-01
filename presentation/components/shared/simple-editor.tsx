@@ -25,7 +25,30 @@ import {
   Undo,
   Redo
 } from 'lucide-react';
-import { defaultMarkdownSerializer, defaultMarkdownParser } from 'prosemirror-markdown';
+import { defaultMarkdownSerializer, defaultMarkdownParser, MarkdownSerializer } from 'prosemirror-markdown';
+
+const markdownSerializer = new MarkdownSerializer(
+  {
+    ...defaultMarkdownSerializer.nodes,
+    bulletList: defaultMarkdownSerializer.nodes.bullet_list,
+    orderedList: defaultMarkdownSerializer.nodes.ordered_list,
+    listItem: defaultMarkdownSerializer.nodes.list_item,
+    hardBreak: defaultMarkdownSerializer.nodes.hard_break,
+    horizontalRule: defaultMarkdownSerializer.nodes.horizontal_rule,
+    codeBlock: defaultMarkdownSerializer.nodes.code_block,
+  },
+  {
+    ...defaultMarkdownSerializer.marks,
+    bold: defaultMarkdownSerializer.marks.strong,
+    italic: defaultMarkdownSerializer.marks.em,
+    strike: defaultMarkdownSerializer.marks.strikethrough ?? {
+      open: '~~',
+      close: '~~',
+      mixable: true,
+      expelEnclosingWhitespace: true,
+    },
+  }
+);
 
 interface SimpleEditorProps {
   content: string;
@@ -60,12 +83,42 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       // Convert ProseMirror document to markdown
-      const markdown = defaultMarkdownSerializer.serialize(editor.state.doc);
+      const markdown = markdownSerializer.serialize(editor.state.doc);
       onChange(markdown);
     },
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
+      },
+  handlePaste(view, event) {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) {
+          return false;
+        }
+
+        const html = clipboardData.getData('text/html');
+        const text = clipboardData.getData('text/plain');
+
+        // Allow default handling when rich HTML content is present or there is no plain text
+        if (!text || html) {
+          return false;
+        }
+
+        try {
+          const doc = defaultMarkdownParser.parse(text);
+          if (!doc || doc.content.size === 0) {
+            return false;
+          }
+
+          event.preventDefault();
+
+          const slice = doc.slice(0, doc.content.size);
+          const transaction = view.state.tr.replaceSelection(slice).scrollIntoView();
+          view.dispatch(transaction);
+          return true;
+        } catch {
+          return false;
+        }
       },
     },
   });
@@ -73,7 +126,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
   // Update editor content when content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
-      const currentMarkdown = defaultMarkdownSerializer.serialize(editor.state.doc);
+  const currentMarkdown = markdownSerializer.serialize(editor.state.doc);
       if (currentMarkdown !== content) {
         try {
           const doc = defaultMarkdownParser.parse(content);
