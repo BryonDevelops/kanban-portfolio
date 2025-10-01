@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
-import { Save, X, Settings } from 'lucide-react';
+import { Save, X, Settings, Edit3 } from 'lucide-react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
@@ -30,28 +30,93 @@ interface StreamlinedBlogEditorProps {
     imageUrl: string;
   }) => void;
 
-  onContentChange?: (content: string) => void;
-  // Simple editor mode props
+  // Controlled mode props
+  title?: string;
+  onTitleChange?: (value: string) => void;
   content?: string;
   onChange?: (content: string) => void;
+  excerpt?: string;
+  onExcerptChange?: (value: string) => void;
+  imageUrl?: string;
+  onImageUrlChange?: (value: string) => void;
   placeholder?: string;
 }
 
-export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: StreamlinedBlogEditorProps) {
+export function StreamlinedBlogEditor({
+  onBlogPostCreated,
+  trigger,
+  initialData,
+  title: controlledTitle,
+  onTitleChange,
+  content: controlledContent,
+  onChange,
+  excerpt: controlledExcerpt,
+  onExcerptChange,
+  imageUrl: controlledImageUrl,
+  onImageUrlChange: onImageUrlChangeProp,
+  placeholder,
+}: StreamlinedBlogEditorProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isEditingHeaderTitle, setIsEditingHeaderTitle] = useState(false);
   const isAdmin = useIsAdmin();
   const { user, isLoaded } = useUser();
   const isLoggedIn = isLoaded && !!user;
   const canSaveToDatabase = isLoggedIn && isAdmin;
 
   // Editor state
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [excerpt, setExcerpt] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [titleState, setTitleState] = useState(initialData?.title || '');
+  const [contentState, setContentState] = useState(initialData?.content || '');
+  const [excerptState, setExcerptState] = useState(initialData?.excerpt || '');
+  const [imageUrlState, setImageUrlState] = useState(initialData?.imageUrl || '');
+
+  const isTitleControlled = typeof controlledTitle === 'string' && !!onTitleChange;
+  const isContentControlled = typeof controlledContent === 'string' && !!onChange;
+  const isExcerptControlled = typeof controlledExcerpt === 'string' && !!onExcerptChange;
+  const isImageUrlControlled = typeof controlledImageUrl === 'string' && !!onImageUrlChangeProp;
+
+  const title = isTitleControlled ? controlledTitle! : titleState;
+  const content = isContentControlled ? controlledContent! : contentState;
+  const excerpt = isExcerptControlled ? controlledExcerpt! : excerptState;
+  const imageUrl = isImageUrlControlled ? controlledImageUrl! : imageUrlState;
+
+  const setTitle = (value: string) => {
+    if (onTitleChange) {
+      onTitleChange(value);
+    }
+    if (!isTitleControlled) {
+      setTitleState(value);
+    }
+  };
+
+  const setContent = (value: string) => {
+    if (onChange) {
+      onChange(value);
+    }
+    if (!isContentControlled) {
+      setContentState(value);
+    }
+  };
+
+  const setExcerpt = (value: string) => {
+    if (onExcerptChange) {
+      onExcerptChange(value);
+    }
+    if (!isExcerptControlled) {
+      setExcerptState(value);
+    }
+  };
+
+  const setImageUrl = (value: string) => {
+    if (onImageUrlChangeProp) {
+      onImageUrlChangeProp(value);
+    }
+    if (!isImageUrlControlled) {
+      setImageUrlState(value);
+    }
+  };
 
   // Auto-generate excerpt from content
   useEffect(() => {
@@ -61,9 +126,19 @@ export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: Streamline
       const autoExcerpt = plainText.length > 150
         ? plainText.substring(0, 150) + '...'
         : plainText;
-      setExcerpt(autoExcerpt);
+      if (isExcerptControlled) {
+        onExcerptChange?.(autoExcerpt);
+      } else {
+        setExcerptState(autoExcerpt);
+      }
     }
-  }, [content, excerpt]);
+  }, [content, excerpt, isExcerptControlled, onExcerptChange]);
+
+  useEffect(() => {
+    if (!open) {
+      setIsEditingHeaderTitle(false);
+    }
+  }, [open]);
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
@@ -76,26 +151,38 @@ export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: Streamline
 
     try {
       if (canSaveToDatabase) {
-        const response = await fetch('/api/blog-posts', {
+        const payload = {
+          title: title.trim(),
+          excerpt: excerpt.trim(),
+          content: content.trim(),
+          author: user?.fullName || user?.username || '',
+          tags: [] as string[], // Could be extracted from content or added later
+          publishedAt: new Date().toISOString(),
+          readTime: Math.ceil(content.replace(/<[^>]*>/g, '').split(' ').length / 200),
+          ...(imageUrl.trim() ? { imageUrl: imageUrl.trim() } : {}),
+        };
+
+        const response = await fetch('/api/posts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            title: title.trim(),
-            excerpt: excerpt.trim(),
-            content: content.trim(),
-            author: user?.fullName || user?.username || '',
-            tags: [], // Could be extracted from content or added later
-            imageUrl: imageUrl.trim(),
-            publishedAt: new Date().toISOString(),
-            readTime: Math.ceil(content.replace(/<[^>]*>/g, '').split(' ').length / 200),
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create blog post');
+          const contentType = response.headers.get('content-type') || '';
+          let errorMessage = 'Failed to create blog post';
+
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            const responseText = await response.text();
+            errorMessage = responseText || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
 
         // Success toast
@@ -123,10 +210,10 @@ export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: Streamline
   };
 
   const resetEditor = () => {
-    setTitle('');
-    setContent('');
-    setExcerpt('');
-    setImageUrl('');
+    if (!isTitleControlled) setTitleState('');
+    if (!isContentControlled) setContentState('');
+    if (!isExcerptControlled) setExcerptState('');
+    if (!isImageUrlControlled) setImageUrlState('');
     setError(null);
   };
 
@@ -141,11 +228,42 @@ export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: Streamline
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+  <DialogContent data-modal-safe="true" className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">
-              {title || 'Untitled Blog Post'}
+              <div className="flex items-center gap-2">
+                {isEditingHeaderTitle ? (
+                  <Input
+                    value={title ?? ''}
+                    onChange={(event) => setTitle(event.target.value)}
+                    onBlur={() => setIsEditingHeaderTitle(false)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        setIsEditingHeaderTitle(false);
+                      }
+                    }}
+                    autoFocus
+                    placeholder="Microblog title..."
+                    className="h-9 text-base font-semibold"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingHeaderTitle(true)}
+                    className="group flex items-center gap-2 text-left focus:outline-none"
+                  >
+                    <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                      {title || 'Untitled Microblog Post'}
+                    </span>
+                    <Edit3 className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                    <span className="text-xs text-slate-400 group-hover:opacity-100 opacity-0 transition-opacity">
+                      click to edit
+                    </span>
+                  </button>
+                )}
+              </div>
             </DialogTitle>
             <div className="flex items-center gap-2">
               <Button
@@ -200,23 +318,12 @@ export function StreamlinedBlogEditor({ onBlogPostCreated, trigger }: Streamline
           </div>
         )}
 
-        {/* Title Input */}
-        <div className="flex-shrink-0 px-4 py-2 border-b">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Blog post title..."
-            className="text-2xl font-bold border-none shadow-none px-0 focus-visible:ring-0"
-            style={{ fontSize: '2rem', fontWeight: 'bold' }}
-          />
-        </div>
-
         {/* Main Editor */}
         <div className="flex-1 overflow-hidden">
           <SimpleEditor
             content={content}
             onChange={setContent}
-            placeholder="Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
+            placeholder={placeholder || "Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"}
           />
         </div>
 

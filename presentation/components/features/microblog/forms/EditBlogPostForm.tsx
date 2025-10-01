@@ -103,23 +103,44 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
     try {
       if (canSaveToDatabase) {
         // Update in database via API
-        const response = await fetch(`/api/blog-posts/${blogPost.id}`, {
+        const readTime = Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200);
+
+        const { imageUrl, ...rest } = {
+          ...updatedData,
+          author: formData.author,
+          tags: formData.tags,
+          categories: formData.categories,
+          readTime,
+        };
+
+        const payload = {
+          ...rest,
+          ...(typeof imageUrl === 'string' && imageUrl.trim()
+            ? { imageUrl: imageUrl.trim() }
+            : {}),
+        };
+
+        const response = await fetch(`/api/posts/${blogPost.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...updatedData,
-            author: formData.author,
-            tags: formData.tags,
-            categories: formData.categories,
-            readTime: Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200),
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update blog post');
+          const contentType = response.headers.get('content-type') || '';
+          let errorMessage = 'Failed to update blog post';
+
+          if (contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            const responseText = await response.text();
+            errorMessage = responseText || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
 
         // Show success toast
@@ -151,7 +172,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
     try {
       if (canSaveToDatabase) {
         // Delete from database via API
-        const response = await fetch(`/api/blog-posts/${blogPost.id}`, {
+        const response = await fetch(`/api/posts/${blogPost.id}`, {
           method: 'DELETE',
         });
 

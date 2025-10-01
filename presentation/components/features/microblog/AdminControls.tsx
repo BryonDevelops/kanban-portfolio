@@ -9,7 +9,6 @@ import { Textarea } from '@/presentation/components/ui/textarea'
 import { Edit, Trash2, Plus, Star } from 'lucide-react'
 import { BlogPost } from './BlogPostPortal'
 import { Category } from '@/domain/microblog/entities/category'
-import { StreamlinedBlogEditor } from './forms/StreamlinedBlogEditor'
 import { CreateBlogPostForm } from './forms/CreateBlogPostForm'
 import { ColorPicker } from '@/presentation/components/shared/color-picker'
 import { useIsMobile } from '../../../hooks/use-mobile'
@@ -53,8 +52,8 @@ export function PostAdminButtons({
               ? 'text-yellow-600 dark:text-yellow-400'
               : 'text-gray-400 dark:text-gray-500 hover:text-yellow-600 dark:hover:text-yellow-400'
           } hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
-          onClick={(e) => {
-            e.stopPropagation()
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation()
             onToggleFeatured(post.id)
           }}
           title={post.featured ? 'Remove from featured' : 'Mark as featured'}
@@ -66,8 +65,8 @@ export function PostAdminButtons({
           size="sm"
           variant="ghost"
           className={`p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
-          onClick={(e) => {
-            e.stopPropagation()
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation()
             onEdit(post)
           }}
           title="Edit post"
@@ -79,8 +78,8 @@ export function PostAdminButtons({
           size="sm"
           variant="ghost"
           className={`p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
-          onClick={(e) => {
-            e.stopPropagation()
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation()
             if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
               onDelete(post.id)
             }
@@ -251,8 +250,8 @@ export function CategoryAdminButtons({
           size="sm"
           variant="ghost"
           className={`p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
-          onClick={(e) => {
-            e.stopPropagation()
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation()
             onEdit(category)
           }}
           title="Edit category"
@@ -264,8 +263,8 @@ export function CategoryAdminButtons({
           size="sm"
           variant="ghost"
           className={`p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors ${isMobile ? 'h-9 w-9' : 'h-8 w-8'}`}
-          onClick={(e) => {
-            e.stopPropagation()
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation()
             if (confirm(`Are you sure you want to delete the "${category.name}" category? This action cannot be undone.`)) {
               onDelete(category.id)
             }

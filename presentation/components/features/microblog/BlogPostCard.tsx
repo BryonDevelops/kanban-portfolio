@@ -11,7 +11,7 @@ interface BlogPostCardProps {
   post: BlogPost
 }
 
-function BlogPostCard({ post }: BlogPostCardProps) {
+export function BlogPostCard({ post }: BlogPostCardProps) {
   return (
     <BlogPostPortal
       post={post}
@@ -57,7 +57,7 @@ function BlogPostCard({ post }: BlogPostCardProps) {
 
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {post.tags.slice(0, 3).map((tag) => (
+                {post.tags.slice(0, 3).map((tag: string) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
                     {tag}
                   </Badge>
