@@ -88,14 +88,20 @@ export function ExperienceCard({ experience: exp, index, isLast = false }: Exper
         </div>
         <div className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
           <ul className="space-y-2">
-            {exp.description.split('-').filter(item => item.trim()).map((item, paraIndex) => (
+            {exp.description
+              .split('\n')
+              .map(line => line.trim())
+              .filter(line => line.startsWith('- '))
+              .map(line => line.substring(2).trim())
+              .filter(item => item.length > 0)
+              .map((item, paraIndex) => (
               <li key={paraIndex} className="flex items-start gap-3">
                 <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
                   exp.featured
                     ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
                     : 'bg-gradient-to-r from-blue-500 to-purple-500'
                 }`}></div>
-                <span className="flex-1">{item.trim()}</span>
+                <span className="flex-1">{item}</span>
               </li>
             ))}
           </ul>
