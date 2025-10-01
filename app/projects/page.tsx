@@ -1,12 +1,24 @@
 "use client"
 
-import React from 'react'
-import { ProjectCard } from '@/presentation/components/shared/ProjectCard'
+import React, { useState, useEffect, useCallback } from 'react'
+import { ProjectCard, ShowcasedProject } from '@/presentation/components/shared/ProjectCard'
 import { SectionBadge } from '@/presentation/components/shared/section-badge'
+import { useIsAdmin } from '@/presentation/components/shared/ProtectedRoute'
+import { CreateShowcasedProjectForm } from '@/presentation/components/features/projects/forms/CreateShowcasedProjectForm'
+import { EditShowcasedProjectForm } from '@/presentation/components/features/projects/forms/EditShowcasedProjectForm'
+import { Button } from '@/presentation/components/ui/button'
+import { Plus, RefreshCw } from 'lucide-react'
+import { Project } from '@/domain/board/schemas/project.schema'
 
 export default function ProjectsShowcasePage() {
-  const projects = [
+  const isAdmin = useIsAdmin()
+
+  // State for managing projects
+  const [projects, setProjects] = useState<ShowcasedProject[]>([])
+  const [loading, setLoading] = useState(true)
+  const [manualProjects, setManualProjects] = useState<ShowcasedProject[]>([
     {
+      id: "kanban-portfolio",
       title: "Kanban Portfolio",
       description: "A modern portfolio website built with Next.js, featuring a kanban board interface for project management and beautiful tech stack showcases. Includes real-time collaboration, drag-and-drop functionality, and responsive design.",
       technologies: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Supabase', 'React', 'PostgreSQL'],
@@ -14,42 +26,78 @@ export default function ProjectsShowcasePage() {
       github: "https://github.com/BryonDevelops/kanban-portfolio",
       featured: true
     },
-    {
-      title: "E-commerce Platform",
-      description: "Full-stack e-commerce solution with React frontend, Node.js backend, and PostgreSQL database. Features include user authentication, payment processing, inventory management, and admin dashboard.",
-      technologies: ['React', 'Node.js', 'PostgreSQL', 'Stripe', 'Express', 'JWT'],
-      link: "#",
-      github: "#"
-    },
-    {
-      title: "Task Management App",
-      description: "A collaborative task management application with real-time updates, team workspaces, and advanced filtering. Built with modern web technologies and cloud infrastructure.",
-      technologies: ['Vue.js', 'Firebase', 'Tailwind CSS', 'Vuex', 'PWA'],
-      link: "#",
-      github: "#"
-    },
-    {
-      title: "Weather Dashboard",
-      description: "Beautiful weather dashboard with location-based forecasts, interactive maps, and weather alerts. Features include geolocation, offline support, and customizable widgets.",
-      technologies: ['React', 'OpenWeather API', 'Chart.js', 'Service Workers', 'CSS Grid'],
-      link: "#",
-      github: "#"
-    },
-    {
-      title: "Code Snippet Manager",
-      description: "Developer tool for organizing and sharing code snippets with syntax highlighting, tagging, and search functionality. Includes public sharing and team collaboration features.",
-      technologies: ['Next.js', 'Prisma', 'PlanetScale', 'Monaco Editor', 'Vercel'],
-      link: "#",
-      github: "#"
-    },
-    {
-      title: "Social Media Analytics",
-      description: "Comprehensive analytics dashboard for social media performance tracking. Features include data visualization, automated reporting, and multi-platform integration.",
-      technologies: ['Python', 'Django', 'D3.js', 'PostgreSQL', 'Celery', 'Redis'],
-      link: "#",
-      github: "#"
-    }
-  ]
+  ])
+
+  // Admin UI state
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [projectToEdit, setProjectToEdit] = useState<ShowcasedProject | null>(null)
+
+  // Fetch completed projects from kanban board
+  const fetchCompletedProjects = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const kanbanProjects: Project[] = await response.json()
+
+        // Filter for completed projects and convert to ShowcasedProject format
+        const completedProjects: ShowcasedProject[] = kanbanProjects
+          .filter(project => project.status === 'completed')
+          .map(project => ({
+            id: project.id,
+            title: project.title,
+            description: project.description || '',
+            technologies: project.technologies,
+            image: project.image,
+            link: project.url,
+            github: project.url, // You might want to have separate github field in Project schema
+            featured: false, // You can add logic to determine featured projects
+            isCompletedKanbanProject: true
+          }))
+
+        // Combine with manual projects and sort (completed projects first, then manual)
+        setProjects([...completedProjects, ...manualProjects])
+      }
+    } catch (error) {
+      console.error('Failed to fetch completed projects:', error)
+      // Fallback to manual projects only
+      setProjects(manualProjects)
+      } finally {
+        setLoading(false)
+      }
+    }, [manualProjects])
+
+  // Load projects on component mount
+  useEffect(() => {
+    fetchCompletedProjects()
+  }, [fetchCompletedProjects])  // Project management functions
+  const handleProjectCreated = (newProject: ShowcasedProject) => {
+    setManualProjects(prev => [newProject, ...prev])
+  }
+
+  const handleProjectUpdated = (updatedProject: ShowcasedProject) => {
+    setManualProjects(prev =>
+      prev.map(project =>
+        project.id === updatedProject.id ? updatedProject : project
+      )
+    )
+    setProjectToEdit(null)
+  }
+
+  const handleProjectDeleted = (projectToDelete: ShowcasedProject) => {
+    setManualProjects(prev => prev.filter(project => project.id !== projectToDelete.id))
+
+    // Show success toast
+    import("@/presentation/utils/toast").then(({ success }) => {
+      success("Project deleted!", `"${projectToDelete.title}" has been removed from the showcase.`)
+    })
+  }
+
+  const handleEditProject = (project: ShowcasedProject) => {
+    setProjectToEdit(project)
+    setShowEditForm(true)
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -89,17 +137,58 @@ export default function ProjectsShowcasePage() {
             </p>
           </div>
 
+          {/* Admin Controls */}
+          {isAdmin && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-8 mx-auto max-w-md">
+              <div className="text-center mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                  <span className="font-semibold">Admin Mode:</span> {loading ? 'Loading...' : `Managing ${projects.length} showcase projects`}
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    onClick={() => setShowCreateForm(true)}
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Manual Project
+                  </Button>
+                  <Button
+                    onClick={fetchCompletedProjects}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
+                Shows completed kanban projects + manual showcase projects. Use (⋮) menu to edit/delete manual projects.
+              </p>
+            </div>
+          )}
+
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project, index) => (
-              <div
-                key={project.title}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <ProjectCard {...project} />
-              </div>
-            ))}
+            {projects.map((project, index) => {
+              // Only allow editing/deleting of manual projects (those with 'showcase-' prefix or in manualProjects)
+              const isManualProject = project.id?.startsWith('showcase-') || manualProjects.some(mp => mp.id === project.id)
+
+              return (
+                <div
+                  key={project.id || project.title}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  <ProjectCard
+                    {...project}
+                    onEdit={isManualProject ? handleEditProject : undefined}
+                    onDelete={isManualProject ? handleProjectDeleted : undefined}
+                  />
+                </div>
+              )
+            })}
           </div>
 
           {/* Call to Action */}
@@ -120,7 +209,7 @@ export default function ProjectsShowcasePage() {
                   Get In Touch
                 </a>
                 <a
-                  href="/projects"
+                  href="/board"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-blue-200 dark:border-blue-800 bg-white/90 dark:bg-white/5 backdrop-blur-sm text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium rounded-lg transition-all duration-200"
                 >
                   View Kanban Board
@@ -130,6 +219,20 @@ export default function ProjectsShowcasePage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Forms */}
+      <CreateShowcasedProjectForm
+        open={showCreateForm}
+        onOpenChange={setShowCreateForm}
+        onProjectCreated={handleProjectCreated}
+      />
+
+      <EditShowcasedProjectForm
+        open={showEditForm}
+        onOpenChange={setShowEditForm}
+        project={projectToEdit}
+        onProjectUpdated={handleProjectUpdated}
+      />
     </div>
   )
 }
