@@ -385,10 +385,12 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       </div>
 
       {/* Editor Content */}
-      <EditorContent
-        editor={editor}
-        className="min-h-[300px] focus-within:outline-none p-4"
-      />
+      <div className="max-h-[65vh] overflow-y-auto">
+        <EditorContent
+          editor={editor}
+          className="min-h-[300px] focus-within:outline-none p-4"
+        />
+      </div>
 
       {/* Character Count */}
       <div className="border-t px-4 py-2 text-xs text-muted-foreground bg-muted/30 flex justify-between items-center">

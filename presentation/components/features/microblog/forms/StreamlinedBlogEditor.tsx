@@ -319,12 +319,14 @@ export function StreamlinedBlogEditor({
         )}
 
         {/* Main Editor */}
-        <div className="flex-1 overflow-hidden">
-          <SimpleEditor
-            content={content}
-            onChange={setContent}
-            placeholder={placeholder || "Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"}
-          />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="h-full min-h-0 overflow-y-auto pr-1">
+            <SimpleEditor
+              content={content}
+              onChange={setContent}
+              placeholder={placeholder || "Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"}
+            />
+          </div>
         </div>
 
         {/* Footer Actions */}
