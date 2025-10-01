@@ -37,7 +37,9 @@ Grid layouts have never been easier with Tailwind CSS!`,
     author: 'Bryon Bauer',
     publishedAt: '2024-09-15',
     tags: ["Tailwind CSS", "CSS", "Frontend"],
-    readTime: 4
+    readTime: 4,
+    featured: false,
+    categories: []
   },
   {
     id: '4',
@@ -74,7 +76,9 @@ Performance optimization is an ongoing process that pays dividends in user satis
     author: 'Bryon Bauer',
     publishedAt: '2024-09-12',
     tags: ["React", "Performance", "JavaScript"],
-    readTime: 6
+    readTime: 6,
+    featured: false,
+    categories: []
   },
   {
     id: '5',
@@ -114,7 +118,9 @@ Building accessible components ensures your applications work for everyone!`,
     author: 'Bryon Bauer',
     publishedAt: '2024-09-10',
     tags: ["Accessibility", "Web Standards", "UX"],
-    readTime: 5
+    readTime: 5,
+    featured: false,
+    categories: []
   },
   {
     id: '6',
@@ -158,6 +164,8 @@ The edge is where the future of computing happens!`,
     author: 'Bryon Bauer',
     publishedAt: '2024-09-08',
     tags: ["Edge Computing", "Cloud", "Architecture"],
-    readTime: 8
+    readTime: 8,
+    featured: false,
+    categories: []
   }
 ]
