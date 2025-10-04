@@ -76,6 +76,7 @@ export function ImprovedEditBlogPostForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [newTag, setNewTag] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -321,17 +322,11 @@ export function ImprovedEditBlogPostForm({
             : 'max-w-5xl max-h-[90vh] rounded-xl'
         }`}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
-          {/* Top Bar */}
-          <div className="flex items-center justify-between p-4 pb-3">
+        {/* Enhanced Header with Title */}
+        <div className="flex-shrink-0 border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
+          {/* Top Row: Controls and Status */}
+          <div className="flex justify-between items-center p-4 pb-0">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Edit Post
-                </h2>
-              </div>
               {hasUnsavedChanges && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                   <div className="w-1 h-1 rounded-full bg-amber-500"></div>
@@ -339,11 +334,10 @@ export function ImprovedEditBlogPostForm({
                 </div>
               )}
             </div>
-            
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
                 title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               >
                 {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -358,10 +352,118 @@ export function ImprovedEditBlogPostForm({
                     setIsOpen(false);
                   }
                 }}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
               >
                 <X className="h-4 w-4" />
               </button>
+            </div>
+          </div>
+
+          {/* Main Header Content */}
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+            {/* Title Section */}
+            <div className="mb-4">
+              <div className="flex items-start gap-3 mb-3 group">
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    onBlur={() => setIsEditingTitle(false)}
+                    onKeyPress={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
+                    className="text-xl sm:text-2xl font-bold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1"
+                    placeholder="Blog post title..."
+                    autoFocus
+                  />
+                ) : (
+                  <div className="relative flex-1">
+                    <h1
+                      className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                      onClick={() => setIsEditingTitle(true)}
+                    >
+                      {formData.title || 'Untitled Blog Post'}
+                      {/* Subtle edit indicator */}
+                      <span className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-slate-400 font-normal">
+                        click to edit
+                      </span>
+                    </h1>
+                    {/* Underline hint */}
+                    <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Edit3
+                    className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors group-hover:text-blue-500 group-hover:scale-110 duration-200"
+                    onClick={() => setIsEditingTitle(true)}
+                  />
+                  <span className="text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 font-medium hidden sm:inline">
+                    Edit
+                  </span>
+                </div>
+              </div>
+
+              {/* Author and Read Time Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4">
+                {/* Author */}
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <User className="h-3 w-3 flex-shrink-0" />
+                  <span>Author:</span>
+                  <input
+                    type="text"
+                    value={formData.author}
+                    onChange={(e) => handleInputChange('author', e.target.value)}
+                    className="bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 flex-1 min-w-0"
+                    placeholder="Author name..."
+                  />
+                </div>
+
+                {/* Read Time */}
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <Clock className="h-3 w-3 flex-shrink-0" />
+                  <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
+                </div>
+              </div>
+
+              {/* Tags Section */}
+              <div className="flex gap-1 flex-wrap items-center">
+                <div className="flex items-center gap-2 mb-2 mr-2">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Tags:</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-500">({formData.tags.length})</span>
+                </div>
+                {formData.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-md text-xs font-medium"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => removeTag(tag)}
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors ml-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+
+                {/* Quick Add Tag */}
+                <div className="flex items-center gap-1 ml-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                    placeholder="Add tag..."
+                    className="w-20 sm:w-24 px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={addTag}
+                    disabled={!newTag.trim()}
+                    className="p-1 text-purple-600 hover:text-purple-700 disabled:text-slate-400 transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
