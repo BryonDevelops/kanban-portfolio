@@ -3,126 +3,105 @@
 [![CI/CD](https://github.com/BryonDevelops/kanban-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/BryonDevelops/kanban-portfolio/actions/workflows/ci.yml)
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com)
 
-A modern, full-stack Kanban board application built with Next.js 15, TypeScript, and Supabase. Features include user authentication, admin functionality, dark/light theme support, and a clean, responsive UI.
+A full-stack personal portfolio and project showcase built with Next.js 15, React 19, and TypeScript. The site features a kanban board backed by Supabase, a projects showcase, a microblog, and an admin area for managing feature flags. It ships with Clerk authentication, Sanity-powered content, a PWA experience, and a reusable UI system.
 
-## Features
-
-- ✅ **User Authentication** - Secure authentication with Clerk
-- ✅ **Admin Dashboard** - Protected admin routes and functionality
-- ✅ **Dark/Light Theme** - Complete theme system with system preference detection
-- ✅ **Kanban Board** - Drag-and-drop task management
-- ✅ **Responsive Design** - Mobile-first design with Tailwind CSS
-- ✅ **Type-Safe** - Full TypeScript implementation
-- ✅ **Database Integration** - Supabase for data persistence
-- ✅ **Component Library** - shadcn/ui components
+## Highlights
+- Production-ready kanban board with drag-and-drop columns, Supabase persistence, and optimistic updates.
+- Authenticated admin workspace for managing feature flags, curated projects, and experimental features (Clerk protected).
+- Projects screen that combines live Supabase data with manually curated highlights for portfolio storytelling.
+- Microblog authoring pipeline with Tiptap-based editors, Supabase storage, category taxonomy, and feature toggles.
+- Sanity-backed About page that pulls experience cards directly from Sanity Studio.
+- Installable PWA experience with offline fallback pages, toast-driven notifications, and a shared shadcn/ui design system.
 
 ## Tech Stack
+- Framework: Next.js 15 App Router, React 19, TypeScript.
+- Styling: Tailwind CSS, shadcn/ui, custom motion effects, next-themes.
+- Data: Supabase (PostgreSQL) via typed repositories, Sanity CMS, local feature flag registry.
+- Auth & security: Clerk, middleware route protection, role-aware UI.
+- Testing: Jest (unit, domain, integration, services, presentation), Playwright-ready E2E suite, Storybook for visual regression prep.
+- Tooling: npm scripts, Husky, ESLint, Prettier, Supabase CLI, Storybook.
 
-- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
-- **Styling**: Tailwind CSS with dark mode support
-- **UI Components**: shadcn/ui
-- **Authentication**: Clerk
-- **Database**: Supabase
-- **Theme Management**: next-themes
-- **Testing**: Jest, React Testing Library
-- **Code Quality**: ESLint, Prettier
+## Quick Start
+1. Clone the repository and install dependencies:
+   ```bash
+   git clone https://github.com/BryonDevelops/kanban-portfolio.git
+   cd kanban-portfolio
+   npm install
+   ```
+2. Copy the example environment file and fill in values:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Visit `http://localhost:3000` to explore the application.
 
-## Getting Started
+### Environment variables
+Only the variables you enable will be used at runtime; the app gracefully falls back when optional services are missing.
 
-### Prerequisites
+| Variable | Purpose | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Clerk authentication | Required for sign-in and admin guard rails. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase client and service access | Needed for kanban data, microblog posts, migrations, and E2E tests. |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_AUTH_TOKEN` | Sanity CMS | Powers the About page and Studio deployments. Optional locally. |
+| `SENDGRID_API_KEY`, `SENDGRID_SENDER_EMAIL`, `CONTACT_RECIPIENT` | Contact form delivery | Optional; falls back to console logging without keys. |
+| `NEXT_PUBLIC_FEATURE_*` | Feature flag overrides | Defaults enable all features. |
+| `TEST_SUPABASE_*` | Dedicated Supabase credentials for tests | Used by the Jest E2E suite. |
 
-- Node.js 18+
-- npm or yarn
-- Supabase account
-- Clerk account
+Refer to `.env.local.example` for the full list including optional AI/Tiptap and image provider tokens.
 
-### Installation
+### Database and content
+- Supabase migrations live in `infrastructure/database/migrations`. Run them with `npm run db:migrate` (bundled Supabase CLI) or sync manually through the Supabase dashboard.
+- When testing locally without Supabase credentials the app falls back to in-memory seed data for read-only views.
+- Sanity Studio lives in `studio-bryondevelops`. Start it with:
+  ```bash
+  cd studio-bryondevelops
+  npm install
+  npm run dev
+  ```
+  Deployments are documented in `SANITY_DEPLOYMENT_README.md`.
 
-1. Clone the repository:
+## Scripts
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js development server. |
+| `npm run build` / `npm run start` | Build and serve the production bundle. |
+| `npm run lint` | Run ESLint against the monorepo. |
+| `npm run test:unit` / `test:domain` / `test:services` / `test:presentation` / `test:integration` / `test:e2e` | Run the respective Jest test suites. |
+| `npm run storybook` | Launch Storybook for the presentation layer. |
+| `npm run analyze-bundle` | Inspect bundle output. |
+| `npm run db:migrate` / `npm run db:reset` | Apply or reset Supabase migrations (requires configured credentials). |
+| `npm run cypress` | Open the Cypress runner (optional E2E experiments). |
 
-```bash
-git clone <repository-url>
-cd kanban-portfolio
+## Project layout
+```
+kanban-portfolio/
+|- app/                  # Next.js routes, API handlers, layout composition
+|- domain/               # Framework-agnostic entities, schemas, repository contracts
+|- infrastructure/       # Supabase access, external API clients, migrations
+|- presentation/         # UI components, stores, hooks, utilities
+|- services/             # Application services orchestrating domain + infrastructure
+|- lib/                  # Shared helpers (feature flags, logging, DI, tiptap)
+|- tests/                # Multi-layer Jest suites, fixtures, configs
+|- scripts/              # Build and analysis helpers
+|- studio-bryondevelops/ # Sanity Studio workspace
 ```
 
-2. Install dependencies:
+## Testing
+- Unit, domain, service, and presentation suites run with Jest and Testing Library (`npm run test:unit`, `test:domain`, etc.).
+- Integration tests validate Supabase repositories with controlled fixtures (`npm run test:integration`).
+- E2E tests target real Supabase instances and require `TEST_SUPABASE_*` credentials (`npm run test:e2e`).
+- Storybook and Chromatic-ready stories exist under `tests/presentation/storybook`.
 
-```bash
-npm install
-```
+See `tests/README.md` for coverage expectations and detailed tooling guidance.
 
-3. Set up environment variables:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Fill in your environment variables:
-
-- Clerk keys
-- Supabase URL and keys
-- Other required configuration
-
-4. Run database migrations:
-
-```bash
-npm run migrate
-```
-
-5. Start the development server:
-
-```bash
-npm run dev
-```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-```
-├── app/                    # Next.js app router pages
-├── domain/                 # Domain layer (entities, repositories, schemas)
-├── infrastructure/         # Infrastructure layer (database, external APIs)
-├── presentation/           # Presentation layer (components, hooks, stores)
-├── services/               # Application services
-├── tests/                  # Test suites
-└── lib/                    # Shared utilities and dependency injection
-```
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm test` - Run Jest tests
-- `npm run lint` - Run ESLint
-- `npm run migrate` - Run database migrations
-
-## Theme System
-
-The application includes a complete dark/light theme system:
-
-- **Light Mode**: Clean, bright interface
-- **Dark Mode**: Easy on the eyes for extended use
-- **System Preference**: Automatically detects and follows system theme
-- **Persistent**: Theme choice is saved and restored on reload
-
-Toggle themes using the theme switcher in the top navigation bar.
-
-## Authentication
-
-- **Public Routes**: Landing page, board view (read-only)
-- **Protected Routes**: Admin dashboard, task management
-- **Role-Based Access**: Admin users have additional functionality
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+## Documentation
+- `ADMIN_SETUP.md` – Clerk onboarding, admin routes, and seed scripts.
+- `FEATURE_FLAGS.md` – How runtime feature toggles are defined and consumed.
+- `PWA_README.md` – Service worker behaviour, offline strategy, and install prompt.
+- `SANITY_DEPLOYMENT_README.md` – Deploying the Sanity Studio and wiring env vars.
 
 ## License
-
-This project is licensed under the MIT License.
+This project is released under the MIT License.

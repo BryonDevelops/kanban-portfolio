@@ -1,87 +1,36 @@
-# Database Schema and Migrations
+# Database Module
 
-This directory contains the database schema definitions and migration files for the Kanban Portfolio application.
+This folder centralises Supabase access and schema management for the Kanban Portfolio.
 
-## Schema Files
+## Contents
+- `supabaseClient.ts` – lazily instantiates and caches the Supabase JS client using `NEXT_PUBLIC_SUPABASE_*` keys. Returns `null` when credentials are missing so the rest of the app can fall back gracefully.
+- `repositories/` – Supabase-backed implementations of the domain repository interfaces (`SupabaseBoardRepository`, `SupabaseTaskRepository`, `SupabaseTagRepository`, `SupabaseFeatureFlagRepository`, `SupabaseMicroblogRepository`, `SupabaseCategoryRepository`).
+- `migrations/` – Versioned SQL files that describe the canonical PostgreSQL schema.
 
-### `supabase/schema/tags.sql`
+## Repository responsibilities
+- **Board** (`supaBaseBoardRepository.ts`): reads and mutates projects, tasks, and drag-and-drop ordering.
+- **Task** (`supabaseTaskRepository.ts`): task-centred operations used by the services layer.
+- **Tag** (`supabaseTagRepository.ts`): CRUD for tag dictionaries and project-tag relationships.
+- **Feature flags** (`supabaseFeatureFlagRepository.ts`): toggles for the admin console and client gating logic.
+- **Microblog** (`supabaseMicroblogRepository.ts`): post lifecycle management with automatic read time calculation.
+- **Categories** (`supabaseCategoryRepository.ts`): taxonomy helpers backing the microblog filters and selectors.
 
-Defines the `tags` table structure with:
+Each repository normalises data coming from Supabase to match the domain types and bubbles up errors so callers can decide how to render failures.
 
-- `id` (TEXT PRIMARY KEY) - Unique identifier
-- `name` (TEXT NOT NULL UNIQUE) - Tag name
-- `color` (TEXT NOT NULL) - Hex color code (e.g., '#3B82F6')
-- `description` (TEXT) - Optional description
-- `created_at` and `updated_at` - Timestamps
+## Migration summary
+- `001_initial_schema.sql` – creates the `projects` and `tasks` tables, timestamp triggers, indexes, and enables row-level security.
+- `002_add_order_to_projects.sql` – adds and backfills the `order` column to control kanban column ordering.
+- `003_add_tags_and_status_tables.sql` – normalises tags and status values into dedicated tables, introduces the `project_tags` junction table, and wires indexes.
 
-### `supabase/schema/status.sql`
-
-Defines the `status` table structure with:
-
-- `id` (TEXT PRIMARY KEY) - Unique identifier
-- `name` (TEXT NOT NULL UNIQUE) - Status name
-- `color` (TEXT NOT NULL) - Hex color code
-- `description` (TEXT) - Optional description
-- `order` (INTEGER) - Display order for kanban columns
-- `created_at` and `updated_at` - Timestamps
-
-Includes default status values:
-
-- Planning (#6B7280)
-- In Progress (#3B82F6)
-- Completed (#10B981)
-- On Hold (#F59E0B)
-
-## Migration Files
-
-### `infrastructure/database/migrations/001_initial_schema.sql`
-
-Initial database setup with projects and tasks tables.
-
-### `infrastructure/database/migrations/002_add_order_to_projects.sql`
-
-Adds ordering functionality to projects table.
-
-### `infrastructure/database/migrations/003_add_tags_and_status_tables.sql`
-
-Major migration that:
-
-1. Creates `tags` and `status` tables
-2. Creates `project_tags` junction table for many-to-many relationships
-3. Adds `status_id` column to projects table
-4. Migrates existing data from text arrays to proper relationships
-5. Sets up indexes, triggers, and RLS policies
-
-## Database Structure
-
-```
-projects (existing)
-├── id, title, description, url, status_id (new), order, etc.
-└── project_tags (junction table)
-    └── tags (new table)
-        ├── id, name, color, description, timestamps
-
-status (new table)
-├── id, name, color, description, order, timestamps
-```
-
-## Running Migrations
-
-To apply migrations to your Supabase database:
+Run migrations with the bundled CLI:
 
 ```bash
-# Using Supabase CLI
-supabase db push
-
-# Or run individual migration files in Supabase SQL editor
+npm run db:migrate       # applies all migrations
+npm run db:reset         # drops and recreates using Supabase CLI (destructive)
 ```
 
-## Data Migration Notes
+These commands expect `SUPABASE_SERVICE_ROLE_KEY` to be set. You can also execute the SQL files manually inside the Supabase dashboard if you prefer a guided workflow.
 
-The migration handles existing data by:
-
-1. Converting existing `status` text values to `status_id` references
-2. Creating tags from existing `tags` text arrays
-3. Establishing proper many-to-many relationships via `project_tags`
-
-After migration, the old `status` and `tags` columns can be dropped (currently commented out in the migration file).
+## Working locally
+- When Supabase credentials are not defined the repositories throw informative errors; higher layers detect this and swap to mocked in-memory data so the app remains viewable.
+- Tests in `tests/integration` mock Supabase responses, while `tests/e2e` exercises the real schema. Set `TEST_SUPABASE_*` to point at a disposable project before running E2E tests.

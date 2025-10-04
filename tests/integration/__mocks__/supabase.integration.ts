@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 // Mock for Supabase client used in integration tests
 export const createMockSupabaseClient = () => {
   const mockSupabase = {

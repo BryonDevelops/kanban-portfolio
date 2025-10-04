@@ -1,16 +1,38 @@
 // infrastructure/database/repositories/supabaseMicroblogRepository.ts
 
+import { nanoid } from 'nanoid';
 import { IMicroblogRepository } from '../../../domain/microblog/repositories/microblogRepository';
-import { Post, PostCreate, PostUpdate } from '../../../domain/microblog/entities/post';
+import { Post, PostCreate, PostUpdate, PostStatus } from '../../../domain/microblog/entities/post';
 import { getSupabase } from '../supabaseClient';
 
 type DatabasePostUpdate = {
   title?: string;
   content?: string;
+  excerpt?: string;
+  author?: string;
+  published_at?: string;
   tags?: string[];
   status?: string;
   read_time?: number;
+  image_url?: string | null;
+  featured?: boolean;
   updated_at?: string;
+};
+
+type DatabasePostRow = {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  published_at: string;
+  tags: string[] | null;
+  read_time: number | null;
+  image_url: string | null;
+  status: string | null;
+  featured: boolean | null;
+  created_at: string;
+  updated_at: string | null;
 };
 
 export class SupabaseMicroblogRepository implements IMicroblogRepository {
@@ -29,7 +51,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch posts: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
 
   async fetchPostById(id: string): Promise<Post | null> {
@@ -51,7 +73,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch post: ${error.message}`);
     }
 
-    return data;
+    return data ? this.mapDatabaseToDomain(data as DatabasePostRow) : null;
   }
 
   async createPost(postData: PostCreate): Promise<Post> {
@@ -64,11 +86,22 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     const wordCount = postData.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length;
     const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
+    const now = new Date().toISOString();
+    const id = nanoid();
     const post = {
-      ...postData,
+      id,
+      title: postData.title,
+      excerpt: postData.excerpt,
+      content: postData.content,
+      author: postData.author,
+      published_at: postData.publishedAt,
+      tags: postData.tags ?? [],
       read_time: readTime,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      image_url: postData.imageUrl ?? null,
+      status: postData.status ?? 'draft',
+      featured: postData.featured ?? false,
+      created_at: now,
+      updated_at: now,
     };
 
     const { data, error } = await supabase
@@ -81,7 +114,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to create post: ${error.message}`);
     }
 
-    return data;
+    return this.mapDatabaseToDomain(data as DatabasePostRow);
   }
 
   async updatePost(id: string, updates: PostUpdate): Promise<Post> {
@@ -91,10 +124,36 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     }
 
     // Calculate read time if content is being updated
-    const updateData: DatabasePostUpdate = { ...updates };
-    if (updates.content) {
+    const updateData: DatabasePostUpdate = {};
+
+    if (updates.title !== undefined) {
+      updateData.title = updates.title;
+    }
+    if (updates.excerpt !== undefined) {
+      updateData.excerpt = updates.excerpt;
+    }
+    if (updates.content !== undefined) {
+      updateData.content = updates.content;
       const wordCount = updates.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length;
       updateData.read_time = Math.max(1, Math.ceil(wordCount / 200));
+    }
+    if (updates.author !== undefined) {
+      updateData.author = updates.author;
+    }
+    if (updates.publishedAt !== undefined) {
+      updateData.published_at = updates.publishedAt;
+    }
+    if (updates.tags !== undefined) {
+      updateData.tags = updates.tags;
+    }
+    if (updates.status !== undefined) {
+      updateData.status = updates.status;
+    }
+    if (updates.imageUrl !== undefined) {
+      updateData.image_url = updates.imageUrl ?? null;
+    }
+    if (updates.featured !== undefined) {
+      updateData.featured = updates.featured;
     }
 
     updateData.updated_at = new Date().toISOString();
@@ -110,7 +169,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to update post: ${error.message}`);
     }
 
-    return data;
+    return this.mapDatabaseToDomain(data as DatabasePostRow);
   }
 
   async deletePost(id: string): Promise<void> {
@@ -159,7 +218,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     }
 
     // Toggle the featured status
-    const newFeaturedStatus = !currentPost.featured;
+    const newFeaturedStatus = !Boolean(currentPost.featured);
 
     const { data, error } = await supabase
       .from('posts')
@@ -175,7 +234,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to toggle featured status: ${error.message}`);
     }
 
-    return data;
+    return this.mapDatabaseToDomain(data as DatabasePostRow);
   }
 
   async fetchPostsByStatus(status: Post['status']): Promise<Post[]> {
@@ -194,7 +253,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch posts by status: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
 
   async fetchPostsByAuthor(author: string): Promise<Post[]> {
@@ -213,7 +272,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch posts by author: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
 
   async fetchPostsByTag(tag: string): Promise<Post[]> {
@@ -232,7 +291,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch posts by tag: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
 
   async fetchFeaturedPosts(): Promise<Post[]> {
@@ -252,7 +311,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to fetch featured posts: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
 
   async searchPosts(query: string): Promise<Post[]> {
@@ -272,6 +331,23 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       throw new Error(`Failed to search posts: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(row => this.mapDatabaseToDomain(row as DatabasePostRow));
   }
+
+  private mapDatabaseToDomain = (record: DatabasePostRow): Post => ({
+    id: record.id,
+    title: record.title,
+    excerpt: record.excerpt,
+    content: record.content,
+    author: record.author,
+    publishedAt: record.published_at,
+    tags: record.tags ?? [],
+    readTime: record.read_time ?? 1,
+    imageUrl: record.image_url ?? undefined,
+    status: (record.status as PostStatus | null) ?? 'draft',
+    featured: Boolean(record.featured),
+    categories: [],
+    createdAt: record.created_at,
+    updatedAt: record.updated_at ?? record.created_at,
+  });
 }
