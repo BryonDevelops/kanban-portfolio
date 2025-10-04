@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import LinkExtension from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
@@ -13,7 +14,6 @@ import { FloatingElement } from '@/components/tiptap-ui-utils/floating-element';
 import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/presentation/components/ui/button';
-import { htmlTablesToMarkdown, tabularTextToMarkdown } from '@/presentation/utils/markdown';
 import {
   Bold,
   Italic,
@@ -31,30 +31,9 @@ import {
   Redo,
   Table as TableIcon
 } from 'lucide-react';
-import { defaultMarkdownSerializer, defaultMarkdownParser, MarkdownSerializer } from 'prosemirror-markdown';
-
-const markdownSerializer = new MarkdownSerializer(
-  {
-    ...defaultMarkdownSerializer.nodes,
-    bulletList: defaultMarkdownSerializer.nodes.bullet_list,
-    orderedList: defaultMarkdownSerializer.nodes.ordered_list,
-    listItem: defaultMarkdownSerializer.nodes.list_item,
-    hardBreak: defaultMarkdownSerializer.nodes.hard_break,
-    horizontalRule: defaultMarkdownSerializer.nodes.horizontal_rule,
-    codeBlock: defaultMarkdownSerializer.nodes.code_block,
-  },
-  {
-    ...defaultMarkdownSerializer.marks,
-    bold: defaultMarkdownSerializer.marks.strong,
-    italic: defaultMarkdownSerializer.marks.em,
-    strike: defaultMarkdownSerializer.marks.strikethrough ?? {
-      open: '~~',
-      close: '~~',
-      mixable: true,
-      expelEnclosingWhitespace: true,
-    },
-  }
-);
+import { marked } from 'marked';
+import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
 
 interface SimpleEditorProps {
   content: string;
@@ -63,21 +42,40 @@ interface SimpleEditorProps {
 }
 
 export function SimpleEditor({ content, onChange, placeholder = "Start writing your blog post..." }: SimpleEditorProps) {
-  // Convert markdown content to ProseMirror document for initialization
-  const getInitialContent = () => {
-    if (!content) return '';
+  // Markdown <-> HTML converters
+  const turndown = useMemo(() => {
+    const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+    td.use(gfm);
+    return td;
+  }, []);
+  const mdToHtml = useCallback((md: string) => {
     try {
-      const doc = defaultMarkdownParser.parse(content);
-      return doc.toJSON();
+      const parsed = marked.parse(md || '');
+      return typeof parsed === 'string' ? parsed : '';
     } catch {
-      // Fallback to plain text if markdown parsing fails
-      return content;
+      return md;
     }
-  };
+  }, []);
+  const htmlToMd = useCallback((html: string) => {
+    try {
+      return turndown.turndown(html || '');
+    } catch {
+      return html;
+    }
+  }, [turndown]);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
+      LinkExtension.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          rel: 'noopener noreferrer nofollow',
+          target: '_blank',
+        },
+      }),
       Table.configure({
         resizable: true,
       }),
@@ -89,104 +87,56 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       }),
       Placeholder.configure({
         placeholder,
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: false,
       }),
     ],
-    content: getInitialContent(),
+    content: content ? mdToHtml(content) : '',
     immediatelyRender: false,
+    editable: true,
+    onCreate: ({ editor }) => {
+      if (content && content.trim()) {
+        const html = mdToHtml(content);
+        editor.commands.setContent(html, { emitUpdate: false });
+      }
+    },
     onUpdate: ({ editor }) => {
-      // Convert ProseMirror document to markdown
-      const markdown = markdownSerializer.serialize(editor.state.doc);
+      const html = editor.getHTML();
+      const markdown = htmlToMd(html);
       onChange(markdown);
     },
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 prose-table:border-collapse prose-table:border prose-table:border-border prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2',
       },
-      handlePaste(view, event) {
-        const clipboardData = event.clipboardData;
-        if (!clipboardData) {
-          return false;
-        }
-
-        const html = clipboardData.getData('text/html');
-        const text = clipboardData.getData('text/plain');
-
-        const insertMarkdown = (markdown: string, fallbackToText = true) => {
-          try {
-            const doc = defaultMarkdownParser.parse(markdown);
-            if (!doc || doc.content.size === 0) {
-              return false;
-            }
-
-            const slice = doc.slice(0, doc.content.size);
-            const transaction = view.state.tr.replaceSelection(slice).scrollIntoView();
-            view.dispatch(transaction);
-            return true;
-          } catch {
-            if (!fallbackToText) {
-              return false;
-            }
-
-            const textNode = view.state.schema.text(markdown);
-            const transaction = view.state.tr.replaceSelectionWith(textNode).scrollIntoView();
-            view.dispatch(transaction);
-            return true;
-          }
-        };
-
-        if (html) {
-          const tableMarkdown = htmlTablesToMarkdown(html);
-
-          if (!tableMarkdown) {
-            return false;
-          }
-
-          event.preventDefault();
-          const content = tableMarkdown.startsWith('\n') ? tableMarkdown : `\n${tableMarkdown}`;
-          const paddedContent = content.endsWith('\n') ? content : `${content}\n`;
-
-          return insertMarkdown(paddedContent);
-        }
-
-        if (!text) {
-          return false;
-        }
-
-        const tabularMarkdown = tabularTextToMarkdown(text);
-        const payload = tabularMarkdown ?? text;
-
-        event.preventDefault();
-        return insertMarkdown(payload, true);
-      },
     },
   });
 
-  // Update editor content when content prop changes
+  // Update editor content when content prop changes (markdown -> HTML)
   useEffect(() => {
-    if (editor && content !== undefined) {
-      const currentMarkdown = markdownSerializer.serialize(editor.state.doc);
-      if (currentMarkdown !== content) {
-        try {
-          const doc = defaultMarkdownParser.parse(content);
-          editor.commands.setContent(doc.toJSON());
-        } catch {
-          // Fallback to plain text if parsing fails
-          editor.commands.setContent(content);
-        }
-      }
+    if (!editor) return;
+    if (typeof content !== 'string') return;
+    const html = mdToHtml(content);
+    editor.commands.setContent(html, { emitUpdate: false });
+  }, [editor, content, mdToHtml]);
+
+  const addLink = useCallback(() => {
+    if (!editor) return;
+    const prev = editor.getAttributes('link').href || '';
+    const url = window.prompt('Enter URL', prev);
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().unsetLink().run();
+      return;
     }
-  }, [editor, content]);
+    editor.chain().focus().setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) {
-    return null;
+    return (
+      <div className="p-4 text-center text-muted-foreground">Loading editor…</div>
+    );
   }
-
-  const addLink = () => {
-    const url = window.prompt('Enter URL:');
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
-    }
-  };
 
   return (
     <div className="border rounded-lg overflow-hidden bg-background shadow-sm relative">
@@ -433,18 +383,13 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
 
       {/* Editor Content */}
       <div className="max-h-[65vh] overflow-y-auto">
-        <EditorContent
-          editor={editor}
-          className="min-h-[300px] focus-within:outline-none p-4"
-        />
+        <EditorContent editor={editor} className="min-h-[300px] focus-within:outline-none p-4" />
       </div>
 
       {/* Character Count */}
       <div className="border-t px-4 py-2 text-xs text-muted-foreground bg-muted/30 flex justify-between items-center">
         <span>{editor.storage.characterCount.characters()}/10,000 characters</span>
-        <span className="text-xs opacity-60">
-          {editor.storage.characterCount.words()} words
-        </span>
+        <span className="text-xs opacity-60">{editor.storage.characterCount.words()} words</span>
       </div>
     </div>
   );

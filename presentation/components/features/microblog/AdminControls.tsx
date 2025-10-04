@@ -10,12 +10,12 @@ import { Edit, Trash2, Plus, Star } from 'lucide-react'
 import { BlogPost } from './BlogPostPortal'
 import { Category } from '@/domain/microblog/entities/category'
 import { CreateBlogPostForm } from './forms/CreateBlogPostForm'
+import { ImprovedEditBlogPostForm } from './forms/ImprovedEditBlogPostForm'
 import { ColorPicker } from '@/presentation/components/shared/color-picker'
 import { useIsMobile } from '../../../hooks/use-mobile'
 
 interface AdminControlsProps {
   onCreatePost: (postData: Omit<BlogPost, 'id'>) => Promise<void>
-  onEditPost?: (postId: string, post: Partial<BlogPost>) => void
   onDeletePost?: (postId: string) => void
   onToggleFeatured?: (postId: string) => void
   onCreateCategory?: (category: Omit<Category, 'id' | 'postCount' | 'createdAt' | 'updatedAt'>) => void
@@ -478,7 +478,7 @@ export function EditCategoryDialog({
 }
 
 // Main AdminControls component - now just manages state and provides the components
-export function AdminControls({ onCreatePost, onEditPost, onDeletePost, onToggleFeatured, onCreateCategory, onEditCategory, onDeleteCategory }: AdminControlsProps) {
+export function AdminControls({ onCreatePost, onDeletePost, onToggleFeatured, onCreateCategory, onEditCategory, onDeleteCategory }: AdminControlsProps) {
   const { isLoaded, user } = useUser()
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -537,12 +537,21 @@ export function AdminControls({ onCreatePost, onEditPost, onDeletePost, onToggle
       />
     ),
     EditPostDialog: () => (
-      <EditPostDialog
-        post={editingPost}
-        isOpen={!!editingPost}
-        onClose={() => setEditingPost(null)}
-        onEditPost={onEditPost}
-      />
+      editingPost ? (
+        <ImprovedEditBlogPostForm
+          blogPost={editingPost}
+          open={!!editingPost}
+          onOpenChange={(open) => !open && setEditingPost(null)}
+          onBlogPostUpdated={() => {
+            setEditingPost(null)
+            // The store will be updated via the microblog page handlers
+          }}
+          onBlogPostDeleted={() => {
+            setEditingPost(null)
+            // The store will be updated via the microblog page handlers
+          }}
+        />
+      ) : null
     ),
     CreateCategoryButton: () => (
       <CreateCategoryButton onCreateCategory={onCreateCategory} />
