@@ -15,7 +15,6 @@ export default function MicroblogPage() {
     isLoading,
     loadPosts,
     createPost,
-    updatePost,
     deletePost,
     getPublishedPosts,
     getFeaturedPosts,
@@ -58,9 +57,6 @@ export default function MicroblogPage() {
 
   const adminControls = AdminControls({
     onCreatePost: handleCreatePost,
-    onEditPost: async (postId, updates) => {
-      await updatePost(postId, updates)
-    },
     onDeletePost: async (postId) => {
       await deletePost(postId)
     },
@@ -125,7 +121,7 @@ export default function MicroblogPage() {
               </Button>
 
               {adminControls.isAdmin && (
-                <adminControls.CreatePostButton />
+                <>{adminControls.CreatePostButton()}</>
               )}
 
               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400">
@@ -179,7 +175,7 @@ export default function MicroblogPage() {
                         {/* Admin buttons */}
                         {adminControls.isAdmin && (
                           <div className="absolute top-4 left-4 z-10">
-                            <adminControls.PostAdminButtons post={post} />
+                            <>{adminControls.PostAdminButtons({ post })}</>
                           </div>
                         )}
 
@@ -245,7 +241,7 @@ export default function MicroblogPage() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-slate-800 dark:text-white">Categories</h3>
                   {adminControls.isAdmin && (
-                    <adminControls.CreateCategoryButton />
+                    <>{adminControls.CreateCategoryButton()}</>
                   )}
                 </div>
                 <div className="space-y-3">
@@ -256,7 +252,7 @@ export default function MicroblogPage() {
                     >
                       {adminControls.isAdmin && (
                         <div className="absolute top-2 right-2 z-10">
-                          <adminControls.CategoryAdminButtons category={category} />
+                          <>{adminControls.CategoryAdminButtons({ category })}</>
                         </div>
                       )}
 
@@ -299,7 +295,7 @@ export default function MicroblogPage() {
                         {/* Admin buttons */}
                         {adminControls.isAdmin && (
                           <div className="absolute top-4 right-4 z-10">
-                            <adminControls.PostAdminButtons post={post} />
+                            <>{adminControls.PostAdminButtons({ post })}</>
                           </div>
                         )}
 
@@ -358,10 +354,10 @@ export default function MicroblogPage() {
       </div>
 
       {/* Admin Edit Dialog */}
-      {adminControls.isAdmin && <adminControls.EditPostDialog />}
+  {adminControls.isAdmin && <>{adminControls.EditPostDialog()}</>}
 
       {/* Category Admin Edit Dialog */}
-      {adminControls.isAdmin && <adminControls.EditCategoryDialog />}
+  {adminControls.isAdmin && <>{adminControls.EditCategoryDialog()}</>}
     </div>
   )
 }
