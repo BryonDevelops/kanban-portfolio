@@ -3,6 +3,10 @@
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { SlashCommandTriggerButton } from '@/components/tiptap-ui/slash-command-trigger-button';
 import { SlashDropdownMenu } from '@/components/tiptap-ui/slash-dropdown-menu';
 import { FloatingElement } from '@/components/tiptap-ui-utils/floating-element';
@@ -24,7 +28,8 @@ import {
   Link,
   Minus,
   Undo,
-  Redo
+  Redo,
+  Table as TableIcon
 } from 'lucide-react';
 import { defaultMarkdownSerializer, defaultMarkdownParser, MarkdownSerializer } from 'prosemirror-markdown';
 
@@ -73,6 +78,12 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       CharacterCount.configure({
         limit: 10000,
       }),
@@ -89,7 +100,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 prose-table:border-collapse prose-table:border prose-table:border-border prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2',
       },
       handlePaste(view, event) {
         const clipboardData = event.clipboardData;
@@ -366,6 +377,15 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
             title="Add Link"
           >
             <Link className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant={editor.isActive('table') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            title="Insert Table"
+          >
+            <TableIcon className="h-4 w-4" />
           </Button>
           <Button
             type="button"
