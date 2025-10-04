@@ -1,193 +1,55 @@
 # Toast System
 
-A comprehensive toast notification system built with Radix UI and integrated with the presentation layer.
+The toast implementation extends the shadcn/ui primitives to provide application-wide notifications with sensible defaults.
 
 ## Features
+- Multiple variants (`default`, `success`, `error`, `warning`, `info`, `destructive`) with shared styling tokens.
+- Auto-dismiss behaviour with configurable duration and persistent toasts when duration is `Infinity`.
+- Screen-reader friendly announcements and keyboard accessible actions.
+- Utility helpers for the most common notification patterns.
 
-- ✅ Multiple toast variants (success, error, warning, info, default)
-- ✅ Auto-dismiss functionality
-- ✅ Accessible with screen reader support
-- ✅ Customizable duration and styling
-- ✅ TypeScript support
-- ✅ Clean API for easy usage
+## Key files
+- `toast.tsx` – variant definitions and base Radix bindings.
+- `toaster.tsx` – viewport container rendered once inside `app/layout.tsx`.
+- `presentation/hooks/use-toast.ts` – client hook exposing the `toast` dispatcher and convenience helpers.
+- `presentation/utils/toast.ts` – typed helpers (`success`, `error`, `warning`, `info`) used across the app.
 
-## Components
-
-### Core Components
-
-- `Toast` - Individual toast component
-- `ToastProvider` - Context provider for toast state
-- `ToastViewport` - Container for positioning toasts
-- `Toaster` - Main component that renders all active toasts
-
-### Hook
-
-- `useToast()` - Hook for programmatic toast management
-
-### Utilities
-
-- `toastUtils` - Pre-configured toast functions for common use cases
-
-## Usage
-
-### Basic Usage
-
+## Basic usage
 ```tsx
-import { success, error, warning, info } from "@/presentation/utils/toast";
+import { toast } from '@/presentation/hooks/use-toast';
 
-// Success toast
-success("Project saved!", "Your changes have been saved successfully.");
-
-// Error toast
-error("Failed to save", "Please check your connection and try again.");
-
-// Warning toast
-warning("Unsaved changes", "You have unsaved changes that will be lost.");
-
-// Info toast
-info(
-  "New feature available",
-  "Check out the latest updates in your dashboard."
-);
-```
-
-### Advanced Usage with Hook
-
-```tsx
-import { useToast } from "@/presentation/hooks/use-toast";
-
-function MyComponent() {
-  const { toast } = useToast();
-
-  const handleAction = () => {
-    // Show loading toast
-    const { id } = toast({
-      title: "Processing...",
-      description: "Please wait while we process your request.",
-    });
-
-    // Simulate async operation
-    setTimeout(() => {
-      // Update the toast to success
-      toast({
-        id,
-        title: "Success!",
-        description: "Your request has been processed.",
-        variant: "success",
-      });
-    }, 2000);
-  };
-
-  return <button onClick={handleAction}>Process Request</button>;
-}
-```
-
-### Custom Toast with Actions
-
-```tsx
-import { toast } from "@/presentation/hooks/use-toast";
-import { ToastAction } from "@/presentation/components/ui/toast";
-
-function showConfirmationToast() {
-  toast({
-    title: "Delete project?",
-    description: "This action cannot be undone.",
-    variant: "destructive",
-    action: (
-      <ToastAction altText="Confirm deletion">
-        <button onClick={() => console.log("Deleted!")}>Delete</button>
-      </ToastAction>
-    ),
-  });
-}
-```
-
-## Toast Variants
-
-- `default` - Standard gray toast
-- `success` - Green success toast
-- `error` / `destructive` - Red error toast
-- `warning` - Yellow warning toast
-- `info` - Blue info toast
-
-## Configuration
-
-### Toast Options
-
-```tsx
-type ToastOptions = {
-  title?: string;
-  description?: string;
-  variant?: "default" | "success" | "error" | "warning" | "info";
-  duration?: number; // in milliseconds
-  action?: ReactElement;
-};
-```
-
-### Default Duration
-
-Toasts automatically dismiss after 5 seconds by default. You can customize this:
-
-```tsx
 toast({
-  title: "Custom duration",
-  duration: 10000, // 10 seconds
+  title: 'Saved',
+  description: 'Your project has been stored successfully.',
+  variant: 'success',
 });
 ```
 
-## Integration
-
-The `Toaster` component is already added to your root layout (`app/layout.tsx`), so toasts will work throughout your application automatically.
-
-## Examples
-
-### In Board Component
-
+### Using helpers
 ```tsx
-// presentation/components/features/board/Board.tsx
-import { success, error } from "@/presentation/utils/toast";
+import { success, error } from '@/presentation/utils/toast';
 
-function Board() {
-  const handleSave = async () => {
-    try {
-      await saveBoard();
-      success("Board saved!", "Your kanban board has been saved.");
-    } catch (err) {
-      error("Save failed", "Unable to save your board. Please try again.");
-    }
-  };
-
-  return <button onClick={handleSave}>Save Board</button>;
-}
+success('Project saved', 'Your changes are now live.');
+error('Save failed', 'Please try again in a few seconds.');
 ```
 
-### In Form Validation
-
+### Updating an existing toast
 ```tsx
-// presentation/components/forms/ProjectForm.tsx
-import { warning } from "@/presentation/utils/toast";
+const { toast } = useToast();
+const { id } = toast({ title: 'Syncing...', duration: Infinity });
 
-function ProjectForm() {
-  const handleSubmit = (data) => {
-    if (!data.title) {
-      warning("Title required", "Please enter a project title.");
-      return;
-    }
-
-    // Submit form...
-  };
-
-  return <form onSubmit={handleSubmit}>{/* form fields */}</form>;
-}
+// Later…
+toast({ id, title: 'Done', description: 'All items are up to date.', variant: 'success' });
 ```
 
-## Styling
-
-The toast system uses Tailwind CSS classes and follows your design system. You can customize the appearance by modifying the `toastVariants` in `presentation/components/ui/toast.tsx`.
+## Configuration
+- Default duration is 5000 ms. Override per toast with the `duration` option.
+- Provide a `ToastAction` component for inline confirmation flows.
+- The toaster viewport is mounted once in `app/layout.tsx`; no additional wiring is needed.
 
 ## Accessibility
+- Toasts announce updates to assistive technologies.
+- Focus remains in the calling context unless an action requires user interaction.
+- Keyboard users can dismiss toasts with Escape and interact with action buttons.
 
-- All toasts are announced to screen readers
-- Keyboard navigation support
-- ARIA labels and roles properly set
-- Focus management handled automatically
+Keep toast copy short and actionable, and prefer success/neutral variants unless a destructive action occurred.

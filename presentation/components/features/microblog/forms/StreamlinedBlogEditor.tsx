@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { createLogger } from '@/lib/logger';
 import { Button } from '@/presentation/components/ui/button';
 import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
 import { Save, X, Settings, Edit3 } from 'lucide-react';
@@ -9,6 +10,8 @@ import { useUser } from '@clerk/nextjs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
 import { Input } from '@/presentation/components/ui/input';
 import { Textarea } from '@/presentation/components/ui/textarea';
+
+const microblogEditorLogger = createLogger(['presentation', 'microblog', 'StreamlinedBlogEditor']);
 
 interface StreamlinedBlogEditorProps {
   onBlogPostCreated?: () => void;
@@ -82,6 +85,8 @@ export function StreamlinedBlogEditor({
   const excerpt = isExcerptControlled ? controlledExcerpt! : excerptState;
   const imageUrl = isImageUrlControlled ? controlledImageUrl! : imageUrlState;
 
+  const saveLogger = useMemo(() => microblogEditorLogger.child('handleSave'), []);
+
   const setTitle = (value: string) => {
     if (onTitleChange) {
       onTitleChange(value);
@@ -141,26 +146,60 @@ export function StreamlinedBlogEditor({
   }, [open]);
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+    const trimmedExcerpt = (excerpt || '').trim();
+    const trimmedImageUrl = (imageUrl || '').trim();
+
+    if (!trimmedTitle || !trimmedContent) {
+      saveLogger.warn('Validation failed before publishing microblog post', {
+        hasTitle: Boolean(trimmedTitle),
+        hasContent: Boolean(trimmedContent),
+        titleLength: trimmedTitle.length,
+        contentLength: trimmedContent.length,
+      });
       setError('Title and content are required');
       return;
     }
 
+    const plainTextWords = trimmedContent.replace(/<[^>]*>/g, '').split(' ');
+    const wordCount = plainTextWords.filter((word) => word.trim().length > 0).length;
+    const readTimeEstimate = Math.ceil(plainTextWords.length / 200);
+    const requestMetadata = {
+      canSaveToDatabase,
+      isAdmin,
+      isLoggedIn,
+      wordCount,
+      readTime: readTimeEstimate,
+      titleLength: trimmedTitle.length,
+      excerptLength: trimmedExcerpt.length,
+      hasImage: Boolean(trimmedImageUrl),
+    };
+
     setLoading(true);
     setError(null);
+
+    saveLogger.info('Attempting to publish microblog post', requestMetadata);
 
     try {
       if (canSaveToDatabase) {
         const payload = {
-          title: title.trim(),
-          excerpt: excerpt.trim(),
-          content: content.trim(),
+          title: trimmedTitle,
+          excerpt: trimmedExcerpt,
+          content: trimmedContent,
           author: user?.fullName || user?.username || '',
           tags: [] as string[], // Could be extracted from content or added later
           publishedAt: new Date().toISOString(),
-          readTime: Math.ceil(content.replace(/<[^>]*>/g, '').split(' ').length / 200),
-          ...(imageUrl.trim() ? { imageUrl: imageUrl.trim() } : {}),
+          readTime: readTimeEstimate,
+          ...(trimmedImageUrl ? { imageUrl: trimmedImageUrl } : {}),
         };
+
+        saveLogger.debug('Sending microblog post to API', {
+          endpoint: '/api/posts',
+          hasImage: Boolean(trimmedImageUrl),
+          readTime: payload.readTime,
+          wordCount,
+        });
 
         const response = await fetch('/api/posts', {
           method: 'POST',
@@ -170,11 +209,17 @@ export function StreamlinedBlogEditor({
           body: JSON.stringify(payload),
         });
 
+        const responseMetadata = {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type') || undefined,
+        };
+
         if (!response.ok) {
-          const contentType = response.headers.get('content-type') || '';
+          saveLogger.error('API returned a non-success status when creating microblog post', responseMetadata);
           let errorMessage = 'Failed to create blog post';
 
-          if (contentType.includes('application/json')) {
+          if (responseMetadata.contentType?.includes('application/json')) {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
           } else {
@@ -185,24 +230,37 @@ export function StreamlinedBlogEditor({
           throw new Error(errorMessage);
         }
 
-        // Success toast
-        import("@/presentation/utils/toast").then(({ success }) => {
-          success("Blog post created!", `"${title}" has been published.`);
+        saveLogger.info('Microblog post created successfully', {
+          ...responseMetadata,
+          wordCount,
+          readTime: readTimeEstimate,
         });
 
-        // Reset and close
+        import("@/presentation/utils/toast").then(({ success }) => {
+          success('Blog post created!', `"${trimmedTitle}" has been published.`);
+        });
+
         resetEditor();
         setOpen(false);
         onBlogPostCreated?.();
       } else {
+        saveLogger.warn('Blocked blog post creation due to insufficient permissions', {
+          canSaveToDatabase,
+          isAdmin,
+          isLoggedIn,
+        });
         throw new Error('You must be logged in as an admin to create blog posts');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create blog post';
+      saveLogger.error('Failed to publish microblog post', err, {
+        ...requestMetadata,
+        errorMessage,
+      });
       setError(errorMessage);
 
       import("@/presentation/utils/toast").then(({ error: errorToast }) => {
-        errorToast("Failed to create blog post", errorMessage);
+        errorToast('Failed to create blog post', errorMessage);
       });
     } finally {
       setLoading(false);
@@ -366,3 +424,4 @@ export function StreamlinedBlogEditor({
     </Dialog>
   );
 }
+

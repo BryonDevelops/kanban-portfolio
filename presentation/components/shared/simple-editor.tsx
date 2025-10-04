@@ -9,6 +9,7 @@ import { FloatingElement } from '@/components/tiptap-ui-utils/floating-element';
 import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/presentation/components/ui/button';
+import { htmlTablesToMarkdown, tabularTextToMarkdown } from '@/presentation/utils/markdown';
 import {
   Bold,
   Italic,
@@ -90,7 +91,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
       },
-  handlePaste(view, event) {
+      handlePaste(view, event) {
         const clipboardData = event.clipboardData;
         if (!clipboardData) {
           return false;
@@ -99,26 +100,52 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
         const html = clipboardData.getData('text/html');
         const text = clipboardData.getData('text/plain');
 
-        // Allow default handling when rich HTML content is present or there is no plain text
-        if (!text || html) {
-          return false;
-        }
+        const insertMarkdown = (markdown: string, fallbackToText = true) => {
+          try {
+            const doc = defaultMarkdownParser.parse(markdown);
+            if (!doc || doc.content.size === 0) {
+              return false;
+            }
 
-        try {
-          const doc = defaultMarkdownParser.parse(text);
-          if (!doc || doc.content.size === 0) {
+            const slice = doc.slice(0, doc.content.size);
+            const transaction = view.state.tr.replaceSelection(slice).scrollIntoView();
+            view.dispatch(transaction);
+            return true;
+          } catch {
+            if (!fallbackToText) {
+              return false;
+            }
+
+            const textNode = view.state.schema.text(markdown);
+            const transaction = view.state.tr.replaceSelectionWith(textNode).scrollIntoView();
+            view.dispatch(transaction);
+            return true;
+          }
+        };
+
+        if (html) {
+          const tableMarkdown = htmlTablesToMarkdown(html);
+
+          if (!tableMarkdown) {
             return false;
           }
 
           event.preventDefault();
+          const content = tableMarkdown.startsWith('\n') ? tableMarkdown : `\n${tableMarkdown}`;
+          const paddedContent = content.endsWith('\n') ? content : `${content}\n`;
 
-          const slice = doc.slice(0, doc.content.size);
-          const transaction = view.state.tr.replaceSelection(slice).scrollIntoView();
-          view.dispatch(transaction);
-          return true;
-        } catch {
+          return insertMarkdown(paddedContent);
+        }
+
+        if (!text) {
           return false;
         }
+
+        const tabularMarkdown = tabularTextToMarkdown(text);
+        const payload = tabularMarkdown ?? text;
+
+        event.preventDefault();
+        return insertMarkdown(payload, true);
       },
     },
   });
@@ -126,7 +153,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
   // Update editor content when content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
-  const currentMarkdown = markdownSerializer.serialize(editor.state.doc);
+      const currentMarkdown = markdownSerializer.serialize(editor.state.doc);
       if (currentMarkdown !== content) {
         try {
           const doc = defaultMarkdownParser.parse(content);
