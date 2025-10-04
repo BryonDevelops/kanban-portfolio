@@ -7,16 +7,16 @@ import { useIsMobile } from '../../../../hooks/use-mobile';
 import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
 import { CategorySelector } from './CategorySelector';
 import { BlogPost } from '../BlogPostPortal';
-import { 
-  X, 
-  Save, 
-  Edit3, 
-  Maximize2, 
-  Minimize2, 
-  FileText, 
-  User, 
-  Clock, 
-  Trash2, 
+import {
+  X,
+  Save,
+  Edit3,
+  Maximize2,
+  Minimize2,
+  FileText,
+  User,
+  Clock,
+  Trash2,
   Plus,
   Tag,
   Loader2,
@@ -35,13 +35,13 @@ interface ImprovedEditBlogPostFormProps {
   trigger?: React.ReactNode;
 }
 
-export function ImprovedEditBlogPostForm({ 
-  blogPost, 
-  onBlogPostUpdated, 
-  onBlogPostDeleted, 
-  open, 
-  onOpenChange, 
-  trigger 
+export function ImprovedEditBlogPostForm({
+  blogPost,
+  onBlogPostUpdated,
+  onBlogPostDeleted,
+  open,
+  onOpenChange,
+  trigger
 }: ImprovedEditBlogPostFormProps) {
   const isAdmin = useIsAdmin();
   const { user, isLoaded } = useUser();
@@ -96,7 +96,7 @@ export function ImprovedEditBlogPostForm({
 
   // Update form data when blogPost prop changes
   useEffect(() => {
-    setFormData({
+    const newFormData = {
       title: blogPost.title,
       excerpt: blogPost.excerpt,
       content: blogPost.content,
@@ -104,7 +104,8 @@ export function ImprovedEditBlogPostForm({
       tags: [...blogPost.tags],
       categories: [...(blogPost.categories || [])],
       imageUrl: blogPost.imageUrl || '',
-    });
+    };
+    setFormData(newFormData);
   }, [blogPost]);
 
   // Auto-dismiss messages
@@ -160,7 +161,7 @@ export function ImprovedEditBlogPostForm({
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       if (!formData.title.trim()) {
         throw new Error('Title is required');
@@ -210,7 +211,7 @@ export function ImprovedEditBlogPostForm({
 
         setSuccess('Blog post updated successfully!');
         setHasUnsavedChanges(false);
-        
+
         // Notify parent after a short delay to show success message
         setTimeout(() => {
           onBlogPostUpdated?.();
@@ -247,7 +248,7 @@ export function ImprovedEditBlogPostForm({
         }
 
         setSuccess('Blog post deleted successfully!');
-        
+
         setTimeout(() => {
           onBlogPostDeleted?.();
           setIsOpen(false);
@@ -420,7 +421,22 @@ export function ImprovedEditBlogPostForm({
                 {/* Read Time */}
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <Clock className="h-3 w-3 flex-shrink-0" />
-                  <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
+                  <span>
+                    {(() => {
+                      // Estimate words from Markdown content
+                      const text = (formData.content || '')
+                        .replace(/```[\s\S]*?```/g, ' ') // remove fenced code blocks
+                        .replace(/`[^`]*`/g, ' ') // remove inline code
+                        .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // links: keep label
+                        .replace(/[#>*_~\-]+/g, ' ') // markdown syntax
+                        .replace(/\|/g, ' ') // table pipes
+                        .replace(/\s+/g, ' ') // collapse whitespace
+                        .trim();
+                      const words = text ? text.split(' ').filter(Boolean).length : 0;
+                      const mins = Math.ceil(words / 200);
+                      return `Read time: ${mins} min`;
+                    })()}
+                  </span>
                 </div>
               </div>
 
@@ -520,34 +536,6 @@ export function ImprovedEditBlogPostForm({
         <div className="flex-1 overflow-y-auto">
           {activeSection === 'content' ? (
             <div className="p-6 space-y-6">
-              {/* Title Section */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="w-full px-4 py-3 text-xl font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter post title..."
-                />
-              </div>
-
-              {/* Excerpt Section */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Excerpt
-                </label>
-                <textarea
-                  value={formData.excerpt}
-                  onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Brief description of the post..."
-                />
-              </div>
-
               {/* Content Editor */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -555,8 +543,9 @@ export function ImprovedEditBlogPostForm({
                 </label>
                 <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                   <SimpleEditor
-                    content={formData.content}
-                    onChange={(content: string) => handleInputChange('content', content)}
+                    key={`editor-${blogPost.id}`}
+                    content={formData.content || ''}
+                    onChange={(newContent: string) => handleInputChange('content', newContent)}
                     placeholder="Write your blog post content..."
                   />
                 </div>
@@ -593,6 +582,20 @@ export function ImprovedEditBlogPostForm({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Excerpt Section (below Author & Read Time) */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Excerpt
+                </label>
+                <textarea
+                  value={formData.excerpt}
+                  onChange={(e) => handleInputChange('excerpt', e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  placeholder="Brief description of the post..."
+                />
               </div>
 
               {/* Featured Image */}
