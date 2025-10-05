@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog';
 import { Bug, ChevronDown, Maximize2, Minimize2, X } from 'lucide-react';
 
 interface PortalProps {
@@ -109,6 +109,9 @@ export function Portal({
             {title && (
               <DialogTitle className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">{title}</DialogTitle>
             )}
+            <DialogDescription className="sr-only">
+              {title ? `Content for ${title}` : 'Modal content'}
+            </DialogDescription>
           </div>
           <div className="flex items-center gap-1">
             {adminControls && (
