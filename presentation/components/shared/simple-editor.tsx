@@ -44,12 +44,43 @@ interface SimpleEditorProps {
 export function SimpleEditor({ content, onChange, placeholder = "Start writing your blog post..." }: SimpleEditorProps) {
   // Markdown <-> HTML converters
   const turndown = useMemo(() => {
-    const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+    const td = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      fence: '```'
+    });
     td.use(gfm);
+
+    // Better code block handling
+    td.addRule('codeBlock', {
+      filter: ['pre'],
+      replacement: function(content, node) {
+        const firstChild = node.firstChild as HTMLElement;
+        const className = firstChild?.className || '';
+        const language = className.match(/language-(\w+)/)?.[1] || '';
+        return '\n\n```' + language + '\n' + content + '\n```\n\n';
+      }
+    });
+
+    // Better table handling
+    td.addRule('tableSection', {
+      filter: ['thead', 'tbody', 'tfoot'],
+      replacement: function(content) {
+        return content;
+      }
+    });
+
     return td;
   }, []);
   const mdToHtml = useCallback((md: string) => {
     try {
+      // Configure marked for better code block and table handling
+      marked.setOptions({
+        gfm: true,
+        breaks: false,
+        pedantic: false
+      });
+
       const parsed = marked.parse(md || '');
       return typeof parsed === 'string' ? parsed : '';
     } catch {
@@ -78,6 +109,10 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       }),
       Table.configure({
         resizable: true,
+        handleWidth: 5,
+        cellMinWidth: 25,
+        lastColumnResizable: false,
+        allowTableNodeSelection: true,
       }),
       TableRow,
       TableHeader,
@@ -97,7 +132,10 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
     onCreate: ({ editor }) => {
       if (content && content.trim()) {
         const html = mdToHtml(content);
-        editor.commands.setContent(html, { emitUpdate: false });
+        // Use a timeout to ensure proper initialization and prevent cursor issues
+        setTimeout(() => {
+          editor.commands.setContent(html, { emitUpdate: false });
+        }, 0);
       }
     },
     onUpdate: ({ editor }) => {
@@ -107,18 +145,32 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 prose-table:border-collapse prose-table:border prose-table:border-border prose-th:border prose-th:border-border prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2',
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 prose-table:border-0',
       },
     },
   });
 
   // Update editor content when content prop changes (markdown -> HTML)
+  // Only update if the content is significantly different to preserve cursor position and table editing
   useEffect(() => {
     if (!editor) return;
     if (typeof content !== 'string') return;
-    const html = mdToHtml(content);
-    editor.commands.setContent(html, { emitUpdate: false });
-  }, [editor, content, mdToHtml]);
+
+    const currentHtml = editor.getHTML();
+    const currentMarkdown = htmlToMd(currentHtml);
+
+    // Don't update if currently editing a table or if content is very similar
+    if (editor.isActive('table') || editor.isActive('tableRow') || editor.isActive('tableCell')) {
+      return;
+    }
+
+    // Only update if content has significantly changed (more than whitespace)
+    const normalizeContent = (str: string) => str.replace(/\\s+/g, ' ').trim();
+    if (normalizeContent(currentMarkdown) !== normalizeContent(content)) {
+      const html = mdToHtml(content);
+      editor.commands.setContent(html, { emitUpdate: false });
+    }
+  }, [editor, content, mdToHtml, htmlToMd]);
 
   const addLink = useCallback(() => {
     if (!editor) return;
@@ -328,15 +380,87 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
           >
             <Link className="h-4 w-4" />
           </Button>
-          <Button
-            type="button"
-            variant={editor.isActive('table') ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            title="Insert Table"
-          >
-            <TableIcon className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              variant={editor.isActive('table') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                if (editor.isActive('table')) {
+                  editor.chain().focus().deleteTable().run();
+                } else {
+                  editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                }
+              }}
+              title={editor.isActive('table') ? 'Delete Table' : 'Insert Table'}
+            >
+              <TableIcon className="h-4 w-4" />
+            </Button>
+            {editor.isActive('table') && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().addRowBefore().run()}
+                  title="Add Row Before"
+                  className="text-xs px-2"
+                >
+                  +R↑
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().addRowAfter().run()}
+                  title="Add Row After"
+                  className="text-xs px-2"
+                >
+                  +R↓
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().addColumnBefore().run()}
+                  title="Add Column Before"
+                  className="text-xs px-2"
+                >
+                  +C←
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().addColumnAfter().run()}
+                  title="Add Column After"
+                  className="text-xs px-2"
+                >
+                  +C→
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().deleteRow().run()}
+                  title="Delete Row"
+                  className="text-xs px-2 text-red-600 hover:text-red-700"
+                >
+                  -R
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editor.chain().focus().deleteColumn().run()}
+                  title="Delete Column"
+                  className="text-xs px-2 text-red-600 hover:text-red-700"
+                >
+                  -C
+                </Button>
+              </>
+            )}
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -383,8 +507,125 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
 
       {/* Editor Content */}
       <div className="max-h-[65vh] overflow-y-auto">
-        <EditorContent editor={editor} className="min-h-[300px] focus-within:outline-none p-4" />
+        <EditorContent
+          editor={editor}
+          className="min-h-[300px] focus-within:outline-none p-4 simple-editor-content"
+        />
       </div>
+
+      {/* Table Styles */}
+      <style jsx global>{`
+        .simple-editor-content .ProseMirror table {
+          border-collapse: collapse;
+          margin: 16px 0;
+          overflow: hidden;
+          table-layout: fixed;
+          width: 100%;
+          border: 2px solid #e2e8f0;
+        }
+
+        .simple-editor-content .ProseMirror table td,
+        .simple-editor-content .ProseMirror table th {
+          border: 1px solid #e2e8f0;
+          box-sizing: border-box;
+          min-width: 100px;
+          padding: 8px 12px;
+          position: relative;
+          vertical-align: top;
+          background: white;
+        }
+
+        .simple-editor-content .ProseMirror table th {
+          background-color: #f8fafc !important;
+          border-bottom: 2px solid #cbd5e1 !important;
+          font-weight: 600;
+          text-align: left;
+          color: #374151;
+        }
+
+        .simple-editor-content .ProseMirror table .selectedCell:after {
+          background: rgba(59, 130, 246, 0.1);
+          content: "";
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          pointer-events: none;
+          position: absolute;
+          z-index: 2;
+        }
+
+        .simple-editor-content .ProseMirror table .column-resize-handle {
+          background-color: #3b82f6;
+          bottom: -2px;
+          position: absolute;
+          right: -2px;
+          top: 0;
+          width: 4px;
+          pointer-events: auto;
+          cursor: col-resize;
+        }
+
+        .simple-editor-content .ProseMirror table td:hover,
+        .simple-editor-content .ProseMirror table th:hover {
+          background-color: #f1f5f9;
+        }
+
+        .simple-editor-content .ProseMirror pre {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          color: #374151;
+          font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+          padding: 0.75rem 1rem;
+          white-space: pre-wrap;
+        }
+
+        .simple-editor-content .ProseMirror code {
+          background-color: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.25rem;
+          color: #374151;
+          font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+          font-size: 0.85em;
+          padding: 0.125rem 0.25rem;
+        }
+
+        /* Dark mode styles */
+        .dark .simple-editor-content .ProseMirror table {
+          border: 2px solid #374151;
+        }
+
+        .dark .simple-editor-content .ProseMirror table td,
+        .dark .simple-editor-content .ProseMirror table th {
+          border: 1px solid #374151;
+          background: #1f2937;
+          color: #f9fafb;
+        }
+
+        .dark .simple-editor-content .ProseMirror table th {
+          background-color: #374151 !important;
+          border-bottom: 2px solid #4b5563 !important;
+          color: #f9fafb;
+        }
+
+        .dark .simple-editor-content .ProseMirror table td:hover,
+        .dark .simple-editor-content .ProseMirror table th:hover {
+          background-color: #374151;
+        }
+
+        .dark .simple-editor-content .ProseMirror pre {
+          background: #374151;
+          border: 1px solid #4b5563;
+          color: #f9fafb;
+        }
+
+        .dark .simple-editor-content .ProseMirror code {
+          background-color: #374151;
+          border: 1px solid #4b5563;
+          color: #f9fafb;
+        }
+      `}</style>
 
       {/* Character Count */}
       <div className="border-t px-4 py-2 text-xs text-muted-foreground bg-muted/30 flex justify-between items-center">

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { BlogPostPortal, type BlogPost } from '@/presentation/components/features/microblog/BlogPostPortal'
 
 describe('BlogPostPortal markdown rendering', () => {
@@ -17,16 +16,13 @@ describe('BlogPostPortal markdown rendering', () => {
   }
 
   it('converts markdown content into formatted HTML', async () => {
-    const user = userEvent.setup()
-
     render(
       <BlogPostPortal
         post={basePost}
-        trigger={<button type="button">Open Post</button>}
+        open={true}
+        onOpenChange={() => {}}
       />
     )
-
-    await user.click(screen.getByRole('button', { name: /open post/i }))
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Hello World' })

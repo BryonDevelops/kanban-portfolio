@@ -188,7 +188,15 @@ export function CategorySelector({ selectedCategories, onCategoriesChange, class
                 <TagIcon className="h-3 w-3" />
                 {name}
                 <button
-                  onClick={() => handleCategoryToggle(selectedCategories[index])}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCategoryToggle(selectedCategories[index]);
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 ml-1"
                 >
                   <X className="h-3 w-3" />
@@ -206,7 +214,15 @@ export function CategorySelector({ selectedCategories, onCategoriesChange, class
               <button
                 key={category.id}
                 type="button"
-                onClick={() => handleCategoryToggle(category.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCategoryToggle(category.id);
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 className={`p-2 rounded-lg border text-left transition-all ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'

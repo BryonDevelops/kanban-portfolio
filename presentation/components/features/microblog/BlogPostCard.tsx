@@ -4,7 +4,7 @@ import React from "react"
 import { Portal } from "../../shared/Portal"
 import { BlogPostContent, BlogPost } from "./BlogPostPortal"
 import { Badge } from "../../ui/badge"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, X } from "lucide-react"
 
 type BlogPostCardVariant = "default" | "featured"
 
@@ -24,6 +24,7 @@ export function BlogPostCard({
   className
 }: BlogPostCardProps) {
   const [isPortalOpen, setIsPortalOpen] = React.useState(false)
+  const [isFullscreen, setIsFullscreen] = React.useState(false)
 
   const openPortal = React.useCallback(() => {
     setIsPortalOpen(true)
@@ -38,6 +39,11 @@ export function BlogPostCard({
 
   const handleOpenChange = React.useCallback((open: boolean) => {
     setIsPortalOpen(open)
+    if (!open) setIsFullscreen(false)
+  }, [])
+
+  const handleToggleFullscreen = React.useCallback(() => {
+    setIsFullscreen((prev) => !prev)
   }, [])
 
   const publishedDate = new Date(post.publishedAt)
@@ -52,6 +58,11 @@ export function BlogPostCard({
   const combinedClassName = className ? `${baseClassName} ${className}` : baseClassName
   const tagsToDisplay = variant === "featured" ? post.tags.slice(0, 3) : post.tags.slice(0, 2)
   const adminButtonPosition = variant === "featured" ? "absolute top-4 left-4 z-10" : "absolute top-4 right-4 z-10"
+
+  // Modal classes: fullscreen disables border-radius and max-width
+  const modalClass = isFullscreen
+    ? "h-screen max-h-screen w-screen flex flex-col rounded-none shadow-none bg-white/90 dark:bg-neutral-900/95 backdrop-blur-xl border-0"
+    : "h-screen max-h-screen flex flex-col w-full sm:w-auto rounded-2xl shadow-2xl bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-border"
 
   return (
     <>
@@ -157,8 +168,42 @@ export function BlogPostCard({
         )}
       </div>
 
-      <Portal open={isPortalOpen} onOpenChange={handleOpenChange} title={post.title} maxWidth="max-w-4xl">
-        <BlogPostContent post={post} />
+      <Portal
+        open={isPortalOpen}
+        onOpenChange={handleOpenChange}
+        title={post.title}
+        maxWidth={isFullscreen ? undefined : "max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl"}
+        bringToTop
+        className={modalClass}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={handleToggleFullscreen}
+        hideDefaultHeader
+      >
+        {/* Modal Header - title + tags/category only */}
+        <div className={`flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-border ${isFullscreen ? "bg-background/90" : "bg-background/80"} backdrop-blur ${isFullscreen ? "rounded-none" : "rounded-t-2xl"} sticky top-0 z-10`}>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg font-semibold truncate text-foreground pr-2 sm:pr-4">{post.title}</h2>
+            <div className="mt-1 flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-2">
+              {post.tags?.slice(0, 6).map((tag) => (
+                <Badge key={tag} variant="secondary" className="px-2 py-0.5 text-[10px] sm:text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => handleOpenChange(false)}
+            aria-label="Close"
+            className="p-2 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring flex-shrink-0"
+            type="button"
+          >
+            <X className="h-5 w-5 text-foreground/70" />
+          </button>
+        </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-8">
+          <BlogPostContent post={post} />
+        </div>
       </Portal>
     </>
   )

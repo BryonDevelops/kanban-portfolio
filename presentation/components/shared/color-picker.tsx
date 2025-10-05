@@ -33,7 +33,15 @@ export function ColorPicker({
           <button
             key={option.value}
             type="button"
-            onClick={() => onChange(option.value)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onChange(option.value);
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             className={`relative h-12 rounded-lg border-2 transition-all duration-200 hover:scale-105 ${
               value === option.value
                 ? 'border-slate-800 dark:border-white ring-2 ring-slate-800/20 dark:ring-white/20'

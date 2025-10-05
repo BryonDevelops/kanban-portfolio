@@ -18,6 +18,7 @@ import { MinusIcon } from "@/components/tiptap-icons/minus-icon"
 import { TypeIcon } from "@/components/tiptap-icons/type-icon"
 import { AtSignIcon } from "@/components/tiptap-icons/at-sign-icon"
 import { SmilePlusIcon } from "@/components/tiptap-icons/smile-plus-icon"
+import { TableIcon } from "@/components/tiptap-icons/table-icon"
 
 // --- Lib ---
 import {
@@ -145,6 +146,13 @@ const texts = {
     subtext: "Horizontal line to separate content",
     keywords: ["hr", "horizontalRule", "line", "separator"],
     badge: MinusIcon,
+    group: "Insert",
+  },
+  table: {
+    title: "Table",
+    subtext: "Insert a table with rows and columns",
+    keywords: ["table", "grid", "rows", "columns"],
+    badge: TableIcon,
     group: "Insert",
   },
 
@@ -304,6 +312,12 @@ const getItemImplementations = () => {
       check: (editor: Editor) => isNodeInSchema("horizontalRule", editor),
       action: ({ editor }: { editor: Editor }) => {
         editor.chain().focus().setHorizontalRule().run()
+      },
+    },
+    table: {
+      check: (editor: Editor) => isNodeInSchema("table", editor),
+      action: ({ editor }: { editor: Editor }) => {
+        editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
       },
     },
 
