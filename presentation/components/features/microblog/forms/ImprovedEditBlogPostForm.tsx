@@ -312,19 +312,16 @@ export function ImprovedEditBlogPostForm({
   }
 
   const modalContent = (
-    <div className={`fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center ${
-      isFullscreen ? 'p-0' : isMobile ? 'p-4' : 'p-6'
-    }`}>
-      <div
-        ref={modalRef}
-        className={`w-full bg-white dark:bg-slate-900 shadow-2xl overflow-hidden relative flex flex-col ${
-          isFullscreen
-            ? 'h-screen max-w-none rounded-none'
-            : isMobile
-            ? 'h-full max-w-none rounded-lg'
-            : 'max-w-5xl max-h-[90vh] rounded-xl'
-        }`}
-      >
+    <div
+      ref={modalRef}
+      className={`w-full bg-white dark:bg-slate-900 shadow-2xl overflow-hidden relative flex flex-col ${
+        isFullscreen
+          ? 'h-screen max-w-none rounded-none'
+          : isMobile
+          ? 'h-full max-w-none rounded-lg'
+          : 'max-w-5xl max-h-[90vh] rounded-xl'
+      }`}
+    >
         {/* Enhanced Header with Title */}
         <div className="flex-shrink-0 border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
           {/* Top Row: Controls and Status */}
@@ -700,7 +697,6 @@ export function ImprovedEditBlogPostForm({
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 

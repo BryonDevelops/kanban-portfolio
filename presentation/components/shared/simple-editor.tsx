@@ -294,7 +294,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       </FloatingElement>
 
       {/* Toolbar */}
-      <div className="border-b bg-card p-3 flex flex-wrap gap-2 items-center">
+      <div className="sticky top-0 z-20 border-b bg-card p-3 flex flex-wrap gap-2 items-center backdrop-blur-sm bg-card/95">
         {/* Slash Command Trigger */}
         <SlashCommandTriggerButton
           editor={editor}
