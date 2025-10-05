@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog'
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { ShowcasedProject } from '@/presentation/components/shared/ProjectCard'
 import { ImageUploadDropdown } from '@/presentation/components/shared/image-upload-dropdown'
+import { TechStackPicker } from '../../../shared/TechStackPicker'
+import { TECH_STACK, TechItem } from '../tech-data';
 
 interface CreateShowcasedProjectFormProps {
   open: boolean
@@ -33,8 +35,7 @@ export function CreateShowcasedProjectForm({
     featured: false
   })
 
-  // Technology input state
-  const [techInput, setTechInput] = useState('')
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +79,7 @@ export function CreateShowcasedProjectForm({
         github: '',
         featured: false
       })
-      setTechInput('')
+  // No setTechInput needed
 
       // Close dialog and notify parent
       onOpenChange(false)
@@ -96,23 +97,7 @@ export function CreateShowcasedProjectForm({
     }
   }
 
-  const addTechnology = () => {
-    const tech = techInput.trim()
-    if (tech && !formData.technologies.includes(tech)) {
-      setFormData(prev => ({
-        ...prev,
-        technologies: [...prev.technologies, tech]
-      }))
-      setTechInput('')
-    }
-  }
 
-  const removeTechnology = (tech: string) => {
-    setFormData(prev => ({
-      ...prev,
-      technologies: prev.technologies.filter((t: string) => t !== tech)
-    }))
-  }
 
   const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -166,44 +151,16 @@ export function CreateShowcasedProjectForm({
 
           {/* Technologies */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Technologies
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                placeholder="Add technology (e.g., React)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTechnology()
-                  }
-                }}
-              />
-              <Button type="button" onClick={addTechnology} variant="outline" size="sm">
-                Add
-              </Button>
-            </div>
-            {formData.technologies.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.technologies.map((tech: string) => (
-                  <span
-                    key={tech}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md text-sm"
-                  >
-                    {tech}
-                    <button
-                      type="button"
-                      onClick={() => removeTechnology(tech)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <label className="text-sm font-medium">Tech Stack</label>
+            <TechStackPicker
+              value={formData.technologies
+                .map(t => TECH_STACK.find(item => item.id === (typeof t === 'string' ? t : (t as string)))!)
+                .filter(Boolean) as TechItem[]}
+              onChange={techs => setFormData(prev => ({
+                ...prev,
+                technologies: techs.map(t => t.id)
+              }))}
+            />
           </div>
 
           {/* Image */}

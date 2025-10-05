@@ -4,8 +4,10 @@ import { Input } from '@/presentation/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
 import { ProjectCreate, Project } from '../../../../../domain/board/schemas/project.schema';
 import { Plus, X } from 'lucide-react';
+import { TechStackPicker } from '../../../shared/TechStackPicker';
 import { useBoardStore } from '../../../../stores/board/boardStore';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
+import { TECH_STACK, TechItem } from '../../../features/projects/tech-data';
 import { useUser } from '@clerk/nextjs';
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
@@ -53,8 +55,7 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
     end_date: undefined,
   });
 
-  // Technology input state
-  const [techInput, setTechInput] = useState('');
+  // Remove manual tech input state
   const [tagInput, setTagInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,7 +144,7 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
         start_date: undefined,
         end_date: undefined,
       });
-      setTechInput('');
+  // setTechInput removed (no longer needed)
       setTagInput('');
 
       // Close dialog and notify parent
@@ -162,23 +163,7 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
     }
   };
 
-  const addTechnology = () => {
-    const tech = techInput.trim();
-    if (tech && !formData.technologies.includes(tech)) {
-      setFormData(prev => ({
-        ...prev,
-        technologies: [...prev.technologies, tech]
-      }));
-      setTechInput('');
-    }
-  };
 
-  const removeTechnology = (tech: string) => {
-    setFormData(prev => ({
-      ...prev,
-      technologies: prev.technologies.filter(t => t !== tech)
-    }));
-  };
 
   const addTag = () => {
     const tag = tagInput.trim();
@@ -304,44 +289,16 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
 
           {/* Technologies */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Technologies
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                placeholder="Add technology (e.g., React)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTechnology();
-                  }
-                }}
-              />
-              <Button type="button" onClick={addTechnology} variant="outline" size="sm">
-                Add
-              </Button>
-            </div>
-            {formData.technologies.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.technologies.map((tech) => (
-                  <span
-                    key={tech}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm"
-                  >
-                    {tech}
-                    <button
-                      type="button"
-                      onClick={() => removeTechnology(tech)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <label className="text-sm font-medium">Tech Stack</label>
+            <TechStackPicker
+                value={formData.technologies
+                  .map(t => TECH_STACK.find(item => item.id === (typeof t === 'string' ? t : (t as TechItem).id))!)
+                  .filter(Boolean) as TechItem[]}
+                onChange={techs => setFormData(prev => ({
+                  ...prev,
+                  technologies: techs.map(t => t.id)
+                }))}
+            />
           </div>
 
           {/* Tags */}
