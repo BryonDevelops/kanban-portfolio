@@ -1,5 +1,6 @@
 "use client"
 
+import { TECH_STACK, TechItem } from '../../../features/projects/tech-data';
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
@@ -15,6 +16,9 @@ import { useIsAdmin } from '../../../shared/ProtectedRoute'
 import Image from 'next/image'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs"
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown'
+import { TechStackPicker } from '../../../shared/TechStackPicker';
+
+
 
 type Props = {
   project: Project
@@ -56,7 +60,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     architecture: project.architecture || ''
   })
 
-  const [newTech, setNewTech] = useState('')
+  // newTech and setNewTech removed (replaced by TechStackPicker)
   const [newTag, setNewTag] = useState('')
   const [newAttachment, setNewAttachment] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -369,22 +373,7 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, hasChanges, handleSave, onClose])
 
-  const addTechnology = () => {
-    if (newTech.trim() && !formData.technologies.includes(newTech.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        technologies: [...prev.technologies, newTech.trim()]
-      }))
-      setNewTech('')
-    }
-  }
-
-  const removeTechnology = (tech: string) => {
-    setFormData(prev => ({
-      ...prev,
-      technologies: prev.technologies.filter(t => t !== tech)
-    }))
-  }
+  // addTechnology and removeTechnology removed (replaced by TechStackPicker)
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
@@ -1405,40 +1394,15 @@ React, TypeScript, Tailwind CSS
                   <h3 className="text-sm font-medium text-slate-900 dark:text-white">Technologies</h3>
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newTech}
-                    onChange={(e) => setNewTech(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addTechnology()}
-                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-sm"
-                    placeholder="Add technology (e.g., React, Node.js)"
-                  />
-                  <button
-                    onClick={addTechnology}
-                    disabled={!newTech.trim()}
-                    className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 font-medium"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {formData.technologies.map((tech, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-md text-xs font-medium"
-                    >
-                      {tech}
-                      <button
-                        onClick={() => removeTechnology(tech)}
-                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                <TechStackPicker
+                  value={formData.technologies
+                    .map(t => TECH_STACK.find(item => item.id === (typeof t === 'string' ? t : (t as TechItem).id))!)
+                    .filter(Boolean) as TechItem[]}
+                  onChange={techs => setFormData(prev => ({
+                    ...prev,
+                    technologies: techs.map(t => t.id)
+                  }))}
+                />
               </div>
             </TabsContent>
 
