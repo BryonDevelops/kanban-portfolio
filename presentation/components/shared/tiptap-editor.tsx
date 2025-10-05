@@ -132,9 +132,9 @@ export function TiptapEditor({
       {/* Floating Toolbar */}
       {isToolbarVisible && (
         <div
-          className="fixed z-50 bg-background border border-border rounded-lg shadow-lg p-1 flex items-center gap-1 animate-in fade-in-0 zoom-in-95"
+          className="fixed z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-1 flex items-center gap-1 animate-in fade-in-0 zoom-in-95"
           style={{
-            top: `${toolbarPosition.top}px`,
+            top: `${Math.max(60, toolbarPosition.top)}px`,
             left: `${toolbarPosition.left}px`,
             transform: 'translateX(-50%)'
           }}

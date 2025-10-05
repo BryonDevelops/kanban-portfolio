@@ -312,19 +312,16 @@ export function ImprovedEditBlogPostForm({
   }
 
   const modalContent = (
-    <div className={`fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center ${
-      isFullscreen ? 'p-0' : isMobile ? 'p-4' : 'p-6'
-    }`}>
-      <div
-        ref={modalRef}
-        className={`w-full bg-white dark:bg-slate-900 shadow-2xl overflow-hidden relative flex flex-col ${
-          isFullscreen
-            ? 'h-screen max-w-none rounded-none'
-            : isMobile
-            ? 'h-full max-w-none rounded-lg'
-            : 'max-w-5xl max-h-[90vh] rounded-xl'
-        }`}
-      >
+    <div
+      ref={modalRef}
+      className={`w-full bg-white dark:bg-slate-900 shadow-2xl overflow-hidden relative flex flex-col ${
+        isFullscreen
+          ? 'h-screen max-w-none rounded-none'
+          : isMobile
+          ? 'h-full max-w-none rounded-lg'
+          : 'max-w-5xl max-h-[90vh] rounded-xl'
+      }`}
+    >
         {/* Enhanced Header with Title */}
         <div className="flex-shrink-0 border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50">
           {/* Top Row: Controls and Status */}
@@ -345,20 +342,7 @@ export function ImprovedEditBlogPostForm({
               >
                 {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </button>
-              <button
-                onClick={() => {
-                  if (hasUnsavedChanges) {
-                    if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-                      setIsOpen(false);
-                    }
-                  } else {
-                    setIsOpen(false);
-                  }
-                }}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {/* Close button now handled by Portal component */}
             </div>
           </div>
 
@@ -713,15 +697,31 @@ export function ImprovedEditBlogPostForm({
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
+
+  // Handle close with unsaved changes check
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      // User is trying to close the modal
+      if (hasUnsavedChanges) {
+        if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+          setIsOpen(false);
+        }
+        // If user cancels, don't close the modal
+      } else {
+        setIsOpen(false);
+      }
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   // Render using shared Portal component
   return (
     <Portal
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={handleClose}
       title={formData.title || 'Edit Blog Post'}
       maxWidth="max-w-3xl"
       isFullscreen={isFullscreen}

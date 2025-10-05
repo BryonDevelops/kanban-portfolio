@@ -123,7 +123,7 @@ export function Portal({
         </DialogDescription>
 
         {/* Functional controls - positioned absolutely if needed */}
-        {(onToggleFullscreen || hasDebugInfo) && (
+        {(onToggleFullscreen || hasDebugInfo || !hideDefaultHeader) && (
           <div className="fixed top-4 right-4 z-50 flex items-center gap-1">
             {hasDebugInfo && (
               <button
@@ -148,20 +148,23 @@ export function Portal({
                 {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
               </button>
             )}
+            {!hideDefaultHeader && (
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => onOpenChange(false)}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors bg-background/80 backdrop-blur-sm"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )}
         {/* Default header for backward compatibility */}
         {!hideDefaultHeader && title && (
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="p-1 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </button>
+            {/* Close button now handled by functional controls in top-right */}
           </div>
         )}
 

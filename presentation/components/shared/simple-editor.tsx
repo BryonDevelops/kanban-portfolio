@@ -153,9 +153,9 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
 
         // Check if pasted text contains markdown code blocks or other markdown syntax
         if (text && (
-          text.includes('```') || 
+          text.includes('```') ||
           text.match(/^#{1,6}\s+/m) || // Headers
-          text.match(/^\*\s+/m) ||     // Bullet lists  
+          text.match(/^\*\s+/m) ||     // Bullet lists
           text.match(/^\d+\.\s+/m) ||  // Numbered lists
           text.match(/^>\s+/m) ||      // Blockquotes
           text.match(/\*\*.*?\*\*/) || // Bold
@@ -174,7 +174,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
             // (not just wrapped in a single <p> tag with the same text)
             const hasMarkdownElements = tempDiv.querySelector('pre, code, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, strong, em');
             const textContentDiffers = tempDiv.textContent?.trim() !== text.trim();
-            
+
             if (hasMarkdownElements || textContentDiffers) {
               event.preventDefault();
 
@@ -294,7 +294,7 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
       </FloatingElement>
 
       {/* Toolbar */}
-      <div className="border-b bg-card p-3 flex flex-wrap gap-2 items-center">
+      <div className="sticky top-0 z-20 border-b bg-card p-3 flex flex-wrap gap-2 items-center backdrop-blur-sm bg-card/95">
         {/* Slash Command Trigger */}
         <SlashCommandTriggerButton
           editor={editor}
