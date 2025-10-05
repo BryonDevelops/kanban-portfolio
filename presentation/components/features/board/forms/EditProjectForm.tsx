@@ -1642,6 +1642,7 @@ React, TypeScript, Tailwind CSS
       maxWidth="max-w-4xl"
       isFullscreen={isFullscreen}
       onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+      hideDefaultHeader
     >
       {modalContent}
     </Portal>

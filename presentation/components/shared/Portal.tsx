@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogDescription, DialogTitle } from '../ui/dialog';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Bug, ChevronDown, Maximize2, Minimize2 } from 'lucide-react';
+import { Bug, ChevronDown, Maximize2, Minimize2, X } from 'lucide-react';
 
 interface PortalProps {
   open: boolean;
@@ -16,6 +16,7 @@ interface PortalProps {
   debugTitle?: string;
   defaultDebugOpen?: boolean;
   bringToTop?: boolean;
+  hideDefaultHeader?: boolean;
 };
 
 /**
@@ -36,6 +37,7 @@ export function Portal({
   debugTitle = 'Debug info',
   defaultDebugOpen = false,
   bringToTop = false,
+  hideDefaultHeader = false,
 }: PortalProps) {
   const hasDebugInfo = debugInfo !== undefined && debugInfo !== null;
   const [debugOpen, setDebugOpen] = React.useState(() => defaultDebugOpen && hasDebugInfo);
@@ -148,8 +150,22 @@ export function Portal({
             )}
           </div>
         )}
+        {/* Default header for backward compatibility */}
+        {!hideDefaultHeader && title && (
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="p-1 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+          </div>
+        )}
 
-        {/* Pure content - no container styling */}
+        {/* Content - no container styling */}
         {children}
 
         {/* Debug panel - positioned absolutely if open */}

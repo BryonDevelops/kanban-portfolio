@@ -527,6 +527,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
       maxWidth="max-w-3xl"
       isFullscreen={isFullscreen}
       onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+      hideDefaultHeader
     >
       {modalContent}
     </Portal>

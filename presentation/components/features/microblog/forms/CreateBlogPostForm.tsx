@@ -619,6 +619,7 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
       maxWidth="max-w-3xl"
       isFullscreen={isFullscreen}
       onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+      hideDefaultHeader
     >
       {modalContent}
     </Portal>
