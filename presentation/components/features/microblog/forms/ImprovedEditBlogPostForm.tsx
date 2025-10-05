@@ -23,7 +23,7 @@ import {
   AlertCircle,
   Check
 } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import { Portal } from '../../../shared/Portal';
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
 interface ImprovedEditBlogPostFormProps {
@@ -719,10 +719,17 @@ export function ImprovedEditBlogPostForm({
     </div>
   );
 
-  // Render using portal to escape container bounds
-  if (typeof window !== 'undefined') {
-    return createPortal(modalContent, document.body);
-  }
-
-  return modalContent;
+  // Render using shared Portal component
+  return (
+    <Portal
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      title={formData.title || 'Edit Blog Post'}
+      maxWidth="max-w-3xl"
+      isFullscreen={isFullscreen}
+      onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+    >
+      {modalContent}
+    </Portal>
+  );
 }

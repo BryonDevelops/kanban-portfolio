@@ -3,13 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { MarkdownRenderer } from '@/presentation/utils/markdown'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../../ui/dialog'
+import { Portal } from '../../shared/Portal'
 import { Badge } from '../../ui/badge'
 import { Calendar, User, Tag } from 'lucide-react'
 
@@ -29,66 +23,58 @@ export interface BlogPost {
 
 interface BlogPostPortalProps {
   post: BlogPost
-  trigger: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function BlogPostPortal({ post, trigger }: BlogPostPortalProps) {
+export function BlogPostContent({ post }: { post: BlogPost }) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <DialogTitle className="text-2xl font-bold leading-tight">
-                {post.title}
-              </DialogTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  <span>{post.author}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
-                </div>
-                <span>{post.readTime || 5} min read</span>
-              </div>
-            </div>
-          </div>
-
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  <Tag className="h-3 w-3 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {post.imageUrl && (
-            <div className="relative w-full h-64 rounded-lg overflow-hidden">
-              <Image
-                src={post.imageUrl}
-                alt={post.title}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-
-          <MarkdownRenderer
-            content={post.content}
-            className="prose prose-slate dark:prose-invert max-w-none"
-          />
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <User className="h-4 w-4" />
+          <span>{post.author}</span>
         </div>
-      </DialogContent>
-    </Dialog>
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4" />
+          <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+        </div>
+        <span>{post.readTime || 5} min read</span>
+      </div>
+      {post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs">
+              <Tag className="h-3 w-3 mr-1" />
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+      <div className="space-y-6">
+        {post.imageUrl && (
+          <div className="relative w-full h-64 rounded-lg overflow-hidden">
+            <Image
+              src={post.imageUrl}
+              alt={post.title}
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+        <MarkdownRenderer
+          content={post.content}
+          className="prose prose-slate dark:prose-invert max-w-none"
+        />
+      </div>
+    </div>
+  )
+}
+
+export function BlogPostPortal({ post, open, onOpenChange }: BlogPostPortalProps) {
+  return (
+    <Portal open={open} onOpenChange={onOpenChange} title={post.title} maxWidth="max-w-4xl">
+      <BlogPostContent post={post} />
+    </Portal>
   )
 }
