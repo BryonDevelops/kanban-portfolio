@@ -704,11 +704,28 @@ export function ImprovedEditBlogPostForm({
     </div>
   );
 
+  // Handle close with unsaved changes check
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      // User is trying to close the modal
+      if (hasUnsavedChanges) {
+        if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+          setIsOpen(false);
+        }
+        // If user cancels, don't close the modal
+      } else {
+        setIsOpen(false);
+      }
+    } else {
+      setIsOpen(true);
+    }
+  };
+
   // Render using shared Portal component
   return (
     <Portal
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={handleClose}
       title={formData.title || 'Edit Blog Post'}
       maxWidth="max-w-3xl"
       isFullscreen={isFullscreen}

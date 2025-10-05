@@ -164,14 +164,7 @@ export function Portal({
         {!hideDefaultHeader && title && (
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="p-1 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </button>
+            {/* Close button now handled by functional controls in top-right */}
           </div>
         )}
 
