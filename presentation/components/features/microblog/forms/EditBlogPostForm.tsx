@@ -239,7 +239,9 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
             onClick={() => setIsOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200"
           >
-            <Edit3 className="h-4 w-4" />
+            <div title="Edit Post">
+              <Edit3 className="h-4 w-4" />
+            </div>
             Edit Post
           </button>
         )}
@@ -314,9 +316,12 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
                     >
                       {formData.title || 'Untitled Blog Post'}
                       {/* Subtle edit indicator */}
-                      <span className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-slate-400 font-normal">
-                        click to edit
-                      </span>
+                      <div
+                        className="absolute -top-1 -right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        title="Edit title"
+                      >
+                        <Edit3 className="h-3 w-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" />
+                      </div>
                     </h1>
                     {/* Underline hint */}
                     <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 ease-out"></div>

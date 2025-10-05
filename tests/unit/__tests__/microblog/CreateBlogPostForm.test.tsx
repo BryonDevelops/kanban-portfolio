@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 type FetchMock = jest.MockedFunction<typeof fetch>;
@@ -57,48 +57,19 @@ beforeAll(async () => {
     ),
   }));
 
-  await unstableMockModule('@/presentation/components/features/microblog/forms/StreamlinedBlogEditor', () => ({
-    StreamlinedBlogEditor: ({
-      title,
-      onTitleChange,
+  await unstableMockModule('@/presentation/components/shared/simple-editor', () => ({
+    SimpleEditor: ({
       content,
       onChange,
-      excerpt,
-      onExcerptChange,
-      imageUrl,
-      onImageUrlChange,
     }: {
-      title: string;
-      onTitleChange: (value: string) => void;
       content: string;
       onChange: (value: string) => void;
-      excerpt: string;
-      onExcerptChange: (value: string) => void;
-      imageUrl: string;
-      onImageUrlChange: (value: string) => void;
     }) => (
-      <div data-testid="mock-streamlined-editor">
-        <input
-          data-testid="mock-title-input"
-          value={title}
-          onChange={(event) => onTitleChange(event.target.value)}
-        />
-        <textarea
-          data-testid="mock-content-input"
-          value={content}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <textarea
-          data-testid="mock-excerpt-input"
-          value={excerpt}
-          onChange={(event) => onExcerptChange(event.target.value)}
-        />
-        <input
-          data-testid="mock-image-input"
-          value={imageUrl}
-          onChange={(event) => onImageUrlChange(event.target.value)}
-        />
-      </div>
+      <textarea
+        data-testid="mock-content-input"
+        value={content}
+        onChange={(event) => onChange(event.target.value)}
+      />
     ),
   }));
 
@@ -130,17 +101,25 @@ describe('CreateBlogPostForm', () => {
 
     render(<CreateBlogPostForm open onOpenChange={jest.fn()} />);
 
-    const titleInput = screen.getByTestId('mock-title-input');
-    const contentInput = screen.getByTestId('mock-content-input');
-    const excerptInput = screen.getByTestId('mock-excerpt-input');
-    const imageUrlInput = screen.getByTestId('mock-image-input');
+    // Click to activate title editing mode
+    const titleElement = screen.getByText('Untitled Blog Post');
+    await user.click(titleElement);
 
+    // Find title input after clicking
+    const titleInput = screen.getByPlaceholderText('Blog post title...');
     await user.type(titleInput, 'Test Microblog Post');
-    await user.type(contentInput, 'This is the content body of the microblog post.');
-    await user.type(excerptInput, 'This is a short excerpt.');
 
-    // Ensure accidental whitespace or empty value is removed before submission
-    fireEvent.change(imageUrlInput, { target: { value: '   ' } });
+    // Content input should be available in the content tab (default active tab)
+    const contentInput = screen.getByTestId('mock-content-input');
+    await user.type(contentInput, 'This is the content body of the microblog post.');
+
+    // Navigate to settings tab to access excerpt field
+    const settingsTab = screen.getByText('Settings');
+    await user.click(settingsTab);
+
+    // Find form fields in settings tab
+    const excerptInput = screen.getByPlaceholderText('Brief description of the post...');
+    await user.type(excerptInput, 'This is a short excerpt.');
 
     const submitButton = screen.getByRole('button', { name: /create post/i });
     expect(submitButton).toBeEnabled();

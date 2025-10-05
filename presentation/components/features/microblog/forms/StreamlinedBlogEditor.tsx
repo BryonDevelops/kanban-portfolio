@@ -311,14 +311,13 @@ export function StreamlinedBlogEditor({
                     type="button"
                     onClick={() => setIsEditingHeaderTitle(true)}
                     className="group flex items-center gap-2 text-left focus:outline-none"
+                    title="Edit title"
                   >
                     <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {title || 'Untitled Microblog Post'}
                     </span>
                     <Edit3 className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                    <span className="text-xs text-slate-400 group-hover:opacity-100 opacity-0 transition-opacity">
-                      click to edit
-                    </span>
+
                   </button>
                 )}
               </div>

@@ -37,6 +37,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
     '^react-dnd$': '<rootDir>/tests/presentation/__mocks__/react-dnd.js',
     '^react-dnd-html5-backend$': '<rootDir>/tests/presentation/__mocks__/react-dnd-html5-backend.js',
+    '\\.(css|scss|sass)$': '<rootDir>/tests/unit/__mocks__/styleMock.cjs',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd))',

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog';
-import { Bug, ChevronDown, Maximize2, Minimize2, X } from 'lucide-react';
+import { Dialog, DialogDescription, DialogTitle } from '../ui/dialog';
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Bug, ChevronDown, Maximize2, Minimize2 } from 'lucide-react';
 
 interface PortalProps {
   open: boolean;
@@ -11,15 +12,16 @@ interface PortalProps {
   className?: string;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
-  adminControls?: React.ReactNode;
   debugInfo?: React.ReactNode | Record<string, unknown>;
   debugTitle?: string;
   defaultDebugOpen?: boolean;
+  bringToTop?: boolean;
 };
 
 /**
- * Shared Portal component for full-screen or large overlay forms.
- * Usage: <Portal open={open} onOpenChange={setOpen} title="Edit Project">...</Portal>
+ * Purely functional Portal component - handles modal mechanics without visual styling.
+ * Forms handle their own styling. Provides fullscreen toggle and debug functionality.
+ * Usage: <Portal open={open} onOpenChange={setOpen}>...YourStyledForm...</Portal>
  */
 export function Portal({
   open,
@@ -30,10 +32,10 @@ export function Portal({
   className = '',
   isFullscreen = false,
   onToggleFullscreen,
-  adminControls,
   debugInfo,
   debugTitle = 'Debug info',
   defaultDebugOpen = false,
+  bringToTop = false,
 }: PortalProps) {
   const hasDebugInfo = debugInfo !== undefined && debugInfo !== null;
   const [debugOpen, setDebugOpen] = React.useState(() => defaultDebugOpen && hasDebugInfo);
@@ -98,27 +100,29 @@ export function Portal({
     return null;
   }, [debugInfo, hasDebugInfo]);
 
+  const overlayZ = bringToTop ? 'z-[11000]' : 'z-[9999]';
+  const contentZ = bringToTop ? 'z-[11001]' : 'z-[10000]';
+  const overlayClass = bringToTop
+    ? 'fixed inset-0 bg-background/60 backdrop-blur-md ' + overlayZ
+    : 'fixed inset-0 bg-transparent ' + overlayZ;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`w-full border border-white/20 dark:border-slate-800/60 ${isFullscreen ? 'h-screen max-h-screen rounded-none' : `h-[90vh] ${maxWidth} max-h-[90vh] rounded-2xl`} overflow-y-auto shadow-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg p-0 ${className}`}
-        style={isFullscreen ? { minHeight: '100vh' } : { minHeight: '400px' }}
-      >
-        <div className="flex items-center justify-between px-6 pt-5 pb-2 border-b border-slate-200/60 dark:border-slate-800/60 bg-transparent">
-          <div className="flex items-center gap-2">
-            {title && (
-              <DialogTitle className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">{title}</DialogTitle>
-            )}
-            <DialogDescription className="sr-only">
-              {title ? `Content for ${title}` : 'Modal content'}
-            </DialogDescription>
-          </div>
-          <div className="flex items-center gap-1">
-            {adminControls && (
-              <div className="flex items-center gap-2 mr-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-                {adminControls}
-              </div>
-            )}
+      <DialogPrimitive.Portal>
+        {/* Overlay for modal behavior, optionally blurred and semi-transparent */}
+        <DialogPrimitive.Overlay className={overlayClass} />
+        <DialogPrimitive.Content
+          className={`fixed left-1/2 top-1/2 ${contentZ} -translate-x-1/2 -translate-y-1/2 outline-none bg-background rounded-xl shadow-lg ${isFullscreen ? 'h-screen max-h-screen w-screen' : maxWidth} ${className}`}
+          style={isFullscreen ? { minHeight: '100vh', width: '100vw', left: '0', top: '0', transform: 'none', borderRadius: 0 } : undefined}
+        >
+        {/* Hidden accessibility elements */}
+        {title && <DialogTitle className="sr-only">{title}</DialogTitle>}
+        <DialogDescription className="sr-only">
+          {title ? `Content for ${title}` : 'Modal content'}
+        </DialogDescription>
+
+        {/* Functional controls - positioned absolutely if needed */}
+        {(onToggleFullscreen || hasDebugInfo) && (
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-1">
             {hasDebugInfo && (
               <button
                 type="button"
@@ -126,7 +130,7 @@ export function Portal({
                 aria-expanded={debugOpen}
                 aria-controls={debugPanelId}
                 onClick={() => setDebugOpen((prev) => !prev)}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors bg-background/80 backdrop-blur-sm"
               >
                 <Bug className="h-4 w-4" />
                 <ChevronDown className={`h-4 w-4 transition-transform ${debugOpen ? 'rotate-180' : ''}`} />
@@ -137,35 +141,30 @@ export function Portal({
                 type="button"
                 aria-label={isFullscreen ? 'Minimize' : 'Fullscreen'}
                 onClick={onToggleFullscreen}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors bg-background/80 backdrop-blur-sm"
               >
                 {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
               </button>
             )}
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => onOpenChange(false)}
-              className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors ml-1"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
-        </div>
-        <div className="px-6 pb-6 pt-2 space-y-4">
-          <div>{children}</div>
-          {hasDebugInfo && (
-            <div
-              id={debugPanelId}
-              hidden={!debugOpen}
-              className="rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/80 dark:bg-slate-900/60 px-4 py-3 space-y-3 text-xs text-slate-600 dark:text-slate-300"
-            >
-              <p className="font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{debugTitle}</p>
-              {debugContent}
-            </div>
-          )}
-        </div>
-      </DialogContent>
+        )}
+
+        {/* Pure content - no container styling */}
+        {children}
+
+        {/* Debug panel - positioned absolutely if open */}
+        {hasDebugInfo && (
+          <div
+            id={debugPanelId}
+            hidden={!debugOpen}
+            className="fixed bottom-4 left-4 right-4 max-w-md rounded-lg border border-border bg-muted px-4 py-3 space-y-3 text-xs text-muted-foreground backdrop-blur-sm"
+          >
+            <p className="font-semibold uppercase tracking-wide">{debugTitle}</p>
+            {debugContent}
+          </div>
+        )}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 }

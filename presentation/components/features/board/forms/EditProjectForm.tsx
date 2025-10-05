@@ -698,17 +698,17 @@ export default function EditProjectForm({ project, isOpen, onClose, onSave, onDe
               onClick={() => setEditingTaskId(task.id)}
             >
               {task.title}
-              {/* Subtle edit hint */}
-              <span className="absolute -top-3 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[9px] text-slate-400 font-normal whitespace-nowrap pointer-events-none">
-                click to edit
-              </span>
+
             </span>
             {/* Underline hint */}
             <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover/title:w-full transition-all duration-300 ease-out"></div>
-            <Edit3
-              className="absolute -right-4 top-0 h-2 w-2 text-slate-400 hover:text-blue-500 cursor-pointer opacity-0 group-hover/title:opacity-100 transition-all duration-200 group-hover/title:scale-110"
+            <div
+              className="absolute -right-4 top-0 opacity-0 group-hover/title:opacity-100 transition-all duration-200"
+              title="Edit task"
               onClick={() => setEditingTaskId(task.id)}
-            />
+            >
+              <Edit3 className="h-2 w-2 text-slate-400 hover:text-blue-500 cursor-pointer group-hover/title:scale-110 transition-all duration-200" />
+            </div>
           </div>
         )}
 
