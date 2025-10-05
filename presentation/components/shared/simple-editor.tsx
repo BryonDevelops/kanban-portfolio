@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { DOMParser } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
@@ -146,6 +147,61 @@ export function SimpleEditor({ content, onChange, placeholder = "Start writing y
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 prose-table:border-0',
+      },
+      handlePaste: (view, event) => {
+        const text = event.clipboardData?.getData('text/plain');
+
+        // Check if pasted text contains markdown code blocks or other markdown syntax
+        if (text && (
+          text.includes('```') || 
+          text.match(/^#{1,6}\s+/m) || // Headers
+          text.match(/^\*\s+/m) ||     // Bullet lists  
+          text.match(/^\d+\.\s+/m) ||  // Numbered lists
+          text.match(/^>\s+/m) ||      // Blockquotes
+          text.match(/\*\*.*?\*\*/) || // Bold
+          text.match(/\*.*?\*/) ||     // Italic
+          text.match(/`.*?`/)          // Inline code
+        )) {
+          try {
+            // Convert markdown to HTML
+            const html = mdToHtml(text);
+
+            // Create a temporary div to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            // Check if the conversion actually produced meaningful HTML
+            // (not just wrapped in a single <p> tag with the same text)
+            const hasMarkdownElements = tempDiv.querySelector('pre, code, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, strong, em');
+            const textContentDiffers = tempDiv.textContent?.trim() !== text.trim();
+            
+            if (hasMarkdownElements || textContentDiffers) {
+              event.preventDefault();
+
+              // Use the editor's insertContent method to properly insert the HTML
+              const { state } = view;
+              const { schema } = state;
+
+              // Parse the HTML content using ProseMirror's DOMParser
+              const parser = DOMParser.fromSchema(schema);
+              const doc = parser.parse(tempDiv);
+
+              // Insert the parsed content
+              const { tr } = state;
+              const { from, to } = state.selection;
+              tr.replaceWith(from, to, doc.content);
+              view.dispatch(tr);
+
+              return true;
+            }
+          } catch (error) {
+            // Fall back to default paste behavior if conversion fails
+            console.warn('Failed to parse markdown on paste:', error);
+          }
+        }
+
+        // Default paste behavior
+        return false;
       },
     },
   });
