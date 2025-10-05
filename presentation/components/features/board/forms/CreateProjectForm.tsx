@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/presentation/components/ui/dialog';
-import { ProjectCreate, Project } from '../../../../../domain/board/schemas/project.schema';
+import { Portal } from '@/presentation/components/shared/Portal';
+import { ProjectCreate } from '../../../../../domain/board/schemas/project.schema';
 import { Plus, X } from 'lucide-react';
 import { TechStackPicker } from '../../../shared/TechStackPicker';
 import { useBoardStore } from '../../../../stores/board/boardStore';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { TECH_STACK, TechItem } from '../../../features/projects/tech-data';
-import { useUser } from '@clerk/nextjs';
+
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 
 interface CreateProjectFormProps {
@@ -20,157 +20,40 @@ interface CreateProjectFormProps {
 export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = 'planning' }: CreateProjectFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { setColumns, columns } = useBoardStore();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+
+  const { addProject } = useBoardStore();
   const isAdmin = useIsAdmin();
-  const { user, isLoaded } = useUser();
-  const isLoggedIn = isLoaded && !!user;
-  const canSaveToDatabase = isLoggedIn && isAdmin;
 
-  const BOARD_LOCAL_STORAGE_KEY = 'kanban-board-local-state';
-
-  const saveBoardStateToLocalStorage = (columns: Record<string, Project[]>) => {
-    try {
-      localStorage.setItem(BOARD_LOCAL_STORAGE_KEY, JSON.stringify({
-        columns,
-        savedAt: new Date().toISOString()
-      }));
-    } catch (error) {
-      console.error('Failed to save board state to localStorage:', error);
-    }
-  };
-
-  // Form state
   const [formData, setFormData] = useState<ProjectCreate>({
     title: '',
     description: '',
-    url: '',
-    image: '',
     status: defaultStatus,
     technologies: [],
     tags: [],
-    attachments: [],
-    tasks: [],
     start_date: undefined,
     end_date: undefined,
+    url: '',
+    image: '',
+    attachments: [],
+    notes: '',
+    architecture: '',
+    tasks: []
   });
 
-  // Remove manual tech input state
-  const [tagInput, setTagInput] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Validate required fields
-      if (!formData.title.trim()) {
-        throw new Error('Project title is required');
-      }
-
-      if (canSaveToDatabase) {
-        // Save to database via API
-        const response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create project');
-        }
-
-        // Show success toast
-        import("@/presentation/utils/toast").then(({ success }) => {
-          success("Project created!", `"${formData.title}" has been successfully created.`);
-        });
-      } else {
-        // Save locally to localStorage
-        const newProject: Project = {
-          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          title: formData.title.trim(),
-          description: formData.description?.trim() || undefined,
-          url: formData.url?.trim() || undefined,
-          image: formData.image?.trim() || undefined,
-          status: formData.status,
-          technologies: formData.technologies,
-          tags: formData.tags,
-          attachments: formData.attachments || [],
-          tasks: formData.tasks || [],
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          created_at: new Date(),
-          updated_at: new Date()
-        };
-
-        // Determine which column to add the project to based on status
-        const columnId =
-          formData.status === 'planning' || formData.status === 'on-hold' ? 'ideas' :
-          formData.status === 'in-progress' ? 'in-progress' :
-          'completed';
-
-        // Add project to local state
-        const newColumns = { ...columns };
-        if (!newColumns[columnId]) {
-          newColumns[columnId] = [];
-        }
-        newColumns[columnId].push(newProject);
-        setColumns(newColumns);
-
-        // Save to localStorage
-        saveBoardStateToLocalStorage(newColumns);
-
-        // Show success toast
-        import("@/presentation/utils/toast").then(({ success }) => {
-          success("Project created locally!", `"${formData.title}" has been saved to your browser. Only admins can save to the database.`);
-        });
-      }
-
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        url: '',
-        image: '',
-        status: 'planning',
-        technologies: [],
-        tags: [],
-        attachments: [],
-        tasks: [],
-        start_date: undefined,
-        end_date: undefined,
-      });
-  // setTechInput removed (no longer needed)
-      setTagInput('');
-
-      // Close dialog and notify parent
-      setOpen(false);
-      onProjectCreated?.();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create project';
-      setError(errorMessage);
-
-      // Show error toast
-      import("@/presentation/utils/toast").then(({ error: errorToast }) => {
-        errorToast("Failed to create project", errorMessage);
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleInputChange = (field: keyof ProjectCreate, value: unknown) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-
-
   const addTag = () => {
-    const tag = tagInput.trim();
-    if (tag && !formData.tags.includes(tag)) {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, tag]
+        tags: [...prev.tags, tagInput.trim()]
       }));
       setTagInput('');
     }
@@ -183,36 +66,77 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
     }));
   };
 
-  const handleInputChange = (field: keyof ProjectCreate, value: string | Date | undefined) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.title.trim()) {
+      alert('Please fill in the project title');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await addProject(formData.status, formData.title, formData.description);
+      onProjectCreated?.();
+      setOpen(false);
+
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        status: defaultStatus,
+        technologies: [],
+        tags: [],
+        start_date: undefined,
+        end_date: undefined,
+        url: '',
+        image: '',
+        attachments: [],
+        notes: '',
+        architecture: '',
+        tasks: []
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Failed to create project. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="default" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
+    <div>
+      {trigger ? (
+        <div onClick={() => setOpen(true)}>
+          {trigger}
+        </div>
+      ) : (
+        <Button
+          onClick={() => setOpen(true)}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </Button>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
+      <Portal
+        open={open}
+        onOpenChange={setOpen}
+        title="Create New Project"
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
             <label htmlFor="title" className="text-sm font-medium">
-              Title *
+              Project Title <span className="text-red-500">*</span>
             </label>
             <Input
               id="title"
@@ -220,27 +144,25 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="Enter project title"
               required
-              maxLength={100}
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
             <label htmlFor="description" className="text-sm font-medium">
-              Description
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe your project..."
-              maxLength={500}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-vertical"
+              required
             />
           </div>
 
-          {/* URL */}
+          {/* URLs */}
           <div className="space-y-2">
             <label htmlFor="url" className="text-sm font-medium">
               Project URL
@@ -250,23 +172,17 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
               type="url"
               value={formData.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
-              placeholder="https://example.com"
+              placeholder="https://your-project.com or https://github.com/username/repo"
             />
           </div>
 
-          {/* Image */}
+          {/* Image Upload */}
           <div className="space-y-2">
-            <label htmlFor="image" className="text-sm font-medium">
-              Project Image
-            </label>
+            <label className="text-sm font-medium">Project Image</label>
             <ImageUploadDropdown
               value={formData.image}
-              onChange={(value) => handleInputChange('image', value)}
-              placeholder="Select or upload project image..."
+              onChange={(url) => handleInputChange('image', url)}
             />
-            <p className="text-xs text-muted-foreground">
-              Optional: Add a cover image for your project (JPG, PNG, WebP, etc.) - upload from device, paste from clipboard, or browse Unsplash
-            </p>
           </div>
 
           {/* Status */}
@@ -402,7 +318,7 @@ export function CreateProjectForm({ onProjectCreated, trigger, defaultStatus = '
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </Portal>
+    </div>
   );
 }

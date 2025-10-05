@@ -11,14 +11,12 @@ import { X, Save, Plus, Trash2, Code, FileText, CheckSquare, Circle, CheckCircle
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Project } from '../../../../../domain/board/schemas/project.schema'
-import { createPortal } from 'react-dom'
+import { Portal } from '../../../shared/Portal'
 import { useIsAdmin } from '../../../shared/ProtectedRoute'
 import Image from 'next/image'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs"
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown'
 import { TechStackPicker } from '../../../shared/TechStackPicker';
-
-
 
 type Props = {
   project: Project
@@ -1635,10 +1633,17 @@ React, TypeScript, Tailwind CSS
     </div>
   )
 
-  // Render using portal to escape container bounds
-  if (typeof window !== 'undefined') {
-    return createPortal(modalContent, document.body)
-  }
-
-  return modalContent
+  // Render using shared Portal component
+  return (
+    <Portal
+      open={isOpen}
+      onOpenChange={open => { if (!open) onClose(); }}
+      title={formData.title || 'Edit Project'}
+      maxWidth="max-w-4xl"
+      isFullscreen={isFullscreen}
+      onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+    >
+      {modalContent}
+    </Portal>
+  );
 }

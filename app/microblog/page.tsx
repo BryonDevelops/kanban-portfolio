@@ -1,10 +1,9 @@
 "use client"
 
 import { useCallback, useEffect } from 'react'
-import { BlogPostPortal } from '../../presentation/components/features/microblog/BlogPostPortal'
+import { BlogPostCard } from '../../presentation/components/features/microblog/BlogPostCard'
 import type { BlogPost } from '../../presentation/components/features/microblog/BlogPostPortal'
-import { Badge } from '../../presentation/components/ui/badge'
-import { Clock, ArrowRight, BookOpen, Sparkles, TrendingUp } from "lucide-react"
+import { Clock, BookOpen, Sparkles, TrendingUp } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { AdminControls } from '../../presentation/components/features/microblog/AdminControls'
@@ -160,65 +159,12 @@ export default function MicroblogPage() {
             ) : featuredPosts.length > 0 ? (
               <div className={`grid gap-6 sm:gap-8 ${featuredPosts.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' : 'grid-cols-1 lg:grid-cols-2'}`}>
                 {featuredPosts.slice(0, 4).map((post) => (
-                  <BlogPostPortal
+                  <BlogPostCard
                     key={post.id}
                     post={post}
-                    trigger={
-                      <div className="group relative overflow-hidden bg-white/90 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 rounded-2xl hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-200/20 dark:hover:shadow-white/5 cursor-pointer">
-                        {/* Featured badge */}
-                        <div className="absolute top-4 right-4 z-10">
-                          <div className="bg-gradient-to-r from-pink-500 to-purple-600 dark:from-yellow-500 dark:to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                            Featured
-                          </div>
-                        </div>
-
-                        {/* Admin buttons */}
-                        {adminControls.isAdmin && (
-                          <div className="absolute top-4 left-4 z-10">
-                            <>{adminControls.PostAdminButtons({ post })}</>
-                          </div>
-                        )}
-
-                        <div className="p-6 sm:p-8">
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="text-xs text-slate-500 dark:text-gray-400">
-                              {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
-                            <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime || 5} min read</span>
-                          </div>
-
-                          <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
-                            {post.title}
-                          </h3>
-
-                          <p className="text-slate-600 dark:text-gray-300 leading-relaxed mb-4 line-clamp-3">
-                            {post.excerpt}
-                          </p>
-
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {post.tags.slice(0, 3).map((tag) => (
-                              <Badge
-                                key={tag}
-                                variant="secondary"
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-500 dark:text-gray-400">
-                              By {post.author}
-                            </span>
-                            <span className="text-pink-600 dark:text-blue-400 text-sm font-medium group-hover:underline">
-                              Read More →
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    }
+                    variant="featured"
+                    isAdmin={adminControls.isAdmin}
+                    renderAdminButtons={(cardPost) => adminControls.PostAdminButtons({ post: cardPost })}
                   />
                 ))}
               </div>
@@ -287,57 +233,11 @@ export default function MicroblogPage() {
 
               <div className="space-y-6">
                 {recentPosts.map((post) => (
-                  <BlogPostPortal
+                  <BlogPostCard
                     key={post.id}
                     post={post}
-                    trigger={
-                      <div className="group relative p-6 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.01] cursor-pointer">
-                        {/* Admin buttons */}
-                        {adminControls.isAdmin && (
-                          <div className="absolute top-4 right-4 z-10">
-                            <>{adminControls.PostAdminButtons({ post })}</>
-                          </div>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs text-slate-500 dark:text-gray-400">
-                                {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-gray-400">•</span>
-                              <span className="text-xs text-slate-500 dark:text-gray-400">{post.readTime || 5} min read</span>
-                            </div>
-
-                            <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2 group-hover:text-pink-600 dark:group-hover:text-blue-300 transition-colors">
-                              {post.title}
-                            </h4>
-
-                            <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed mb-3 line-clamp-2">
-                              {post.excerpt}
-                            </p>
-
-                            <div className="flex flex-wrap gap-1">
-                              {post.tags.slice(0, 2).map((tag) => (
-                                <Badge
-                                  key={tag}
-                                  variant="secondary"
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100/50 dark:bg-white/10 text-slate-700 dark:text-white/70 text-xs"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex-shrink-0">
-                            <div className="text-pink-600 dark:text-blue-400 hover:text-pink-700 dark:hover:text-blue-300">
-                              <ArrowRight className="h-4 w-4" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    }
+                    isAdmin={adminControls.isAdmin}
+                    renderAdminButtons={(cardPost) => adminControls.PostAdminButtons({ post: cardPost })}
                   />
                 ))}
               </div>

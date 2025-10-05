@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { useIsMobile } from '../../../../hooks/use-mobile';
 import { StreamlinedBlogEditor } from './StreamlinedBlogEditor';
 import { X, Save, Plus, Edit3, Maximize2, Minimize2, FileText, User, Clock, Edit } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import { Portal } from '../../../shared/Portal';
 import { ImageUploadDropdown } from '../../../shared/image-upload-dropdown';
 import { CategorySelector } from './CategorySelector';
 import type { BlogPost } from '../BlogPostPortal';
@@ -483,10 +483,17 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
     </div>
   );
 
-  // Render using portal to escape container bounds
-  if (typeof window !== 'undefined') {
-    return createPortal(modalContent, document.body);
-  }
-
-  return modalContent;
+  // Render using shared Portal component
+  return (
+    <Portal
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      title={formData.title || 'Create Blog Post'}
+      maxWidth="max-w-3xl"
+      isFullscreen={isFullscreen}
+      onToggleFullscreen={() => setIsFullscreen((v) => !v)}
+    >
+      {modalContent}
+    </Portal>
+  );
 }
