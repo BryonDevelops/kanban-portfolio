@@ -40,6 +40,14 @@
 , "next.config.cjs"  ],
   "exclude": [
     "node_modules",
-    "studio-bryondevelops"
+    "studio-bryondevelops",
+    "components/tiptap-*",
+    "hooks/use-tiptap-*",
+    "hooks/use-ui-editor-state.ts",
+    "hooks/use-cursor-visibility.ts",
+    "hooks/use-floating-toolbar-visibility.ts",
+    "hooks/use-menu-navigation.ts",
+    "lib/tiptap-*.ts",
+    "contexts/*-context.tsx"
   ]
 }

@@ -26,15 +26,27 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
+  // Mark server-only packages to prevent client bundling
+  serverExternalPackages: ['@notionhq/client'],
   // Enable compression
   compress: true,
   // Configure webpack to handle path aliases properly
-  webpack: (config: import('webpack').Configuration) => {
+  webpack: (config: import('webpack').Configuration, { isServer }: { isServer: boolean }) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname),
     };
+
+    // Mark server-only modules to prevent client bundling issues
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Prevent @notionhq/client from being bundled on the client
+        '@notionhq/client': false,
+      };
+    }
+
     return config;
   },
 };

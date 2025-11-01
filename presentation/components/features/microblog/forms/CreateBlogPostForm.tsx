@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 import { useIsMobile } from '../../../../hooks/use-mobile';
-import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
+import { NotionPageSelector } from '@/presentation/components/shared/notion-page-selector';
 import {
   X,
   Save,
@@ -43,7 +43,7 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
-    content: '',
+    notionPageId: '', // Store Notion page ID instead of HTML content
     author: user?.fullName || user?.username || '',
     tags: [] as string[],
     categories: [] as string[], // Array of category IDs
@@ -137,17 +137,19 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
       if (!formData.title.trim()) {
         throw new Error('Title is required');
       }
-      if (!formData.content.trim()) {
-        throw new Error('Content is required');
+      if (!formData.notionPageId.trim()) {
+        throw new Error('Please select a Notion page');
       }
 
       if (canSaveToDatabase) {
         const publishedAt = new Date().toISOString();
-        const readTime = Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').length / 200);
+        // For Notion pages, we'll calculate read time from the page content if needed
+        // For now, set a default read time
+        const readTime = 5; // Default read time, can be calculated from Notion page blocks
         const createdPost: Omit<BlogPost, 'id'> = {
           title: formData.title,
           excerpt: formData.excerpt,
-          content: formData.content,
+          content: formData.notionPageId, // Store Notion page ID in content field
           author: formData.author,
           publishedAt,
           tags: formData.tags,
@@ -334,7 +336,7 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
                 {/* Read Time */}
                 <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
                   <Clock className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
-                  <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
+                  <span>Read time: ~5 min</span>
                 </div>
               </div>
               <div className="flex gap-1 flex-wrap items-center">
@@ -434,18 +436,23 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
         <div className="flex-1 overflow-y-auto">
           {activeSection === 'content' ? (
             <div className="p-6 space-y-6">
-              {/* Content Editor */}
+              {/* Notion Page Selector */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Content
+                  Notion Page
                 </label>
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                  <SimpleEditor
-                    content={formData.content || ''}
-                    onChange={(newContent: string) => handleInputChange('content', newContent)}
-                    placeholder="Start writing your amazing blog post..."
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+                  <NotionPageSelector
+                    databaseId={process.env.NEXT_PUBLIC_NOTION_DATABASE_ID || ''}
+                    selectedPageId={formData.notionPageId}
+                    onPageSelect={(pageId) => handleInputChange('notionPageId', pageId)}
+                    placeholder="Select a Notion page to display..."
+                    showPreview={true}
                   />
                 </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Select a published Notion page from your database. The page content will be rendered on your blog.
+                </p>
               </div>
             </div>
           ) : (
@@ -475,7 +482,7 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
                   <div className="relative">
                     <Clock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <div className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
-                      {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min
+                      ~5 min
                     </div>
                   </div>
                 </div>
@@ -577,7 +584,7 @@ export function CreateBlogPostForm({ onBlogPostCreated, trigger, open, onOpenCha
               </button>
               <button
                 onClick={handleSave}
-                disabled={isLoading || !formData.title.trim() || !formData.content.trim()}
+                disabled={isLoading || !formData.title.trim() || !formData.notionPageId.trim()}
                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:transform-none"
               >
                 {isLoading ? (

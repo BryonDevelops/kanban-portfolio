@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 import { useIsMobile } from '../../../../hooks/use-mobile';
-import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
+import { NotionPageSelector } from '@/presentation/components/shared/notion-page-selector';
 import { CategorySelector } from './CategorySelector';
 import { BlogPost } from '../BlogPostPortal';
 import {
@@ -49,11 +49,11 @@ export function ImprovedEditBlogPostForm({
   const canSaveToDatabase = isLoggedIn && isAdmin;
   const isMobile = useIsMobile();
 
-  // Form state
+  // Form state - treat content as Notion page ID
   const [formData, setFormData] = useState({
     title: blogPost.title,
     excerpt: blogPost.excerpt,
-    content: blogPost.content,
+    notionPageId: blogPost.content, // Store Notion page ID in content field
     author: blogPost.author,
     tags: [...blogPost.tags],
     categories: [...(blogPost.categories || [])],
@@ -85,7 +85,7 @@ export function ImprovedEditBlogPostForm({
     const hasChanges = (
       formData.title !== blogPost.title ||
       formData.excerpt !== blogPost.excerpt ||
-      formData.content !== blogPost.content ||
+      formData.notionPageId !== blogPost.content ||
       formData.author !== blogPost.author ||
       formData.imageUrl !== (blogPost.imageUrl || '') ||
       JSON.stringify(formData.tags) !== JSON.stringify(blogPost.tags) ||
@@ -99,7 +99,7 @@ export function ImprovedEditBlogPostForm({
     const newFormData = {
       title: blogPost.title,
       excerpt: blogPost.excerpt,
-      content: blogPost.content,
+      notionPageId: blogPost.content, // Store Notion page ID in content field
       author: blogPost.author,
       tags: [...blogPost.tags],
       categories: [...(blogPost.categories || [])],
@@ -166,21 +166,23 @@ export function ImprovedEditBlogPostForm({
       if (!formData.title.trim()) {
         throw new Error('Title is required');
       }
-      if (!formData.content.trim()) {
-        throw new Error('Content is required');
+      if (!formData.notionPageId.trim()) {
+        throw new Error('Please select a Notion page');
       }
 
       if (canSaveToDatabase) {
         // Update in database via API
-        const readTime = Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').length / 200);
+        // For Notion pages, use default read time
+        const readTime = 5; // Default read time for Notion pages
 
-        const { imageUrl, ...rest } = {
+        const { imageUrl, notionPageId, ...rest } = {
           ...formData,
           readTime,
         };
-
+        
         const payload = {
           ...rest,
+          content: notionPageId, // Use Notion page ID as content
           ...(typeof imageUrl === 'string' && imageUrl.trim()
             ? { imageUrl: imageUrl.trim() }
             : {}),
@@ -405,16 +407,8 @@ export function ImprovedEditBlogPostForm({
                   <Clock className="h-3 w-3 flex-shrink-0" />
                   <span>
                     {(() => {
-                      // Estimate words from Markdown content
-                      const text = (formData.content || '')
-                        .replace(/```[\s\S]*?```/g, ' ') // remove fenced code blocks
-                        .replace(/`[^`]*`/g, ' ') // remove inline code
-                        .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // links: keep label
-                        .replace(/[#>*_~\-]+/g, ' ') // markdown syntax
-                        .replace(/\|/g, ' ') // table pipes
-                        .replace(/\s+/g, ' ') // collapse whitespace
-                        .trim();
-                      const words = text ? text.split(' ').filter(Boolean).length : 0;
+                      // For Notion pages, use default read time
+                      const words = 1000; // Default estimate for Notion pages
                       const mins = Math.ceil(words / 200);
                       return `Read time: ${mins} min`;
                     })()}
@@ -521,16 +515,20 @@ export function ImprovedEditBlogPostForm({
               {/* Content Editor */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Content
+                  Notion Page
                 </label>
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                  <SimpleEditor
-                    key={`editor-${blogPost.id}`}
-                    content={formData.content || ''}
-                    onChange={(newContent: string) => handleInputChange('content', newContent)}
-                    placeholder="Write your blog post content..."
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+                  <NotionPageSelector
+                    databaseId={process.env.NEXT_PUBLIC_NOTION_DATABASE_ID || ''}
+                    selectedPageId={formData.notionPageId}
+                    onPageSelect={(pageId) => handleInputChange('notionPageId', pageId)}
+                    placeholder="Select a Notion page to display..."
+                    showPreview={true}
                   />
                 </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Select a published Notion page from your database. The page content will be rendered on your blog.
+                </p>
               </div>
             </div>
           ) : (
@@ -560,7 +558,7 @@ export function ImprovedEditBlogPostForm({
                   <div className="relative">
                     <Clock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <div className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
-                      {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min
+                      ~5 min
                     </div>
                   </div>
                 </div>
@@ -679,7 +677,7 @@ export function ImprovedEditBlogPostForm({
               </button>
               <button
                 onClick={handleSave}
-                disabled={isLoading || !formData.title.trim() || !formData.content.trim()}
+                disabled={isLoading || !formData.title.trim() || !formData.notionPageId.trim()}
                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md transform hover:scale-[1.02] disabled:transform-none"
               >
                 {isLoading ? (

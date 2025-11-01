@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BlogPostCard } from '../../presentation/components/features/microblog/BlogPostCard'
 import type { BlogPost } from '../../presentation/components/features/microblog/BlogPostPortal'
 import { Clock, BookOpen, Sparkles, TrendingUp } from "lucide-react"
@@ -9,33 +9,75 @@ import { SectionBadge } from "@/presentation/components/shared/section-badge"
 import { AdminControls } from '../../presentation/components/features/microblog/AdminControls'
 import { useMicroblogStore } from '@/presentation/stores'
 
+// Helper to convert hex color to Tailwind gradient class
+function hexToGradient(hex: string): string {
+  // Map of hex colors to Tailwind gradients
+  const colorMap: Record<string, string> = {
+    '#3B82F6': 'from-blue-500 to-cyan-500',
+    '#EC4899': 'from-pink-500 to-purple-500',
+    '#10B981': 'from-green-500 to-emerald-500',
+    '#F59E0B': 'from-orange-500 to-yellow-500',
+    '#8B5CF6': 'from-violet-500 to-purple-500',
+  }
+  
+  // Convert to uppercase and return mapped gradient or default
+  return colorMap[hex.toUpperCase()] || 'from-gray-500 to-gray-600'
+}
+
 export default function MicroblogPage() {
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null)
+  
   const {
     isLoading,
-    loadPosts,
+    loadPostsFromNotion,
     createPost,
     deletePost,
     getPublishedPosts,
     getFeaturedPosts,
-    categories,
     loadCategories,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    getCategoriesWithPostCounts,
+    getPostsByCategory
   } = useMicroblogStore()
 
-  // Load posts and categories on component mount
+  // Load posts from Notion and categories on component mount
   useEffect(() => {
-    loadPosts()
+    loadPostsFromNotion()
     loadCategories()
-  }, [loadPosts, loadCategories])
+  }, [loadPostsFromNotion, loadCategories])
 
-  // Get published posts for display
-  const publishedPosts = getPublishedPosts()
+  // Get published posts for display (filtered by category if selected)
+  const allPublishedPosts = getPublishedPosts()
+  const publishedPosts = selectedCategorySlug 
+    ? getPostsByCategory(selectedCategorySlug)
+    : allPublishedPosts
   const featuredPosts = getFeaturedPosts()
   const recentPosts = publishedPosts
     .filter(post => !post.featured) // Exclude featured posts from recent
     .slice(0, 8) // Take first 8 non-featured posts
+
+  // Get categories with post counts
+  const categoriesWithCounts = getCategoriesWithPostCounts()
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[MicroblogPage] Render state:', {
+      isLoading,
+      publishedPostsCount: publishedPosts.length,
+      featuredPostsCount: featuredPosts.length,
+      recentPostsCount: recentPosts.length,
+      publishedPostTitles: publishedPosts.map(p => p.title),
+      featuredPostDetails: featuredPosts.map(p => ({
+        id: p.id,
+        title: p.title,
+        featured: p.featured,
+        status: p.status,
+        featuredType: typeof p.featured
+      }))
+    });
+  }, [isLoading, publishedPosts, featuredPosts, recentPosts])
 
   // Get admin components
   const handleCreatePost = useCallback(async (postData: Omit<BlogPost, 'id'>) => {
@@ -191,10 +233,42 @@ export default function MicroblogPage() {
                   )}
                 </div>
                 <div className="space-y-3">
-                  {categories.map((category) => (
+                  {/* All Posts button */}
+                  <div
+                    onClick={() => setSelectedCategorySlug(null)}
+                    className={`group relative flex items-center justify-between p-4 rounded-xl backdrop-blur-sm border transition-all duration-300 hover:scale-105 cursor-pointer ${
+                      selectedCategorySlug === null
+                        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-400/50 dark:border-purple-400/50'
+                        : 'bg-white/80 dark:bg-white/5 border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500" />
+                      <div className="flex-1">
+                        <span className={`group-hover:text-slate-800 dark:group-hover:text-white transition-colors block ${
+                          selectedCategorySlug === null
+                            ? 'text-slate-900 dark:text-white font-semibold'
+                            : 'text-slate-700 dark:text-white/90'
+                        }`}>
+                          All Posts
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-600 dark:text-white/60 bg-pink-100/50 dark:bg-white/10 px-2 py-1 rounded-full">
+                      {allPublishedPosts.length}
+                    </span>
+                  </div>
+
+                  {/* Category buttons */}
+                  {categoriesWithCounts.map((category) => (
                     <div
                       key={category.id}
-                      className="group relative flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer"
+                      onClick={() => setSelectedCategorySlug(category.slug)}
+                      className={`group relative flex items-center justify-between p-4 rounded-xl backdrop-blur-sm border transition-all duration-300 hover:scale-105 cursor-pointer ${
+                        selectedCategorySlug === category.slug
+                          ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-400/50 dark:border-purple-400/50'
+                          : 'bg-white/80 dark:bg-white/5 border-pink-200/50 dark:border-white/10 hover:border-pink-300/50 dark:hover:border-white/20'
+                      }`}
                     >
                       {adminControls.isAdmin && (
                         <div className="absolute top-2 right-2 z-10">
@@ -203,9 +277,13 @@ export default function MicroblogPage() {
                       )}
 
                       <div className="flex items-center gap-3 flex-1">
-                        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${category.color}`} />
+                        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${hexToGradient(category.color)}`} />
                         <div className="flex-1">
-                          <span className="text-slate-700 dark:text-white/90 group-hover:text-slate-800 dark:group-hover:text-white transition-colors block">
+                          <span className={`group-hover:text-slate-800 dark:group-hover:text-white transition-colors block ${
+                            selectedCategorySlug === category.slug
+                              ? 'text-slate-900 dark:text-white font-semibold'
+                              : 'text-slate-700 dark:text-white/90'
+                          }`}>
                             {category.name}
                           </span>
                           {category.description && (
@@ -228,18 +306,53 @@ export default function MicroblogPage() {
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-8">
                 <Clock className="h-5 w-5 text-pink-500 dark:text-blue-400" />
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Recent Posts</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                  {selectedCategorySlug 
+                    ? categoriesWithCounts.find(c => c.slug === selectedCategorySlug)?.name || 'Recent Posts'
+                    : 'Recent Posts'}
+                </h3>
               </div>
 
               <div className="space-y-6">
-                {recentPosts.map((post) => (
-                  <BlogPostCard
-                    key={post.id}
-                    post={post}
-                    isAdmin={adminControls.isAdmin}
-                    renderAdminButtons={(cardPost) => adminControls.PostAdminButtons({ post: cardPost })}
-                  />
-                ))}
+                {isLoading ? (
+                  <div className="text-center py-12">
+                    <div className="text-slate-500 dark:text-gray-400 mb-4">
+                      <Clock className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
+                      <p className="text-lg">Loading posts...</p>
+                    </div>
+                  </div>
+                ) : recentPosts.length > 0 ? (
+                  recentPosts.map((post) => {
+                    console.log('[MicroblogPage] Rendering post card:', {
+                      id: post.id,
+                      title: post.title,
+                      excerpt: post.excerpt?.substring(0, 50),
+                      content: post.content?.substring(0, 50),
+                      hasAllFields: !!post.id && !!post.title && !!post.excerpt && !!post.author && !!post.publishedAt
+                    });
+                    return (
+                      <BlogPostCard
+                        key={post.id}
+                        post={post}
+                        isAdmin={adminControls.isAdmin}
+                        renderAdminButtons={(cardPost) => adminControls.PostAdminButtons({ post: cardPost })}
+                      />
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-slate-500 dark:text-gray-400 mb-4">
+                      <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg">No posts yet</p>
+                      <p className="text-sm">Check back soon for new content!</p>
+                      {publishedPosts.length === 0 && (
+                        <p className="text-xs mt-2 text-slate-400 dark:text-gray-500">
+                          Debug: Total posts in store: {useMicroblogStore.getState().posts.length}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Load More */}
