@@ -57,18 +57,19 @@ beforeAll(async () => {
     ),
   }));
 
-  await unstableMockModule('@/presentation/components/shared/simple-editor', () => ({
-    SimpleEditor: ({
-      content,
-      onChange,
+  await unstableMockModule('@/presentation/components/shared/notion-page-selector', () => ({
+    NotionPageSelector: ({
+      selectedPageId,
+      onPageSelect,
     }: {
-      content: string;
-      onChange: (value: string) => void;
+      selectedPageId: string;
+      onPageSelect: (id: string) => void;
     }) => (
-      <textarea
+      <input
         data-testid="mock-content-input"
-        value={content}
-        onChange={(event) => onChange(event.target.value)}
+        value={selectedPageId}
+        onChange={(event) => onPageSelect(event.target.value)}
+        placeholder="Notion page ID"
       />
     ),
   }));

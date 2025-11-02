@@ -38,6 +38,9 @@ describe('Feature Flags Unit Tests', () => {
         // Experimental features
         aiAssistant: false,
         advancedSearch: false,
+
+        // Authentication features
+        auth: true,
       });
     });
 

@@ -201,7 +201,7 @@ export function BlogPostCard({
           </button>
         </div>
         {/* Scrollable Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-8">
+        <div className={`flex-1 min-h-0 overflow-y-auto py-4 sm:py-8 ${isFullscreen ? 'px-0' : 'px-4 sm:px-8'}`}>
           <BlogPostContent post={post} />
         </div>
       </Portal>

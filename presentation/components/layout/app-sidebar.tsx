@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { NavMain } from "@/presentation/components/layout/nav-main"
 import { sidebarConfig } from "@/presentation/components/layout/sidebar"
-import { getFeatureFlagsSync, type FeatureFlags } from "@/lib/feature-flags"
+import { getFeatureFlagsSync, type FeatureFlags, features } from "@/lib/feature-flags"
 import { useAdminFeatureFlagStore } from "@/presentation/stores/admin/adminFeatureFlagStore"
 
 // Helper function to filter navigation items based on feature flags
@@ -204,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               )}
 
               {/* Signed Out - Auth Buttons */}
-              {isHydrated && (
+              {isHydrated && features.isAuthEnabled() && (
                 <SignedOut>
                   <div className="flex flex-col gap-2">
                     <div className="text-center">

@@ -3,6 +3,7 @@
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { features } from "@/lib/feature-flags"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -18,8 +19,14 @@ export function ProtectedRoute({
   const { user, isLoaded } = useUser()
   const { redirectToSignIn } = useClerk()
   const router = useRouter()
+  const isAuthEnabled = features.isAuthEnabled()
 
   useEffect(() => {
+    // If auth is disabled, don't enforce authentication
+    if (!isAuthEnabled) {
+      return
+    }
+
     if (isLoaded && !user) {
       // User is not signed in, redirect to sign in
       redirectToSignIn()
@@ -41,7 +48,12 @@ export function ProtectedRoute({
         return
       }
     }
-  }, [user, isLoaded, requireAdmin, router, redirectToSignIn])
+  }, [user, isLoaded, requireAdmin, router, redirectToSignIn, isAuthEnabled])
+
+  // If auth is disabled, allow access without authentication
+  if (!isAuthEnabled) {
+    return <>{children}</>
+  }
 
   // Show loading state while checking authentication
   if (!isLoaded) {

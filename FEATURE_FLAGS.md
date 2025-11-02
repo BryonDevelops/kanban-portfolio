@@ -24,6 +24,7 @@ NEXT_PUBLIC_FEATURE_MICROBLOG=true      # Microblog (/microblog)
 NEXT_PUBLIC_FEATURE_PROJECTS=true       # Projects page (/projects)
 NEXT_PUBLIC_FEATURE_ABOUT=true          # About page (/about)
 NEXT_PUBLIC_FEATURE_CONTACT=true        # Contact page (/contact)
+NEXT_PUBLIC_FEATURE_AUTH=true           # Sign in and sign up functionality
 ```
 
 ### Admin Features
@@ -65,6 +66,18 @@ This will:
 - Hide "Microblog" from the sidebar navigation
 - Return 404 when accessing `/microblog`
 - Prevent any microblog-related components from rendering
+
+### Disable Authentication
+
+```bash
+NEXT_PUBLIC_FEATURE_AUTH=false
+```
+
+This will:
+
+- Hide all sign in and sign up buttons across the site (sidebar, topbar, floating button)
+- Allow access to protected routes without authentication
+- Disable authentication enforcement in `ProtectedRoute` components
 
 ### Disable All Admin Features
 

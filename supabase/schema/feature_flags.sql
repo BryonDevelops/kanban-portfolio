@@ -74,6 +74,7 @@ VALUES
     ('pwa', 'Progressive Web App', 'Enable PWA features', true, 'advanced'),
     ('offline', 'Offline Support', 'Enable offline functionality', false, 'advanced'),
     ('aiAssistant', 'AI Assistant', 'Enable AI-powered features', false, 'experimental'),
-    ('advancedSearch', 'Advanced Search', 'Enable advanced search capabilities', false, 'experimental')
+    ('advancedSearch', 'Advanced Search', 'Enable advanced search capabilities', false, 'experimental'),
+    ('auth', 'Authentication', 'Enable sign in and sign up functionality across the site', true, 'core')
 ON CONFLICT
 (id) DO NOTHING;

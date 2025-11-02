@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createLogger } from '@/lib/logger';
 import { Button } from '@/presentation/components/ui/button';
-import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
 import { Save, X, Settings, Edit3 } from 'lucide-react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
@@ -377,11 +376,13 @@ export function StreamlinedBlogEditor({
 
         {/* Main Editor */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          <div className="h-full min-h-0 overflow-y-auto pr-1">
-            <SimpleEditor
-              content={content}
-              onChange={setContent}
+          <div className="h-full min-h-0 overflow-y-auto pr-1 px-4">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               placeholder={placeholder || "Start writing your amazing blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"}
+              className="min-h-full border-0 focus-visible:ring-0 resize-none text-base"
+              style={{ height: '100%' }}
             />
           </div>
         </div>

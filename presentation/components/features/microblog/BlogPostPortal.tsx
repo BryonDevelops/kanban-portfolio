@@ -3,6 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { MarkdownRenderer } from '@/presentation/utils/markdown'
+import { NotionBlogPostContent } from './NotionBlogPostContent'
 import { Portal } from '../../shared/Portal'
 import { Badge } from '../../ui/badge'
 import { Calendar, User, Tag } from 'lucide-react'
@@ -25,6 +26,18 @@ interface BlogPostPortalProps {
   post: BlogPost
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+// Helper function to check if content is a Notion page ID
+// Notion page IDs are typically 32-character hex strings (UUID without dashes)
+function isNotionPageId(content: string): boolean {
+  // Notion page IDs are 32 chars, but can be with or without dashes
+  // Also check if it doesn't look like HTML or markdown
+  const notionIdPattern = /^[a-f0-9]{32}$/i
+  const isNotHtml = !content.trim().startsWith('<') && !content.includes('</')
+  const isNotMarkdown = !content.trim().match(/^#{1,6}\s/) && !content.includes('```')
+  
+  return notionIdPattern.test(content.replace(/-/g, '')) && isNotHtml && isNotMarkdown
 }
 
 export function BlogPostContent({ post }: { post: BlogPost }) {
@@ -62,10 +75,18 @@ export function BlogPostContent({ post }: { post: BlogPost }) {
             />
           </div>
         )}
-        <MarkdownRenderer
-          content={post.content}
-          className="prose prose-slate dark:prose-invert max-w-none"
-        />
+        {/* Check if content is a Notion page ID (starts with UUID format) or HTML/Markdown */}
+        {isNotionPageId(post.content) ? (
+          <NotionBlogPostContent 
+            notionPageId={post.content} 
+            className="prose prose-slate dark:prose-invert max-w-none"
+          />
+        ) : (
+          <MarkdownRenderer
+            content={post.content}
+            className="prose prose-slate dark:prose-invert max-w-none"
+          />
+        )}
       </div>
     </div>
   )

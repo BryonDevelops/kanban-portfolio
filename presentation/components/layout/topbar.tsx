@@ -12,6 +12,7 @@ import Link from "next/link"
 import { ArrowRight, Zap, Mail } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useScrollState } from "@/presentation/hooks/use-scroll-state"
+import { features } from "@/lib/feature-flags"
 
 export function Topbar() {
   const pathname = usePathname()
@@ -58,28 +59,32 @@ export function Topbar() {
         <ModeToggle />
 
         {/* Desktop Auth Buttons */}
-        <SignedOut>
-          <div className="hidden sm:flex items-center gap-1 sm:gap-2">
-            <SignInButton>
-              <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3 h-8">Sign in</Button>
-            </SignInButton>
-            <SignUpButton>
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm px-2 sm:px-3 h-8">Sign up</Button>
-            </SignUpButton>
-          </div>
-        </SignedOut>
+        {features.isAuthEnabled() && (
+          <SignedOut>
+            <div className="hidden sm:flex items-center gap-1 sm:gap-2">
+              <SignInButton>
+                <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3 h-8">Sign in</Button>
+              </SignInButton>
+              <SignUpButton>
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm px-2 sm:px-3 h-8">Sign up</Button>
+              </SignUpButton>
+            </div>
+          </SignedOut>
+        )}
 
         {/* Mobile Auth Buttons */}
-        <SignedOut>
-          <div className="sm:hidden flex items-center gap-1">
-            <SignInButton>
-              <Button variant="ghost" size="sm" className="text-xs px-2 h-8">Sign in</Button>
-            </SignInButton>
-            <SignUpButton>
-              <Button variant="outline" size="sm" className="text-xs px-2 h-8">Sign up</Button>
-            </SignUpButton>
-          </div>
-        </SignedOut>
+        {features.isAuthEnabled() && (
+          <SignedOut>
+            <div className="sm:hidden flex items-center gap-1">
+              <SignInButton>
+                <Button variant="ghost" size="sm" className="text-xs px-2 h-8">Sign in</Button>
+              </SignInButton>
+              <SignUpButton>
+                <Button variant="outline" size="sm" className="text-xs px-2 h-8">Sign up</Button>
+              </SignUpButton>
+            </div>
+          </SignedOut>
+        )}
       </div>
     </div>
   )

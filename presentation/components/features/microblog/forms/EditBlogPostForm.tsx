@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useIsAdmin } from '../../../shared/ProtectedRoute';
 import { useUser } from '@clerk/nextjs';
 import { useIsMobile } from '../../../../hooks/use-mobile';
-import { SimpleEditor } from '@/presentation/components/shared/simple-editor';
+import { NotionPageSelector } from '@/presentation/components/shared/notion-page-selector';
 import { CategorySelector } from './CategorySelector';
 import { BlogPost } from '../BlogPostPortal';
 import { X, Save, Edit3, Maximize2, Minimize2, FileText, User, Clock, Trash2, Plus } from 'lucide-react';
@@ -27,11 +27,11 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
   const canSaveToDatabase = isLoggedIn && isAdmin;
   const isMobile = useIsMobile();
 
-  // Form state
+  // Form state - treat content as Notion page ID
   const [formData, setFormData] = useState({
     title: blogPost.title,
     excerpt: blogPost.excerpt,
-    content: blogPost.content,
+    notionPageId: blogPost.content, // Store Notion page ID in content field
     author: blogPost.author,
     tags: [...blogPost.tags],
     categories: [...(blogPost.categories || [])],
@@ -57,7 +57,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
     setFormData({
       title: blogPost.title,
       excerpt: blogPost.excerpt,
-      content: blogPost.content,
+      notionPageId: blogPost.content, // Store Notion page ID in content field
       author: blogPost.author,
       tags: [...blogPost.tags],
       categories: [...(blogPost.categories || [])],
@@ -96,14 +96,15 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
 
   const handleBlogPostUpdate = async (updatedData: {
     title: string;
-    content: string;
+    content: string; // This will be the Notion page ID
     excerpt: string;
     imageUrl: string;
   }) => {
     try {
       if (canSaveToDatabase) {
         // Update in database via API
-        const readTime = Math.ceil(updatedData.content.replace(/<[^>]*>/g, '').split(' ').length / 200);
+        // For Notion pages, use default read time
+        const readTime = 5; // Default read time for Notion pages
 
         const { imageUrl, ...rest } = {
           ...updatedData,
@@ -351,7 +352,7 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
                 {/* Read Time */}
                 <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}>
                   <Clock className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} flex-shrink-0`} />
-                  <span>Read time: {Math.ceil(formData.content.replace(/<[^>]*>/g, '').split(' ').filter(word => word.length > 0).length / 200)} min</span>
+                  <span>Read time: ~5 min</span>
                 </div>
               </div>
               <div className="flex gap-1 flex-wrap items-center">
@@ -463,11 +464,16 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
               </div>
 
               <div className="space-y-2">
-                <SimpleEditor
-                  content={formData.content}
-                  onChange={(content: string) => handleInputChange('content', content)}
-                  placeholder="Continue editing your blog post... Use the toolbar above to format your text, add headings, lists, links, and more!"
+                <NotionPageSelector
+                  databaseId={process.env.NEXT_PUBLIC_NOTION_DATABASE_ID || ''}
+                  selectedPageId={formData.notionPageId}
+                  onPageSelect={(pageId) => handleInputChange('notionPageId', pageId)}
+                  placeholder="Select a Notion page to display..."
+                  showPreview={true}
                 />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Select a published Notion page from your database. The page content will be rendered on your blog.
+                </p>
               </div>
             </div>
           </div>
@@ -493,13 +499,13 @@ export function EditBlogPostForm({ blogPost, onBlogPostUpdated, onBlogPostDelete
             <button
               onClick={() => handleBlogPostUpdate({
                 title: formData.title,
-                content: formData.content,
+                content: formData.notionPageId, // Use Notion page ID as content
                 excerpt: formData.excerpt,
                 imageUrl: formData.imageUrl,
               })}
-              disabled={!formData.title.trim() || !formData.content.trim()}
+              disabled={!formData.title.trim() || !formData.notionPageId.trim()}
               className={`flex-1 ${isMobile ? 'px-3 py-2.5' : 'sm:flex-initial px-4 py-2'} rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${isMobile ? 'text-sm' : 'text-sm'} ${
-                !formData.title.trim() || !formData.content.trim()
+                !formData.title.trim() || !formData.notionPageId.trim()
                   ? 'bg-slate-400 cursor-not-allowed text-slate-200'
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
               } flex items-center justify-center gap-2`}

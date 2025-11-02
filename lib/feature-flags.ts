@@ -24,6 +24,9 @@ export interface FeatureFlags {
   // Experimental features
   aiAssistant: boolean;
   advancedSearch: boolean;
+
+  // Authentication features
+  auth: boolean;
 }
 
 // Default feature flags (all enabled)
@@ -48,6 +51,9 @@ export const defaultFeatureFlags: FeatureFlags = {
   // Experimental features
   aiAssistant: false,
   advancedSearch: false,
+
+  // Authentication features
+  auth: true,
 };
 
 // Load feature flags from service, with environment variables as fallback
@@ -110,6 +116,9 @@ export function loadFeatureFlagsFromEnv(): FeatureFlags {
   flags.aiAssistant = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_AI_ASSISTANT, flags.aiAssistant);
   flags.advancedSearch = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_ADVANCED_SEARCH, flags.advancedSearch);
 
+  // Authentication features
+  flags.auth = parseBooleanEnv(process.env.NEXT_PUBLIC_FEATURE_AUTH, flags.auth);
+
   return flags;
 }
 
@@ -169,4 +178,5 @@ export const features = {
   isOfflineEnabled: () => isFeatureEnabledSync('offline'),
   isAIAssistantEnabled: () => isFeatureEnabledSync('aiAssistant'),
   isAdvancedSearchEnabled: () => isFeatureEnabledSync('advancedSearch'),
+  isAuthEnabled: () => isFeatureEnabledSync('auth'),
 };

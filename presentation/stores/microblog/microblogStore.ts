@@ -38,6 +38,7 @@ type MicroblogState = {
 
   // Post Queries
   loadPosts: (forceRefresh?: boolean) => Promise<void>;
+  loadPostsFromNotion: (forceRefresh?: boolean) => Promise<void>;
   loadPostById: (id: string) => Promise<Post | null>;
   loadPostsByStatus: (status: PostStatus) => Promise<void>;
   loadPostsByAuthor: (author: string) => Promise<void>;
@@ -57,6 +58,8 @@ type MicroblogState = {
   getFeaturedPosts: () => Post[];
   getCategoryById: (id: string) => Category | undefined;
   getCategoryBySlug: (slug: string) => Category | undefined;
+  getCategoriesWithPostCounts: () => Category[];
+  getPostsByCategory: (categorySlug: string) => Post[];
 };
 
 export const useMicroblogStore = create<MicroblogState>()(
@@ -101,6 +104,139 @@ export const useMicroblogStore = create<MicroblogState>()(
           } else {
             set({
               error: error instanceof Error ? error.message : 'Failed to load posts',
+              isLoading: false
+            });
+          }
+        }
+      },
+
+      loadPostsFromNotion: async (forceRefresh = false) => {
+        const state = get();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        const now = Date.now();
+
+        // If we have cached data and it's still fresh (unless force refresh), use it
+        if (!forceRefresh && state.posts.length > 0 &&
+            state.lastFetched && (now - state.lastFetched) < CACHE_DURATION) {
+          return; // Use cached data
+        }
+
+        // Always show cached data first if available, then fetch in background
+        const hasCachedData = state.posts.length > 0;
+
+        if (!hasCachedData || forceRefresh) {
+          set({ isLoading: true, error: null });
+        }
+
+        try {
+          // Fetch from Notion API
+          console.log('[MicroblogStore] Fetching posts from /api/notion/blog-posts');
+          const response = await fetch('/api/notion/blog-posts');
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Failed to fetch posts: ${response.statusText}`);
+          }
+
+          const blogPosts = await response.json();
+          console.log('[MicroblogStore] Fetched', blogPosts.length, 'blog posts from API');
+          
+          // Debug: Check featured posts from API
+          const apiFeaturedPosts = blogPosts.filter((bp: any) => bp.featured === true || bp.featured === 'true');
+          console.log('[MicroblogStore] Featured posts from API:', apiFeaturedPosts.length, apiFeaturedPosts.map((bp: any) => ({
+            id: bp.id,
+            title: bp.title,
+            featured: bp.featured,
+            featuredType: typeof bp.featured
+          })));
+          
+          console.log('[MicroblogStore] Sample blog post:', blogPosts[0] ? {
+            id: blogPosts[0].id,
+            title: blogPosts[0].title,
+            status: blogPosts[0].status,
+            featured: blogPosts[0].featured,
+            featuredType: typeof blogPosts[0].featured
+          } : 'No posts');
+          
+          // Transform BlogPost to Post format
+          const posts: Post[] = blogPosts.map((bp: any) => {
+            // For non-admins, all posts are published (filtered server-side)
+            // For admins, preserve the actual status from Notion if available
+            const statusFromApi = bp.status?.toLowerCase();
+            let postStatus: PostStatus = 'published'; // Default to published
+            
+            // Map Notion status to PostStatus
+            if (statusFromApi === 'draft') {
+              postStatus = 'draft';
+            } else if (statusFromApi === 'archived') {
+              postStatus = 'archived';
+            } else if (statusFromApi === 'published') {
+              postStatus = 'published';
+            } else {
+              // If status is not recognized, default to 'published' and log it
+              console.warn('[MicroblogStore] Unknown status:', statusFromApi, 'defaulting to published');
+            }
+            
+            // Ensure featured is a proper boolean
+            let featuredValue = false;
+            if (typeof bp.featured === 'boolean') {
+              featuredValue = bp.featured;
+            } else if (bp.featured === 'true' || bp.featured === true || bp.featured === 1) {
+              featuredValue = true;
+            }
+            
+            return {
+              id: bp.id,
+              title: bp.title,
+              excerpt: bp.excerpt,
+              content: bp.content, // Notion page ID
+              author: bp.author,
+              publishedAt: bp.publishedAt,
+              tags: bp.tags || [],
+              readTime: bp.readTime || 5,
+              imageUrl: bp.imageUrl,
+              status: postStatus,
+              featured: featuredValue,
+              categories: bp.categories || [],
+              createdAt: bp.publishedAt, // Use publishedAt as createdAt
+              updatedAt: bp.publishedAt
+            };
+          });
+
+          console.log('[MicroblogStore] Transformed', posts.length, 'posts, setting in store');
+          
+          // Debug: Check featured posts after transformation
+          const transformedFeaturedPosts = posts.filter(p => p.featured === true);
+          console.log('[MicroblogStore] Featured posts after transformation:', transformedFeaturedPosts.length, transformedFeaturedPosts.map(p => ({
+            id: p.id,
+            title: p.title,
+            featured: p.featured,
+            status: p.status,
+            featuredType: typeof p.featured
+          })));
+          
+          console.log('[MicroblogStore] Sample transformed post:', posts[0] ? {
+            id: posts[0].id,
+            title: posts[0].title,
+            status: posts[0].status,
+            featured: posts[0].featured,
+            featuredType: typeof posts[0].featured,
+            content: posts[0].content
+          } : 'No posts');
+          set({
+            posts,
+            isLoading: false,
+            lastFetched: now,
+            error: null
+          });
+        } catch (error) {
+          // If we have cached data, keep using it even if fetch fails
+          if (hasCachedData && !forceRefresh) {
+            set({ isLoading: false });
+          } else {
+            console.error('[MicroblogStore] Error loading posts:', error);
+            set({
+              error: error instanceof Error ? error.message : 'Failed to load posts from Notion',
               isLoading: false
             });
           }
@@ -525,7 +661,21 @@ export const useMicroblogStore = create<MicroblogState>()(
       // Getters
       getPublishedPosts: () => {
         const state = get();
-        return state.posts.filter(post => post.status === 'published');
+        const published = state.posts.filter(post => post.status === 'published');
+        if (published.length > 0) {
+          console.log('[MicroblogStore] getPublishedPosts - First post:', {
+            id: published[0].id,
+            title: published[0].title,
+            excerpt: published[0].excerpt,
+            author: published[0].author,
+            tags: published[0].tags,
+            featured: published[0].featured,
+            status: published[0].status,
+            content: published[0].content,
+            imageUrl: published[0].imageUrl
+          });
+        }
+        return published;
       },
 
       getDraftPosts: () => {
@@ -540,7 +690,24 @@ export const useMicroblogStore = create<MicroblogState>()(
 
       getFeaturedPosts: () => {
         const state = get();
-        return state.posts.filter(post => post.featured === true && post.status === 'published');
+        const allFeatured = state.posts.filter(post => post.featured === true);
+        const publishedFeatured = state.posts.filter(post => post.featured === true && post.status === 'published');
+        
+        console.log('[MicroblogStore] getFeaturedPosts:', {
+          totalPosts: state.posts.length,
+          allFeaturedPosts: allFeatured.length,
+          publishedFeaturedPosts: publishedFeatured.length,
+          allFeaturedDetails: allFeatured.map(p => ({
+            id: p.id,
+            title: p.title,
+            featured: p.featured,
+            status: p.status,
+            featuredType: typeof p.featured
+          })),
+          publishedFeaturedIds: publishedFeatured.map(p => p.id)
+        });
+        
+        return publishedFeatured;
       },
 
       getCategoryById: (id: string) => {
@@ -551,6 +718,30 @@ export const useMicroblogStore = create<MicroblogState>()(
       getCategoryBySlug: (slug: string) => {
         const state = get();
         return state.categories.find(category => category.slug === slug);
+      },
+
+      getCategoriesWithPostCounts: () => {
+        const state = get();
+        const publishedPosts = state.posts.filter(post => post.status === 'published');
+        
+        // Calculate post count for each category
+        return state.categories.map(category => {
+          const count = publishedPosts.filter(post => 
+            post.categories && post.categories.includes(category.slug)
+          ).length;
+          return {
+            ...category,
+            postCount: count
+          };
+        }).filter(cat => cat.postCount > 0); // Only show categories that have posts
+      },
+
+      getPostsByCategory: (categorySlug: string) => {
+        const state = get();
+        const publishedPosts = state.posts.filter(post => post.status === 'published');
+        return publishedPosts.filter(post => 
+          post.categories && post.categories.includes(categorySlug)
+        );
       },
     }),
     {
