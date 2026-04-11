@@ -10,6 +10,9 @@ export interface IMicroblogRepository {
   updatePost(id: string, updates: PostUpdate): Promise<Post>;
   deletePost(id: string): Promise<void>;
 
+  // Cross-post operations (Pebl integration)
+  upsertByExternalPeblId(externalPeblId: string, post: PostCreate): Promise<Post>;
+
   // Post status operations
   publishPost(id: string): Promise<Post>;
   archivePost(id: string): Promise<Post>;

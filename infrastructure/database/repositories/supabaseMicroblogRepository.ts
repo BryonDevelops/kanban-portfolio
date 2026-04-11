@@ -31,6 +31,7 @@ type DatabasePostRow = {
   image_url: string | null;
   status: string | null;
   featured: boolean | null;
+  external_pebl_id: string | null;
   created_at: string;
   updated_at: string | null;
 };
@@ -100,6 +101,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
       image_url: postData.imageUrl ?? null,
       status: postData.status ?? 'draft',
       featured: postData.featured ?? false,
+      external_pebl_id: postData.externalPeblId ?? null,
       created_at: now,
       updated_at: now,
     };
@@ -170,6 +172,86 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     }
 
     return this.mapDatabaseToDomain(data as DatabasePostRow);
+  }
+
+  async upsertByExternalPeblId(externalPeblId: string, postData: PostCreate): Promise<Post> {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    // Calculate read time
+    const wordCount = postData.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length;
+    const readTime = Math.max(1, Math.ceil(wordCount / 200));
+    const now = new Date().toISOString();
+
+    // Check if a post with this external_pebl_id already exists
+    const { data: existing } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('external_pebl_id', externalPeblId)
+      .single();
+
+    if (existing) {
+      // Update existing post
+      const updateData: DatabasePostUpdate = {
+        title: postData.title,
+        excerpt: postData.excerpt,
+        content: postData.content,
+        author: postData.author,
+        published_at: postData.publishedAt,
+        tags: postData.tags ?? [],
+        read_time: readTime,
+        image_url: postData.imageUrl ?? null,
+        status: postData.status ?? 'published',
+        featured: postData.featured ?? false,
+        updated_at: now,
+      };
+
+      const { data, error } = await supabase
+        .from('posts')
+        .update(updateData)
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update cross-posted post: ${error.message}`);
+      }
+
+      return this.mapDatabaseToDomain(data as DatabasePostRow);
+    } else {
+      // Create new post with external_pebl_id
+      const id = nanoid();
+      const post = {
+        id,
+        title: postData.title,
+        excerpt: postData.excerpt,
+        content: postData.content,
+        author: postData.author,
+        published_at: postData.publishedAt,
+        tags: postData.tags ?? [],
+        read_time: readTime,
+        image_url: postData.imageUrl ?? null,
+        status: postData.status ?? 'published',
+        featured: postData.featured ?? false,
+        external_pebl_id: externalPeblId,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const { data, error } = await supabase
+        .from('posts')
+        .insert(post)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create cross-posted post: ${error.message}`);
+      }
+
+      return this.mapDatabaseToDomain(data as DatabasePostRow);
+    }
   }
 
   async deletePost(id: string): Promise<void> {
@@ -347,6 +429,7 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     status: (record.status as PostStatus | null) ?? 'draft',
     featured: Boolean(record.featured),
     categories: [],
+    externalPeblId: record.external_pebl_id ?? undefined,
     createdAt: record.created_at,
     updatedAt: record.updated_at ?? record.created_at,
   });

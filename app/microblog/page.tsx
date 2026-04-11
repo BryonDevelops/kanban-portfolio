@@ -29,7 +29,7 @@ export default function MicroblogPage() {
   
   const {
     isLoading,
-    loadPostsFromNotion,
+    loadPosts,
     createPost,
     deletePost,
     getPublishedPosts,
@@ -42,11 +42,11 @@ export default function MicroblogPage() {
     getPostsByCategory
   } = useMicroblogStore()
 
-  // Load posts from Notion and categories on component mount
+  // Load posts from Supabase (Pebl is the source of truth) and categories on mount
   useEffect(() => {
-    loadPostsFromNotion()
+    loadPosts()
     loadCategories()
-  }, [loadPostsFromNotion, loadCategories])
+  }, [loadPosts, loadCategories])
 
   // Get published posts for display (filtered by category if selected)
   const allPublishedPosts = getPublishedPosts()

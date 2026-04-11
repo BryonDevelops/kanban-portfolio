@@ -102,4 +102,20 @@ export class MicroblogService {
   async getFeaturedPosts(): Promise<Post[]> {
     return await this.repository.fetchFeaturedPosts();
   }
+
+  async upsertFromPebl(externalPeblId: string, postData: PostCreate): Promise<Post> {
+    if (!externalPeblId.trim()) {
+      throw new Error('External Pebl ID is required');
+    }
+
+    if (!postData.title.trim()) {
+      throw new Error('Post title is required');
+    }
+
+    if (!postData.content.trim()) {
+      throw new Error('Post content is required');
+    }
+
+    return await this.repository.upsertByExternalPeblId(externalPeblId, postData);
+  }
 }

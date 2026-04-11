@@ -13,6 +13,7 @@ IF NOT EXISTS posts
   image_url TEXT,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
   featured BOOLEAN NOT NULL DEFAULT FALSE,
+  external_pebl_id TEXT UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -24,6 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts(published_at);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
 CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_posts_featured ON posts(featured);
+CREATE INDEX IF NOT EXISTS idx_posts_external_pebl_id ON posts(external_pebl_id);
 
 -- Create trigger for posts updated_at
 CREATE TRIGGER update_posts_updated_at
