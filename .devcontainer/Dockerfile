@@ -1,5 +1,5 @@
 # Base image with Node.js 20 and VS Code devcontainer tooling
-FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:20
+FROM mcr.microsoft.com/devcontainers/typescript-node:20
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -17,16 +17,12 @@ RUN apt-get update \
     python3 \
     python3-pip \
     pkg-config \
-    libgtk2.0-0 \
     libgtk-3-0 \
     libgbm-dev \
     libnotify-dev \
-    libgconf-2-4 \
     libnss3 \
     libnss3-dev \
     libxss1 \
-    libasound2 \
-    libasound2-dev \
     libxtst6 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
@@ -43,13 +39,15 @@ RUN apt-get update \
     xauth \
     xvfb \
     unzip \
-    libvips42 \
+    libvips-dev \
+    && apt-get -y install --no-install-recommends libasound2 libasound2-dev || \
+       apt-get -y install --no-install-recommends libasound2t64 libasound2-dev || true \
     && git lfs install \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Supabase CLI for local development workflows
-RUN npm install -g supabase
+RUN curl -fsSL https://raw.githubusercontent.com/supabase/cli/main/install.sh | sh
 
 ENV SHELL=/bin/bash
 

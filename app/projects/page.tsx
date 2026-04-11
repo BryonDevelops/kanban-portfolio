@@ -18,13 +18,39 @@ export default function ProjectsShowcasePage() {
   const [loading, setLoading] = useState(true)
   const [manualProjects, setManualProjects] = useState<ShowcasedProject[]>([
     {
+      id: "pebl",
+      title: "Pebl",
+      description: "A full-stack productivity platform where everything is a Pebl — notes, tasks, projects, goals, and views all live inside one unified data model. Features a powerful Command Center with a custom query language, a fully custom theme system, and end-to-end encryption so your data stays yours.",
+      technologies: ['Next.js', 'TypeScript', 'React', 'Supabase', 'PostgreSQL', 'Convex', 'Auth.js', 'Vercel', 'Tailwind CSS'],
+      link: "https://www.pebl.space",
+      featured: true,
+      detail: {
+        role: "Founder & Developer",
+        year: "2025 – Present",
+        longDescription:
+          "Pebl is a productivity platform I designed and built from scratch. The core idea is radical simplicity: every entity — whether it's a note, task, project, goal, or view — is stored as a single universal object called a Pebl. This unified data model eliminates the friction of switching between separate apps and makes cross-feature querying effortless.\n\n" +
+          "The app is anchored by a Command Center that lets you search, filter, and navigate everything instantly. It includes a custom query language (PQL) with clause-based token parsing, a visual query builder for building complex filters without typing, and yellow-highlight search results for fast scanning.\n\n" +
+          "The entire app runs on a fully custom theme system I built from scratch — a cohesive set of tokens, components, and patterns that keep the UI polished and consistent across every surface.\n\n" +
+          "Privacy is a first-class feature. All user data is encrypted client-side using AES-256-GCM via the Web Crypto API with PBKDF2 key derivation before it ever touches the server.",
+      },
+    },
+    {
       id: "kanban-portfolio",
       title: "Kanban Portfolio",
       description: "A modern portfolio website built with Next.js, featuring a kanban board interface for project management and beautiful tech stack showcases. Includes real-time collaboration, drag-and-drop functionality, and responsive design.",
-      technologies: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Supabase', 'React', 'PostgreSQL'],
+      technologies: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Supabase', 'React', 'PostgreSQL', 'Sanity'],
       link: "https://github.com/BryonDevelops/kanban-portfolio",
       github: "https://github.com/BryonDevelops/kanban-portfolio",
-      featured: true
+      featured: true,
+      detail: {
+        role: "Solo Developer",
+        year: "2024 – Present",
+        longDescription:
+          "This portfolio site is more than a static résumé — it's a living, full-stack application I use to manage and showcase my work.\n\n" +
+          "At its core is a kanban board backed by Supabase and PostgreSQL. Projects flow through columns as I work on them, and once marked complete they automatically surface on the public Projects page. That means the showcase stays in sync with my actual workflow without any extra effort.\n\n" +
+          "Content for the About page — experience entries, skills, and metadata — is managed through Sanity CMS, giving me a clean editing experience without touching code.\n\n" +
+          "The front end is built with Next.js and Tailwind CSS with a focus on visual polish: gradient backgrounds, animated transitions, responsive layouts, and a dark mode that feels intentional rather than inverted. There's also an admin layer with protected routes, inline project editing forms, and a microblog.",
+      },
     },
   ])
 

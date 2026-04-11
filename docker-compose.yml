@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   kanban-portfolio:
     build:
-      context: ..
+      context: .
       dockerfile: .devcontainer/Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
       - "6006:6006"
     volumes:
-      - ..:/workspaces/kanban-portfolio:cached
+      - .:/workspaces/kanban-portfolio:cached
       - /workspaces/kanban-portfolio/node_modules
     working_dir: /workspaces/kanban-portfolio
     environment:

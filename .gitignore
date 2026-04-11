@@ -52,3 +52,4 @@ storybook-static
 # Sanity
 .sanity/
 **/studio-bryondevelops/.sanity/
+.env*.local
