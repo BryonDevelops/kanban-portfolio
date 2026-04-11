@@ -103,6 +103,14 @@ export class MicroblogService {
     return await this.repository.fetchFeaturedPosts();
   }
 
+  async deleteFromPebl(externalPeblId: string): Promise<boolean> {
+    if (!externalPeblId.trim()) {
+      throw new Error('External Pebl ID is required');
+    }
+
+    return await this.repository.deleteByExternalPeblId(externalPeblId);
+  }
+
   async upsertFromPebl(externalPeblId: string, postData: PostCreate): Promise<Post> {
     if (!externalPeblId.trim()) {
       throw new Error('External Pebl ID is required');

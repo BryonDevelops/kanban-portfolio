@@ -254,6 +254,35 @@ export class SupabaseMicroblogRepository implements IMicroblogRepository {
     }
   }
 
+  async deleteByExternalPeblId(externalPeblId: string): Promise<boolean> {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
+
+    // Find the post first to confirm it exists
+    const { data: existing } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('external_pebl_id', externalPeblId)
+      .single();
+
+    if (!existing) {
+      return false; // No post found with this external ID
+    }
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', existing.id);
+
+    if (error) {
+      throw new Error(`Failed to delete cross-posted post: ${error.message}`);
+    }
+
+    return true;
+  }
+
   async deletePost(id: string): Promise<void> {
     const supabase = getSupabase();
     if (!supabase) {

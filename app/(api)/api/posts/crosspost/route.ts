@@ -134,3 +134,46 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/**
+ * DELETE /api/posts/crosspost?externalPeblId=xxx
+ *
+ * Removes a cross-posted entry by its external Pebl ID.
+ * Authenticated via API key.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!verifyApiKey(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized: invalid or missing API key' },
+        { status: 401 }
+      );
+    }
+
+    const externalPeblId = request.nextUrl.searchParams.get('externalPeblId');
+
+    if (!externalPeblId) {
+      return NextResponse.json(
+        { error: 'externalPeblId query parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await microblogService.deleteFromPebl(externalPeblId);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: 'No post found with that externalPeblId' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, externalPeblId }, { status: 200 });
+  } catch (error) {
+    console.error('[CrossPost] Delete failed:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete cross-post', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
